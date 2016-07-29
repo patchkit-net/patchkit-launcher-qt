@@ -1,27 +1,43 @@
 #include "mainwindow.h"
-#include <qlogging.h>
+#include "launcher.h"
+#include "launcherexception.h"
+#include "patchkitremotepatcher.h"
+#include <QDebug>
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QDir>
+#include <QFuture>
 
-#include "launcherdata.h"
+LauncherConfiguration createLauncherConfiguration()
+{
+    LauncherConfiguration launcherConfiguration;
+    launcherConfiguration.dataFileName = "launcher.dat";
+
+    return launcherConfiguration;
+}
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
+    QApplication application(argc, argv);
 
-    LauncherData testData = LauncherData::loadFromFile(QString("launcher.dat"));
+    RemotePatcher *remotePatcher = new PatchKitRemotePatcher();
 
-    qDebug(QDir::currentPath().toLatin1().data());
-    qDebug(QString("gameSecret: %1").arg(testData.gameSecret).toStdString().c_str());
-    qDebug(QString("patcherSecret: %1").arg(testData.patcherSecret).toStdString().c_str());
+    Launcher launcher(createLauncherConfiguration(), remotePatcher);
 
-    MainWindow w;
+    MainWindow mainWindow(nullptr);
 
-    const QRect availableSize = QApplication::desktop()->availableGeometry(&w);
-    w.move((availableSize.width() - w.width()) / 2, (availableSize.height() - w.height()) / 2);
+    launcher.connect(&launcher, &Launcher::finished, &mainWindow, &MainWindow::finish);
+    launcher.connect(&launcher, &Launcher::bytesDownloadedChanged, &mainWindow, &MainWindow::setBytesDownloaded);
+    launcher.connect(&launcher, &Launcher::totalBytesChanged, &mainWindow, &MainWindow::setTotalBytes);
+    launcher.connect(&launcher, &Launcher::statusChanged, &mainWindow, &MainWindow::setStatus);
+    launcher.connect(&launcher, &Launcher::progressChanged, &mainWindow, &MainWindow::setProgress);
 
-    w.show();
+    mainWindow.show();
+    launcher.start();
 
-    return a.exec();
+    int result = application.exec();
+
+    delete remotePatcher;
+
+    return result;
 }

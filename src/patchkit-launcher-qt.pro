@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -14,12 +14,18 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     launcher.cpp \
-    launcherdata.cpp
+    launcherdata.cpp \
+    launcherexception.cpp \
+    patchkitremotepatcher.cpp \
+    launcherthread.cpp
 
 HEADERS  += mainwindow.h \
-    ilauncherwindow.h \
     launcher.h \
     launcherconfiguration.h \
-    launcherdata.h
+    launcherdata.h \
+    launcherexception.h \
+    patchkitremotepatcher.h \
+    remotepatcher.h \
+    launcherthread.h
 
 FORMS    += mainwindow.ui

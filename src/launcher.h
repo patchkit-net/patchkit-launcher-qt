@@ -1,29 +1,37 @@
 #ifndef LAUNCHER_H
 #define LAUNCHER_H
 
-#include "ilauncherwindow.h"
-#include "launcherconfiguration.h"
+#include <QObject>
 
-class Launcher
+#include "launcherdata.h"
+#include "launcherconfiguration.h"
+#include "launcherthread.h"
+#include "remotepatcher.h"
+
+class Launcher : public QObject
 {
+    Q_OBJECT
+
 public:
-    explicit Launcher(ILauncherWindow *launcherWindow, LauncherConfiguration launcherConfiguration);
+    Launcher(const LauncherConfiguration &configuration, RemotePatcher * const remotePatcher);
+    ~Launcher();
 
     void start();
     void cancel();
 
-    bool hasFinished();
-    bool hasBeenStarted();
-    bool hasBeenCancelled();
+signals:
+    void finished();
+    void bytesDownloadedChanged(const long& bytesDownloaded);
+    void totalBytesChanged(const long& totalBytes);
+    void statusChanged(const QString& status);
+    void progressChanged(const int& progress);
+
 private:
-    void doWork();
+    LauncherThread *m_thread;
 
-    ILauncherWindow *m_window;
-    LauncherConfiguration m_configuration;
+    RemotePatcher * const m_remotePatcher;
 
-    bool m_hasFinished;
-    bool m_hasBeenStarted;
-    bool m_hasBeenCancelled;
+    const LauncherConfiguration m_configuration;
 };
 
 #endif // LAUNCHER_H

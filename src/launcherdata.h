@@ -1,20 +1,19 @@
 #ifndef LAUNCHERDATA_H
 #define LAUNCHERDATA_H
 
-#include <qstring.h>
-#include <qdatastream.h>
+#include <QString>
+#include <QDataStream>
 
-class LauncherData
+struct LauncherData
 {
 public:
-    static LauncherData loadFromFile(QString& fileName);
+    static LauncherData loadFromFile(const QString& fileName);
 
     QString patcherSecret;
-
     QString gameSecret;
 private:
     static QString readAndDecodeString(QDataStream &fileStream);
-    static QString decodeString(char *bytes, int len);
+    static QString decodeString(const char *bytes, const int &len);
 };
 
 #endif // LAUNCHERDATA_H

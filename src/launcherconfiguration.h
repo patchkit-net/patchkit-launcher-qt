@@ -1,11 +1,12 @@
 #ifndef LAUNCHERCONFIGURATION_H
 #define LAUNCHERCONFIGURATION_H
 
-#include <qstring.h>
+#include <QString>
 
 struct LauncherConfiguration
 {
-    QString launcherDataFileName;
+public:
+    QString dataFileName;
 };
 
 #endif // LAUNCHERCONFIGURATION_H
