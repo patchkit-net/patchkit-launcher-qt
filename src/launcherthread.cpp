@@ -15,7 +15,11 @@ void LauncherThread::run()
 
         qDebug() << data.patcherSecret.toStdString().c_str();
 
-        m_remotePatcher->getVersion(data.patcherSecret);
+        int version = m_remotePatcher->getVersion(data.patcherSecret);
+
+        qDebug() << version;
+
+        m_remotePatcher->download(data.patcherSecret, version);
 
         emit progressChanged(100);
     }
@@ -30,8 +34,8 @@ void LauncherThread::run()
 }
 
 LauncherThread::LauncherThread(const LauncherConfiguration &configuration, RemotePatcher * const remotePatcher) :
-    m_configuration(configuration),
     m_remotePatcher(remotePatcher),
+    m_configuration(configuration),
     m_isCancelled(false)
 {
     m_remotePatcher->moveToThread(this);

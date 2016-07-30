@@ -9,7 +9,7 @@ public:
     LauncherException(const QString& message);
     LauncherException(const char* message);
 
-    const char* what() const { return m_message; }
+    virtual const char* what() const throw() { return m_message; }
     void raise() const { throw *this; }
     LauncherException *clone() const { return new LauncherException(*this); }
 
