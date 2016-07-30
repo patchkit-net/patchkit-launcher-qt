@@ -17,7 +17,8 @@ SOURCES += main.cpp\
     launcherdata.cpp \
     launcherexception.cpp \
     patchkitremotepatcher.cpp \
-    launcherthread.cpp
+    launcherthread.cpp \
+    patchkitlocalpatcher.cpp
 
 HEADERS  += mainwindow.h \
     launcher.h \
@@ -26,6 +27,8 @@ HEADERS  += mainwindow.h \
     launcherexception.h \
     patchkitremotepatcher.h \
     remotepatcher.h \
-    launcherthread.h
+    launcherthread.h \
+    localpatcher.h \
+    patchkitlocalpatcher.h
 
 FORMS    += mainwindow.ui

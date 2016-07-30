@@ -103,18 +103,25 @@ void PatchKitRemotePatcher::getNetworkReply(const QString &urlPath, QNetworkAcce
 {
     qDebug() << QString("Getting network reply from %1").arg(urlPath).toStdString().c_str();
     QUrl url(urlPath);
-    accessManager = new QNetworkAccessManager(this);
+    accessManager = new QNetworkAccessManager();
     reply = accessManager->get( QNetworkRequest(url));
 
-    QEventLoop loop;
-    QObject::connect(reply, &QNetworkReply::readyRead, &loop, &QEventLoop::quit);
+    QEventLoop* readyReadLoop = new QEventLoop();
+    QObject::connect(reply, &QNetworkReply::readyRead, readyReadLoop, &QEventLoop::quit);
 
-    QTimer idleTimer(this);
-    connect(&idleTimer,&QTimer::timeout,&loop,&QEventLoop::quit);
-    idleTimer.setInterval(downloadTimeoutInSeconds *1000);
+    QTimer timeoutTimer;
+    connect(&timeoutTimer, &QTimer::timeout, readyReadLoop, &QEventLoop::quit);
+    timeoutTimer.setInterval(downloadTimeoutInSeconds *1000);
 
-    idleTimer.start();
-    loop.exec();
+    timeoutTimer.start();
+    readyReadLoop->exec();
+
+    delete readyReadLoop;
+
+    if(timeoutTimer.remainingTime() == 0)
+    {
+        throw LauncherException("Request timeout.");
+    }
 
     if(reply->error() != QNetworkReply::NoError)
     {
@@ -160,38 +167,18 @@ void PatchKitRemotePatcher::downloadFile(const QString &filePath, const QString 
     QNetworkReply *reply;
     getNetworkReply(urlPath, accessManager, reply);
 
-    connect(reply, &QNetworkReply::downloadProgress, this, &PatchKitRemotePatcher::downloadProgress);
-
     QFile file(filePath);
-    if(!file.open(QIODevice::Truncate | QIODevice::WriteOnly))
+
+    if(!file.open(QFile::WriteOnly))
     {
-        throw LauncherException("Couldn't open file for saving.");
+        throw LauncherException("Couldn't open file for download.");
     }
 
-    while(!reply->isFinished())
-    {
-        qDebug() << file.write(reply->readAll());
-        file.flush();
-    }
+    file.write(reply->readAll());
 
-
-
-    /*qint64 bufferSize = 1024;
-    char* buffer = new char[bufferSize];
-
-    qint64 totalRead = 0;
-
-    do
-    {
-        qint64 bufferRead = reply->read(buffer, bufferSize);
-        totalRead += bufferRead;
-        qDebug() << totalRead;
-        file.write(buffer, bufferRead);
-    } while(!reply->isFinished());*/
-
+    file.flush();
     file.close();
 
     delete reply;
     delete accessManager;
-    //delete[] buffer;
 }
