@@ -11,11 +11,16 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = patchkit-launcher-qt
 TEMPLATE = app
 
+LIBS += -LC:\Qt\quazip-0.7.2\vs_proj_64\Release -lquazip_static
+
+INCLUDEPATH += C:\Qt\quazip-0.7.2\quazip
+
 SOURCES += main.cpp\
         mainwindow.cpp \
     launcher.cpp \
     launcherdata.cpp \
     launcherexception.cpp \
+    launchercancelledexception.cpp \
     patchkitremotepatcher.cpp \
     launcherthread.cpp \
     patchkitlocalpatcher.cpp \
@@ -30,6 +35,7 @@ HEADERS  += mainwindow.h \
     remotepatcher.h \
     launcherthread.h \
     localpatcher.h \
-    patchkitlocalpatcher.h
+    patchkitlocalpatcher.h \
+    launchercancelledexception.h
 
 FORMS    += mainwindow.ui
