@@ -18,7 +18,8 @@ SOURCES += main.cpp\
     launcherexception.cpp \
     patchkitremotepatcher.cpp \
     launcherthread.cpp \
-    patchkitlocalpatcher.cpp
+    patchkitlocalpatcher.cpp \
+    launcherconfiguration.cpp
 
 HEADERS  += mainwindow.h \
     launcher.h \

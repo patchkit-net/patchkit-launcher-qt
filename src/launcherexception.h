@@ -6,15 +6,18 @@
 class LauncherException : public QException
 {
 public:
-    LauncherException(const QString& message);
-    LauncherException(const char* message);
+    LauncherException(const QString& t_message);
+    LauncherException(const char* t_message);
 
-    virtual const char* what() const throw() { return m_message; }
-    void raise() const { throw *this; }
-    LauncherException *clone() const { return new LauncherException(*this); }
+    const char* what() const throw() override
+    { return m_message.c_str(); }
+    void raise() const override
+    { throw *this; }
+    LauncherException *clone() const override
+    { return new LauncherException(*this); }
 
 private:
-    const char* m_message;
+    const std::string m_message;
 };
 
 #endif // LAUNCHEREXCEPTION_H

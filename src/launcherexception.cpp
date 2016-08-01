@@ -1,12 +1,12 @@
 #include "launcherexception.h"
 
-LauncherException::LauncherException(const QString& message) :
-    m_message(message.toStdString().c_str())
+LauncherException::LauncherException(const QString& t_message) :
+    m_message(t_message.toStdString())
 {
 
 }
 
-LauncherException::LauncherException(const char *message) : m_message(message)
+LauncherException::LauncherException(const char *t_message) : m_message(t_message)
 {
 
 }

@@ -1,13 +1,19 @@
 #include "patchkitremotepatcher.h"
 #include "launcherexception.h"
+#include "launchercancelledexception.h"
 #include <QtNetwork/QtNetwork>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonValue>
 
-int PatchKitRemotePatcher::getVersion(const QString &patcherSecret)
+PatchKitRemotePatcher::PatchKitRemotePatcher() :
+    m_isCancelled(false)
 {
-    QString jsonData = downloadString(QString("http://api.patchkit.net/1/apps/%1/versions/latest/id").arg(patcherSecret));
+}
+
+int PatchKitRemotePatcher::getVersion(const QString& t_patcherSecret)
+{
+    QString jsonData = downloadString(QString("http://api.patchkit.net/1/apps/%1/versions/latest/id").arg(t_patcherSecret));
 
     QJsonDocument jsonDocument = QJsonDocument::fromJson(jsonData.toUtf8());
 
@@ -33,28 +39,27 @@ int PatchKitRemotePatcher::getVersion(const QString &patcherSecret)
     return idValue;
 }
 
-QString PatchKitRemotePatcher::download(const QString &patcherSecret, const int &version)
+QString PatchKitRemotePatcher::download(const QString& t_patcherSecret, int t_version)
 {
-    QString* contentUrls = getContentUrls(patcherSecret, version);
+    QStringList contentUrls = getContentUrls(t_patcherSecret, t_version);
 
     QString filePath("file.zip");
 
     downloadFile(filePath, contentUrls[0]);
 
-    delete[] contentUrls;
-
     return filePath;
 }
 
-void PatchKitRemotePatcher::downloadProgress(const long long &bytesReceived, const long long &bytesTotal)
+void PatchKitRemotePatcher::cancel()
 {
-    emit bytesDownloadedChanged(bytesReceived);
-    emit totalBytesChanged(bytesTotal);
+    m_isCancelled = true;
+
+    emit cancelled();
 }
 
-QString *PatchKitRemotePatcher::getContentUrls(const QString &patcherSecret, const int &version)
+QStringList PatchKitRemotePatcher::getContentUrls(const QString& t_patcherSecret, int t_version) const
 {
-    QString jsonData = downloadString(QString("http://api.patchkit.net/1/apps/%1/versions/%2/content_urls").arg(patcherSecret, QString::number(version)));
+    QString jsonData = downloadString(QString("http://api.patchkit.net/1/apps/%1/versions/%2/content_urls").arg(t_patcherSecret, QString::number(t_version)));
 
     QJsonDocument jsonDocument = QJsonDocument::fromJson(jsonData.toUtf8());
 
@@ -70,7 +75,7 @@ QString *PatchKitRemotePatcher::getContentUrls(const QString &patcherSecret, con
         throw LauncherException("Empty content urls.");
     }
 
-    QString *result = new QString[jsonArray.size()];
+    QStringList result;
 
     for(int i = 0; i < jsonArray.size(); i++)
     {
@@ -93,42 +98,50 @@ QString *PatchKitRemotePatcher::getContentUrls(const QString &patcherSecret, con
             throw LauncherException("Couldn't read content urls from JSON data.");
         }
 
-        result[i] = jsonValue.toString();
+        result.append(jsonValue.toString());
     }
 
     return result;
 }
 
-void PatchKitRemotePatcher::getNetworkReply(const QString &urlPath, QNetworkAccessManager*& accessManager, QNetworkReply*& reply)
+void PatchKitRemotePatcher::getNetworkReply(const QString& t_urlPath, std::auto_ptr<QNetworkAccessManager>& t_accessManager, std::auto_ptr<QNetworkReply>& t_reply) const
 {
-    qDebug() << QString("Getting network reply from %1").arg(urlPath).toStdString().c_str();
-    QUrl url(urlPath);
-    accessManager = new QNetworkAccessManager();
-    reply = accessManager->get( QNetworkRequest(url));
+    qDebug() << QString("Getting network reply from %1").arg(t_urlPath).toStdString().c_str();
+    QUrl url(t_urlPath);
+    t_accessManager = std::auto_ptr<QNetworkAccessManager>(new QNetworkAccessManager());
+    t_reply = std::auto_ptr<QNetworkReply>(t_accessManager.get()->get( QNetworkRequest(url)));
 
-    QEventLoop* readyReadLoop = new QEventLoop();
-    QObject::connect(reply, &QNetworkReply::readyRead, readyReadLoop, &QEventLoop::quit);
+    QEventLoop readyReadLoop;
+    connect(t_reply.get(), &QNetworkReply::readyRead, &readyReadLoop, &QEventLoop::quit);
+
+    connect(this, &PatchKitRemotePatcher::cancelled, &readyReadLoop, &QEventLoop::quit);
 
     QTimer timeoutTimer;
-    connect(&timeoutTimer, &QTimer::timeout, readyReadLoop, &QEventLoop::quit);
+
+    connect(&timeoutTimer, &QTimer::timeout, &readyReadLoop, &QEventLoop::quit);
+
     timeoutTimer.setInterval(downloadTimeoutInSeconds *1000);
-
+    timeoutTimer.setSingleShot(true);
     timeoutTimer.start();
-    readyReadLoop->exec();
 
-    delete readyReadLoop;
+    readyReadLoop.exec();
 
-    if(timeoutTimer.remainingTime() == 0)
+    if(m_isCancelled)
+    {
+        throw LauncherCancelledException();
+    }
+
+    if(!timeoutTimer.isActive())
     {
         throw LauncherException("Request timeout.");
     }
 
-    if(reply->error() != QNetworkReply::NoError)
+    if(t_reply.get()->error() != QNetworkReply::NoError)
     {
-        throw LauncherException(reply->errorString());
+        throw LauncherException(t_reply.get()->errorString());
     }
 
-    QVariant statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
+    QVariant statusCode = t_reply.get()->attribute(QNetworkRequest::HttpStatusCodeAttribute);
 
     if(!statusCode.isValid())
     {
@@ -145,29 +158,40 @@ void PatchKitRemotePatcher::getNetworkReply(const QString &urlPath, QNetworkAcce
     qDebug() << QString("Reply status code - %1").arg(statusCodeValue).toStdString().c_str();
 }
 
-QString PatchKitRemotePatcher::downloadString(const QString &urlPath)
+QString PatchKitRemotePatcher::downloadString(const QString& t_urlPath) const
 {
-    QNetworkAccessManager *accessManager;
-    QNetworkReply *reply;
-    getNetworkReply(urlPath, accessManager, reply);
+    std::auto_ptr<QNetworkAccessManager> accessManager;
+    std::auto_ptr<QNetworkReply> reply;
+    getNetworkReply(t_urlPath, accessManager, reply);
 
     QString result = QString(reply->readAll());
 
     qDebug() << result;
 
-    delete reply;
-    delete accessManager;
-
     return result;
 }
 
-void PatchKitRemotePatcher::downloadFile(const QString &filePath, const QString &urlPath)
+void PatchKitRemotePatcher::downloadFile(const QString& t_filePath, const QString& t_urlPath) const
 {
-    QNetworkAccessManager *accessManager;
-    QNetworkReply *reply;
-    getNetworkReply(urlPath, accessManager, reply);
+    std::auto_ptr<QNetworkAccessManager> accessManager;
+    std::auto_ptr<QNetworkReply> reply;
+    getNetworkReply(t_urlPath, accessManager, reply);
 
-    QFile file(filePath);
+    connect(reply.get(), &QNetworkReply::downloadProgress, this, &PatchKitRemotePatcher::downloadProgress);
+
+    QEventLoop finishedLoop;
+    connect(reply.get(), &QNetworkReply::finished, &finishedLoop, &QEventLoop::quit);
+
+    connect(this, &PatchKitRemotePatcher::cancelled, &finishedLoop, &QEventLoop::quit);
+
+    finishedLoop.exec();
+
+    if (m_isCancelled)
+    {
+        throw LauncherCancelledException();
+    }
+
+    QFile file(t_filePath);
 
     if(!file.open(QFile::WriteOnly))
     {
@@ -178,7 +202,4 @@ void PatchKitRemotePatcher::downloadFile(const QString &filePath, const QString 
 
     file.flush();
     file.close();
-
-    delete reply;
-    delete accessManager;
 }

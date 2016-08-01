@@ -1,1 +1,11 @@
 /src/patchkit-launcher-qt.pro.user
+/src/Debug/
+/src/Release/
+/src/x64/
+/src/.vs/
+/src/GeneratedFiles/
+/src/patchkit-launcher-qt.vcxproj.filters
+/src/patchkit-launcher-qt.vcxproj.user
+/src/patchkit-launcher-qt.vcxproj
+/src/patchkit-launcher-qt.VC.db
+/src/patchkit-launcher-qt.VC.VC.opendb

@@ -1,12 +1,12 @@
 #include "patchkitlocalpatcher.h"
 #include "launcherexception.h"
 
-#include <QFile>
+#include <QDebug>
 #include <QDir>
 #include <QList>
 #include <QJsonDocument>
 #include <QJsonObject>
-#incldue <QJsonValue>
+#include <QJsonValue>
 
 int PatchKitLocalPatcher::getVersion() const
 {
@@ -66,7 +66,7 @@ bool PatchKitLocalPatcher::isInstalled() const
     return true;
 }
 
-void PatchKitLocalPatcher::install(const QString &filePath, const int &version) const
+void PatchKitLocalPatcher::install(const QString& t_filePath, int t_version) const
 {
     //TODO:
 }
@@ -95,11 +95,20 @@ void PatchKitLocalPatcher::uninstall() const
         {
             QString fileFullPath = QDir::cleanPath(patcherDirectory + "/" + installFiles[i]);
 
-            qDebug() << QString("Deleting file %1").arg(fileFullPath).toStdString().c_str();
+            QFileInfo fileInfo(fileFullPath);
 
-            if(QFile::exists(fileFullPath))
+            if(fileInfo.exists())
             {
-                QFile::remove(fileFullPath);
+                if(fileInfo.isFile())
+                {
+                    qDebug() << QString("Deleting file %1").arg(fileFullPath).toStdString().c_str();
+                    QFile::remove(fileFullPath);
+                }
+                else if(fileInfo.isDir())
+                {
+                    qDebug() << QString("Deleting direcetory %1").arg(fileFullPath).toStdString().c_str();
+                    QDir(fileFullPath).removeRecursively();
+                }
             }
         }
 
@@ -116,7 +125,7 @@ void PatchKitLocalPatcher::uninstall() const
     }
 }
 
-void PatchKitLocalPatcher::start(const QString &applicationSecret) const
+void PatchKitLocalPatcher::start(const QString& t_applicationSecret) const
 {
     QString exeFileName;
     QString exeArguments;
@@ -127,21 +136,21 @@ void PatchKitLocalPatcher::start(const QString &applicationSecret) const
 
     qDebug() << "Formating run command.";
 
-    exeFileName = formatPatcherManifest(exeFileName, applicationSecret);
-    exeFileName = formatPatcherManifest(exeArguments, applicationSecret);
+    exeFileName = formatPatcherManifest(exeFileName, t_applicationSecret);
+    exeFileName = formatPatcherManifest(exeArguments, t_applicationSecret);
 
     qDebug() << QString("Run command - %1 %2").arg(exeFileName, exeArguments).toStdString().c_str();
 
 
 }
 
-void PatchKitLocalPatcher::readPatcherManifset(QString &exeFileName, QString &exeArguments) const
+void PatchKitLocalPatcher::readPatcherManifset(QString& t_exeFileName, QString& t_exeArguments) const
 {
     qDebug() << "Reading patcher manifest.";
 
-    QFile manifsetFile(QDir::cleanPath(patcherDirectory + "/" + manifsetFileName));
+    QFile manifestFile(QDir::cleanPath(patcherDirectory + "/" + manifsetFileName));
 
-    if(!manifsetFile.open(QFile::ReadOnly))
+    if(!manifestFile.open(QFile::ReadOnly))
     {
         throw LauncherException("Couldn't open patcher manifest file.");
     }
@@ -170,14 +179,17 @@ void PatchKitLocalPatcher::readPatcherManifset(QString &exeFileName, QString &ex
         throw LauncherException("Invaild format of patcher manifest file.");
     }
 
-    exeFileName = exeFileNameJsonValue.toString();
-    exeArguments = exeArgumentsJsonValue.toString();
+    t_exeFileName = exeFileNameJsonValue.toString();
+    t_exeArguments = exeArgumentsJsonValue.toString();
 }
 
-QString PatchKitLocalPatcher::formatPatcherManifest(const QString &stringToFormat, const QString &applicationSecret) const
+QString PatchKitLocalPatcher::formatPatcherManifest(const QString& t_stringToFormat, const QString& t_applicationSecret) const
 {
-    return stringToFormat
-            .replace("{installdir}", installationDirectory)
-            .replace("{exedir}", patcherDirectory)
-            .replace("{secret}", applicationSecret);
+    QString result(t_stringToFormat);
+
+    result = result.replace("{installdir}", installationDirectory);
+    result = result.replace("{exedir}", patcherDirectory);
+    result = result.replace("{secret}", t_applicationSecret);
+
+    return result;
 }

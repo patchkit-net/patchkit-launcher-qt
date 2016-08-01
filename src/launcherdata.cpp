@@ -3,9 +3,9 @@
 #include <qdatastream.h>
 #include <qfile.h>
 
-LauncherData LauncherData::loadFromFile(const QString &fileName)
+LauncherData LauncherData::loadFromFile(const QString& t_fileName)
 {
-    QFile file(fileName);
+    QFile file(t_fileName);
 
     if(!file.open(QFile::ReadOnly))
     {
@@ -33,25 +33,25 @@ LauncherData LauncherData::loadFromFile(const QString &fileName)
     return data;
 }
 
-QString LauncherData::readAndDecodeString(QDataStream &fileStream)
+QString LauncherData::readAndDecodeString(QDataStream& t_fileStream)
 {
     qint32 len;
-    fileStream >> len;
+    t_fileStream >> len;
 
     std::auto_ptr<char> bytes(new char[len]);
 
-    fileStream.readRawData(bytes.get(), len);
+    t_fileStream.readRawData(bytes.get(), len);
 
     QString result = decodeString(bytes.get(), len);
     return result;
 }
 
-QString LauncherData::decodeString(const char *bytes, const int &len)
+QString LauncherData::decodeString(const char *t_bytes, int t_len)
 {
-    std::auto_ptr<char> temp(new char[len]);
+    std::auto_ptr<char> temp(new char[t_len]);
 
-    memcpy(temp.get(), bytes, len);
-    for(int i = 0; i < len; i++)
+    memcpy(temp.get(), t_bytes, t_len);
+    for(int i = 0; i < t_len; i++)
     {
         char b = temp.get()[i];
         bool lsb = (b & 1) > 0;
@@ -61,5 +61,5 @@ QString LauncherData::decodeString(const char *bytes, const int &len)
         temp.get()[i] = b;
     }
 
-    return QString::fromUtf16(reinterpret_cast<const ushort*>(temp.get()), len/2);
+    return QString::fromUtf16(reinterpret_cast<const ushort*>(temp.get()), t_len/2);
 }

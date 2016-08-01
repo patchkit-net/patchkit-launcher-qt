@@ -2,29 +2,37 @@
 #define PATCHKITREMOTEPATCHER_H
 
 #include <QtNetwork/QtNetwork>
-#include <QObject>
 #include "remotepatcher.h"
 
 class PatchKitRemotePatcher : public RemotePatcher
 {
+    Q_OBJECT
+
 public:
-    int getVersion(const QString &patcherSecret) Q_DECL_OVERRIDE;
+    PatchKitRemotePatcher();
 
-    QString download(const QString &patcherSecret, const int &version) Q_DECL_OVERRIDE;
+    int getVersion(const QString& t_patcherSecret) Q_DECL_OVERRIDE;
 
-private slots:
-    void downloadProgress(const long long& bytesReceived, const long long &bytesTotal);
+    QString download(const QString& t_patcherSecret, int t_version) Q_DECL_OVERRIDE;
+
+signals:
+    void cancelled();
+
+public slots:
+    void cancel() Q_DECL_OVERRIDE;
 
 private:
     const int downloadTimeoutInSeconds = 10;
 
-    QString *getContentUrls(const QString &patcherSecret, const int &version);
+    bool m_isCancelled;
 
-    void getNetworkReply(const QString &urlPath, QNetworkAccessManager*& accessManager, QNetworkReply*& reply);
+    QStringList getContentUrls(const QString& t_patcherSecret, int t_version) const;
 
-    QString downloadString(const QString &urlPath);
+    void getNetworkReply(const QString& t_urlPath, std::auto_ptr<QNetworkAccessManager>& t_accessManager, std::auto_ptr<QNetworkReply>& t_reply) const;
 
-    void downloadFile(const QString &filePath, const QString &urlPath);
+    QString downloadString(const QString& t_urlPath) const;
+
+    void downloadFile(const QString& t_filePath, const QString& t_urlPath) const;
 };
 
 #endif // PATCHKITREMOTEPATCHER_H

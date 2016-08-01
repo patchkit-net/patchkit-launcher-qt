@@ -6,7 +6,9 @@
 struct LauncherConfiguration
 {
 public:
-    QString dataFileName;
+    LauncherConfiguration(const QString& t_dataFileName);
+
+    const QString dataFileName;
 };
 
 #endif // LAUNCHERCONFIGURATION_H

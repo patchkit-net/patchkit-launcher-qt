@@ -12,28 +12,30 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = 0);
+    explicit MainWindow(QWidget *t_parent = nullptr);
     ~MainWindow();
 
+signals:
+    void cancelled();
+
 public slots:
+    void cancel();
     void finish();
-    void setBytesDownloaded(const long& bytesDownloaded);
-    void setTotalBytes(const long& totalBytes);
-    void setStatus(const QString& status);
-    void setProgress(const int& progress);
+    void setStatus(const QString& t_status) const;
+    void setProgress(int t_progress) const;
 
 protected:
-    void showEvent(QShowEvent *event) Q_DECL_OVERRIDE;
-    void mouseMoveEvent(QMouseEvent *event) Q_DECL_OVERRIDE;
-    void mousePressEvent(QMouseEvent *event) Q_DECL_OVERRIDE;
+    void showEvent(QShowEvent *t_event) Q_DECL_OVERRIDE;
+    void mouseMoveEvent(QMouseEvent *t_event) Q_DECL_OVERRIDE;
+    void mousePressEvent(QMouseEvent *t_event) Q_DECL_OVERRIDE;
+    void closeEvent(QCloseEvent *t_event) Q_DECL_OVERRIDE;
 
 private:
-    void refreshDownloadStatus();
-
+    bool m_allowClose;
     int m_bytesDownloaded;
     int m_totalBytes;
     QPoint m_dragPosition;
-    Ui::MainWindow * const ui;
+    Ui::MainWindow * const m_ui;
 };
 
 #endif // MAINWINDOW_H

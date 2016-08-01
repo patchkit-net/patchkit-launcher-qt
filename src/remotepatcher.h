@@ -9,12 +9,14 @@ class RemotePatcher : public QObject
     Q_OBJECT
 
 public:
-    virtual int getVersion(const QString& patcherSecret) = 0;
-    virtual QString download(const QString& patcherSecret, const int& version) = 0;
+    virtual int getVersion(const QString& t_patcherSecret) = 0;
+    virtual QString download(const QString& t_patcherSecret, int t_version) = 0;
+    
+public slots:
+    virtual void cancel() = 0;
 
 signals:
-    void bytesDownloadedChanged(const long long& bytesDownloaded);
-    void totalBytesChanged(const long long& totalBytes);
+    void downloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes);
 };
 
 #endif // IREMOTEPATCHER_H

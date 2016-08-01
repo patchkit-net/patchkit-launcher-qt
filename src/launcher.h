@@ -3,7 +3,6 @@
 
 #include <QObject>
 
-#include "launcherdata.h"
 #include "launcherconfiguration.h"
 #include "launcherthread.h"
 #include "remotepatcher.h"
@@ -13,18 +12,16 @@ class Launcher : public QObject
     Q_OBJECT
 
 public:
-    Launcher(const LauncherConfiguration &configuration, RemotePatcher * const remotePatcher);
+    Launcher(const LauncherConfiguration& t_configuration, RemotePatcher * const t_remotePatcher);
     ~Launcher();
 
     void start();
-    void cancel();
+    void cancel() const;
 
 signals:
     void finished();
-    void bytesDownloadedChanged(const long& bytesDownloaded);
-    void totalBytesChanged(const long& totalBytes);
-    void statusChanged(const QString& status);
-    void progressChanged(const int& progress);
+    void statusChanged(const QString& t_status);
+    void progressChanged(int t_progress);
 
 private:
     LauncherThread *m_thread;

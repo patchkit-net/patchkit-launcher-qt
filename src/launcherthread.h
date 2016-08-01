@@ -14,18 +14,20 @@ class LauncherThread : public QThread
     void run() Q_DECL_OVERRIDE;
 
 public:
-    LauncherThread(const LauncherConfiguration &configuration, RemotePatcher * const remotePatcher);
+    LauncherThread(const LauncherConfiguration& t_configuration, RemotePatcher * const t_remotePatcher);
 
     void cancel();
 
 signals:
-    void bytesDownloadedChanged(const long& bytesDownloaded);
-    void totalBytesChanged(const long& totalBytes);
-    void statusChanged(const QString& status);
-    void progressChanged(const int& progress);
+    void cancelled();
+    void statusChanged(const QString& t_status);
+    void progressChanged(int t_progress);
+
+private slots:
+    void downloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes);
 
 private:
-    LauncherData loadData();
+    LauncherData loadData() const;
 
     RemotePatcher * const m_remotePatcher;
 
