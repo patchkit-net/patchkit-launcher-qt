@@ -38,6 +38,63 @@ Every header file must contain guard
 #endif // HEADERFILENAME_H
 ```
 
+## Errors
+
+Launcher code is using exceptions to handle errors.
+If something in launcher fails it should throw an exception. Exception and it's context will be saved to log file and will make debugging process easier.
+
+## Logging
+
+### Functions
+
+There are five functions that can be used for creating log:
+
+* `logDebug` - very deep informations, mostly contains raw data
+* `logInfo` - describing launcher operations
+* `logWarning` - describing failures from which launcher can be rescued
+* `logCritical` - describing failures that makes launcher unable to work
+
+Every function can format string. For example
+``` C++
+logInfo("Formatted log %1 with some data %2", .arg(QString("someData"), QString::number(5)));
+```
+
+### Rules
+
+* Every important operation should start with log describing it's purpose but it shouldn't inform about it's result. For example:
+``` C++
+bool loadDataFile()
+{
+	logInfo("Loading data file from %1", .args(m_dataFilePath));
+	...
+}
+```
+* Log can display result of function. For example:
+``` C++
+if(loadDataFile())
+{
+	logInfo("Loaded data file.");
+	...
+}
+else
+{
+	logWarning("Failed to load data file.");
+	...
+}
+```
+* Use `logCritical` to display exception description. For example:
+``` C++
+try
+{
+	...
+}
+catch(LauncherException &exception)
+{
+	logCritical(exception.what());
+	...
+}
+```
+
 ## Using Visual Studio as editor
 
 Install [Qt Visual Studio Add-in](https://visualstudiogallery.msdn.microsoft.com/c89ff880-8509-47a4-a262-e4fa07168408).
