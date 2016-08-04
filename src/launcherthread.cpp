@@ -1,83 +1,133 @@
+/*
+* Copyright (C) Upsoft 2016
+* License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
+*/
+
+#include <QtMath>
+
 #include "launcherthread.h"
 #include "launcherexception.h"
 #include "launchercancelledexception.h"
-#include <QDebug>
-#include <QException>
-#include <QFile>
-#include <QtMath>
-#include <QString>
+#include "launcherlog.h"
+
 
 void LauncherThread::run()
 {
     try
     {
+        logInfo("Starting launcher operation.");
+
         emit progressChanged(0);
         emit statusChanged(QString("Waiting..."));
 
-        LauncherData data = loadData();
+        LauncherData data = LauncherData::loadFromFile(m_configuration.dataFileName);
 
-        qDebug() << data.patcherSecret.toStdString().c_str();
+        try
+        {
+            int version = m_remotePatcher->getVersion(data);
 
-        int version = m_remotePatcher->getVersion(data.patcherSecret);
+            logDebug("Current remote patcher version - %1", .arg(QString::number(version)));
 
-        emit statusChanged(QString("Downloading..."));
+            if (m_localPatcher->isInstalled())
+            {
+                logInfo("Found patcher installation.");
+                if (version != m_localPatcher->getVersion())
+                {
+                    logInfo("Local version is different from remote version. Uninstalling local patcher so new version will be installed.");
+                    m_localPatcher->uninstall();
+                }
+            }
 
-        m_remotePatcher->download(data.patcherSecret, version);
+            if (!m_localPatcher->isInstalled())
+            {
+                logInfo("Patcher is not installed. Downloading the newest version of patcher.");
+                emit statusChanged(QString("Downloading..."));
 
-        emit progressChanged(90);
+                logDebug("Connecting downloadProgressChanged signal from remote patcher to slot from launcher thread.");
+                connect(m_remotePatcher.get(), &RemotePatcher::downloadProgressChanged, this, &LauncherThread::setDownloadProgress);
 
-        emit statusChanged(QString("Installing..."));
+                QString downloadedPath = m_remotePatcher->download(data, version);
+                logInfo("Patcher has been downloaded to %1", .arg(downloadedPath));
 
-        emit progressChanged(100);
+                logDebug("Disconnecting downloadProgressChanged signal from remote patcher to slot from launcher thread.");
+                disconnect(m_remotePatcher.get(), &RemotePatcher::downloadProgressChanged, this, &LauncherThread::setDownloadProgress);
+
+                emit progressChanged(downloadedProgressValue);
+
+                emit statusChanged(QString("Installing..."));
+
+                m_localPatcher->install(downloadedPath, version);
+                logInfo("Patcher has been installed.");
+
+                emit progressChanged(100);
+            }
+        }
+        catch (QException& exception)
+        {
+            logWarning(exception.what());
+
+            logInfo("Fallback - trying to use previous patcher installation.");
+
+            if (!m_localPatcher->isInstalled())
+            {
+                logInfo("Fallback success - found previous patcher installation.");
+            }
+            else
+            {
+                logCritical("Fallback failed - no previous patcher installation.");
+                throw;
+            }
+        }
+
+        emit statusChanged(QString("Starting..."));
+
+        m_localPatcher->start(data);
     }
-    catch(LauncherCancelledException&)
+    catch (LauncherCancelledException&)
     {
-        qWarning("Launcher has been canceled.");
+        logWarning("Launcher has been canceled.");
     }
-    catch(QException& exception)
+    catch (QException& exception)
     {
-        qCritical(exception.what());
+        logCritical(exception.what());
     }
-    catch(...)
+    catch (...)
     {
-        qFatal("Unhandled exception of unknown type.");
+        logCritical("Unhandled exception of unknown type.");
     }
 }
 
-LauncherThread::LauncherThread(const LauncherConfiguration& t_configuration, RemotePatcher * const t_remotePatcher) :
+LauncherThread::LauncherThread(const LauncherConfiguration& t_configuration,
+                               std::shared_ptr<RemotePatcher> t_remotePatcher,
+                               std::shared_ptr<LocalPatcher> t_localPatcher) :
     m_remotePatcher(t_remotePatcher),
+    m_localPatcher(t_localPatcher),
     m_configuration(t_configuration),
     m_isCancelled(false)
 {
+    logDebug("Moving m_remotePatcher and m_localPatcher to launcher thread.");
     m_remotePatcher->moveToThread(this);
-
-    connect(m_remotePatcher, &RemotePatcher::downloadProgress, this, &LauncherThread::downloadProgress);
-    connect(this, &LauncherThread::cancelled, m_remotePatcher, &RemotePatcher::cancel);
+    m_localPatcher->moveToThread(this);
 }
 
 void LauncherThread::cancel()
 {
+    logInfo("Cancelling launcher thread");
+
     m_isCancelled = true;
 
-    emit cancelled();
+    /* We don't know from which thread this method is called so we need to make sure that both RemotePatcher::cancel
+       and LocalPatcher::cancel are called from their threads.
+    */
+    QMetaObject::invokeMethod(m_remotePatcher.get(), "cancel");
+    QMetaObject::invokeMethod(m_localPatcher.get(), "cancel");
 }
 
-void LauncherThread::downloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes)
+void LauncherThread::setDownloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes)
 {
     long long kilobytesDownloaded = t_bytesDownloaded / 1024;
     long long totalKilobytes = t_totalBytes / 1024;
 
     emit statusChanged(QString("Downloading %1 / %2 KB").arg(QString::number(kilobytesDownloaded), QString::number(totalKilobytes)));
-    emit progressChanged(qCeil((qreal(t_bytesDownloaded)/t_totalBytes) * 0.9 * 100));
-}
-
-LauncherData LauncherThread::loadData() const
-{
-    qDebug() << QString("Searching for data file - %1").arg(m_configuration.dataFileName).toStdString().c_str();
-    if(!QFile::exists(m_configuration.dataFileName))
-    {
-        throw LauncherException("Missing data file.");
-    }
-    qDebug() << "Loading data file.";
-    return LauncherData::loadFromFile(m_configuration.dataFileName);
+    emit progressChanged(qCeil((qreal(t_bytesDownloaded) / t_totalBytes) * downloadedProgressValue));
 }

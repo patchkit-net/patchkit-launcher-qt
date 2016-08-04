@@ -1,3 +1,8 @@
+/*
+* Copyright (C) Upsoft 2016
+* License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
+*/
+
 #ifndef LAUNCHERCONFIGURATION_H
 #define LAUNCHERCONFIGURATION_H
 
@@ -5,8 +10,7 @@
 
 struct LauncherConfiguration
 {
-public:
-    LauncherConfiguration(const QString& t_dataFileName);
+    explicit LauncherConfiguration(const QString& t_dataFileName);
 
     const QString dataFileName;
 };

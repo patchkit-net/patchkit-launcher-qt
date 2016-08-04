@@ -11,31 +11,49 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = patchkit-launcher-qt
 TEMPLATE = app
 
-LIBS += -LC:\Qt\quazip-0.7.2\vs_proj_64\Release -lquazip_static
+DEFINES += QUAZIP_STATIC
 
-INCLUDEPATH += C:\Qt\quazip-0.7.2\quazip
+INCLUDEPATH += $$PWD/include/zlib
+INCLUDEPATH += $$PWD/include/quazip
 
-SOURCES += main.cpp\
-        mainwindow.cpp \
-    launcher.cpp \
+win32 {
+
+    !contains(QMAKE_TARGET.arch, x86_64) {
+        Debug:LIBS += $$PWD/lib/zlib/win_i386/zlibstaticd.lib
+        Release:LIBS += $$PWD/lib/zlib/win_i386/zlibstatic.lib
+
+        Debug:LIBS += $$PWD/lib/quazip/win_i386/quazip_staticd.lib
+        Release:LIBS += $$PWD/lib/quazip/win_i386/quazip_static.lib
+
+    } else {
+        Debug:LIBS += $$PWD/lib/zlib/win_x86_64/zlibstaticd.lib
+        Release:LIBS += $$PWD/lib/zlib/win_x86_64/zlibstatic.lib
+
+        Debug:LIBS += $$PWD/lib/quazip/win_x86_64/quazip_staticd.lib
+        Release:LIBS += $$PWD/lib/quazip/win_x86_64/quazip_static.lib
+
+    }
+}
+
+SOURCES += launcherconfiguration.cpp \
     launcherdata.cpp \
-    launcherexception.cpp \
-    launchercancelledexception.cpp \
-    patchkitremotepatcher.cpp \
     launcherthread.cpp \
+    main.cpp\
+    mainwindow.cpp \
     patchkitlocalpatcher.cpp \
-    launcherconfiguration.cpp
-
-HEADERS  += mainwindow.h \
-    launcher.h \
+    patchkitremotepatcher.cpp \
+    
+HEADERS  += launchercancelledexception.h \
     launcherconfiguration.h \
     launcherdata.h \
     launcherexception.h \
-    patchkitremotepatcher.h \
-    remotepatcher.h \
+    launcherlog.h \
     launcherthread.h \
     localpatcher.h \
+    mainwindow.h \
     patchkitlocalpatcher.h \
-    launchercancelledexception.h
+    patchkitremotepatcher.h \
+    remotepatcher.h \
+    
 
 FORMS    += mainwindow.ui

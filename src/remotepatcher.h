@@ -1,22 +1,30 @@
-#ifndef IREMOTEPATCHER_H
-#define IREMOTEPATCHER_H
+/*
+* Copyright (C) Upsoft 2016
+* License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
+*/
+
+#ifndef REMOTEPATCHER_H
+#define REMOTEPATCHER_H
 
 #include <QObject>
 #include <QString>
+
+#include "launcherdata.h"
 
 class RemotePatcher : public QObject
 {
     Q_OBJECT
 
 public:
-    virtual int getVersion(const QString& t_patcherSecret) = 0;
-    virtual QString download(const QString& t_patcherSecret, int t_version) = 0;
-    
-public slots:
+    virtual int getVersion(const LauncherData& t_data) = 0;
+
+    virtual QString download(const LauncherData& t_data, int t_version) = 0;
+
+    // Cancels any above operation. If cancellation is successful, LauncherCancelledException is thrown by the operation.
     virtual void cancel() = 0;
 
 signals:
-    void downloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes);
+    void downloadProgressChanged(const long long& t_bytesDownloaded, const long long& t_totalBytes);
 };
 
-#endif // IREMOTEPATCHER_H
+#endif // REMOTEPATCHER_H

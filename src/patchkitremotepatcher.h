@@ -1,7 +1,13 @@
+/*
+* Copyright (C) Upsoft 2016
+* License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
+*/
+
 #ifndef PATCHKITREMOTEPATCHER_H
 #define PATCHKITREMOTEPATCHER_H
 
 #include <QtNetwork/QtNetwork>
+
 #include "remotepatcher.h"
 
 class PatchKitRemotePatcher : public RemotePatcher
@@ -11,28 +17,40 @@ class PatchKitRemotePatcher : public RemotePatcher
 public:
     PatchKitRemotePatcher();
 
-    int getVersion(const QString& t_patcherSecret) Q_DECL_OVERRIDE;
+    int getVersion(const LauncherData& t_data) override;
 
-    QString download(const QString& t_patcherSecret, int t_version) Q_DECL_OVERRIDE;
+    QString download(const LauncherData& t_data, int t_version) override;
+
+    void cancel() override;
 
 signals:
     void cancelled();
 
-public slots:
-    void cancel() Q_DECL_OVERRIDE;
-
 private:
-    const int downloadTimeoutInSeconds = 10;
-
-    bool m_isCancelled;
-
     QStringList getContentUrls(const QString& t_patcherSecret, int t_version) const;
 
-    void getNetworkReply(const QString& t_urlPath, std::auto_ptr<QNetworkAccessManager>& t_accessManager, std::auto_ptr<QNetworkReply>& t_reply) const;
+    static int parseVersionJson(const QString& t_json);
+    static QStringList parseContentUrlsJson(const QString &t_json);
 
     QString downloadString(const QString& t_urlPath) const;
 
     void downloadFile(const QString& t_filePath, const QString& t_urlPath) const;
+    void waitForFileDownload(std::auto_ptr<QNetworkReply>& t_reply) const;
+    void writeDownloadedReplyToFile(std::auto_ptr<QNetworkReply>& t_reply, const QString& t_filePath) const;
+
+    void getNetworkReply(const QString& t_urlPath,
+                         std::auto_ptr<QNetworkAccessManager>& t_accessManager,
+                         std::auto_ptr<QNetworkReply>& t_reply) const;
+    void waitForNetworkReply(std::auto_ptr<QNetworkReply>& t_reply) const;
+    void validateNetworkReply(std::auto_ptr<QNetworkReply>& t_reply) const;
+
+    
+
+    
+
+    bool m_isCancelled;
+
+    const int downloadTimeoutInSeconds = 10;
 };
 
 #endif // PATCHKITREMOTEPATCHER_H

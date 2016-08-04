@@ -1,172 +1,313 @@
-#include "patchkitlocalpatcher.h"
-#include "launcherexception.h"
-
-#include <QDebug>
-#include <QDir>
 #include <QList>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonValue>
+#include "quazip.h"
+#include "quazipfile.h"
+#include <QDir>
+#include <QProcess>
+#include <memory>
 
-int PatchKitLocalPatcher::getVersion() const
+#include "patchkitlocalpatcher.h"
+#include "launcherexception.h"
+#include "launcherlog.h"
+#include <qtextstream.h>
+
+
+bool PatchKitLocalPatcher::isInstalled()
 {
-    qDebug() << "Reading version of installed PatchKit patcher.";
-    QFile file(QDir::cleanPath(patcherDirectory + "/" + versionInfoFileName));
+    logInfo("Checking whether patcher is installed.");
 
-    if(!file.open(QFile::ReadOnly))
+    QStringList filesToCheck;
+
+    filesToCheck << installationInfoFilePath;
+    filesToCheck << versionInfoFilePath;
+    filesToCheck << manifestFilePath;
+
+    return checkIfFilesExist(filesToCheck);
+}
+
+int PatchKitLocalPatcher::getVersion()
+{
+    logInfo("Reading version info of installed patcher.");
+
+    QString versionInfoFileContents = readFileContents(versionInfoFilePath);
+
+    int version = parseVersionInfoToNumber(versionInfoFileContents);
+
+    return version;
+}
+
+void PatchKitLocalPatcher::install(const QString& t_downloadedPath, int t_version)
+{
+    logInfo("Installing patcher (version %1) from downloaded zip - %2", .arg(QString::number(t_version), t_downloadedPath));
+
+    createDirIfNotExists(patcherDirectoryPath);
+
+    QStringList installationInfoFileList;
+
+    extractZip(t_downloadedPath, patcherDirectoryPath, installationInfoFileList);
+
+    installationInfoFileList.append(installationInfoFilePath);
+    installationInfoFileList.append(versionInfoFilePath);
+
+    writeFileContents(versionInfoFilePath, QString::number(t_version));
+
+    QString installationInfoFileContents = "";
+
+    for (int i = 0; i < installationInfoFileList.size(); i++)
     {
-        throw LauncherException("Couldn't open version info file.");
+        installationInfoFileContents += installationInfoFileList[i] + "\n";
+    }
+
+    writeFileContents(installationInfoFilePath, installationInfoFileContents);
+
+    QFile::remove(t_downloadedPath);
+}
+
+void PatchKitLocalPatcher::uninstall()
+{
+    logInfo("Uninstalling patcher.");
+
+    if (!QFile::exists(installationInfoFilePath))
+    {
+        logWarning("Missing installation info!");
+    }
+    else
+    {
+        QStringList installFiles = readFileContents(installationInfoFilePath).split(QChar('\n'));
+
+        for (int i = 0; i < installFiles.size(); i++)
+        {
+            QString fileFullPath = QDir::cleanPath(patcherDirectoryPath + "/" + installFiles[i]);
+
+            QFileInfo fileInfo(fileFullPath);
+
+            if (fileInfo.exists())
+            {
+                if (fileInfo.isFile())
+                {
+                    logInfo("Deleting file %1", .arg(fileFullPath));
+                    QFile::remove(fileFullPath);
+                }
+                else if (fileInfo.isDir())
+                {
+                    logInfo("Deleting directory %1", .arg(fileFullPath));
+                    QDir(fileFullPath).removeRecursively();
+                }
+            }
+        }
+    }
+}
+
+void PatchKitLocalPatcher::start(const LauncherData& data)
+{
+    logInfo("Starting patcher.");
+
+    QString exeFileName;
+    QString exeArguments;
+
+    readPatcherManifset(exeFileName, exeArguments);
+
+    logDebug("Preparing run command from format - %1 %2", .arg(exeFileName, exeArguments));
+
+    exeFileName = formatPatcherManifest(exeFileName, data.encodedApplicationSecret());
+    exeArguments = formatPatcherManifest(exeArguments, data.encodedApplicationSecret());
+
+    logDebug("Starting process with command - %1 %2", .arg(exeFileName, exeArguments));
+
+    QProcess::startDetached(exeFileName + " " + exeArguments);
+}
+
+void PatchKitLocalPatcher::cancel()
+{
+    logInfo("Cancelling remote patcher operations.");
+
+    // Currently there's no cancellation support.
+}
+
+void PatchKitLocalPatcher::writeFileContents(const QString& t_filePath, const QString& t_fileContents)
+{
+    logInfo("Writing file contents to %1", .arg(t_filePath));
+
+    QFile file(t_filePath);
+
+    if (!file.open(QFile::WriteOnly))
+    {
+        throw LauncherException(QString("Couldn't open file %1 for writing").arg(t_filePath));
+    }
+
+    QTextStream fileTextStream(&file);
+    fileTextStream << t_fileContents;
+
+    file.close();
+}
+
+QString PatchKitLocalPatcher::readFileContents(const QString& t_filePath)
+{
+    logInfo("Reading file contents from %1", .arg(t_filePath));
+
+    QFile file(t_filePath);
+
+    if (!file.open(QFile::ReadOnly))
+    {
+        throw LauncherException(QString("Couldn't open file %1 for reading").arg(t_filePath));
     }
 
     QString fileContents(file.readAll());
 
     file.close();
 
-    qDebug() << QString("Parsing string value to number - %1").arg(fileContents).toStdString().c_str();
+    return fileContents;
+}
+
+int PatchKitLocalPatcher::parseVersionInfoToNumber(const QString& t_versionInfoFileContents)
+{
+    logInfo("Parsing version info to number - %1", .arg(t_versionInfoFileContents));
 
     bool intParseResult;
 
-    int version = fileContents.toInt(&intParseResult);
+    int version = t_versionInfoFileContents.toInt(&intParseResult);
 
-    if(!intParseResult)
+    if (!intParseResult)
     {
-        throw LauncherException("Couldn't read version info file.");
+        throw LauncherException("Couldn't parse version info to number.");
     }
-
-    qDebug() << QString("Successfully parsed string value to number - %1").arg(QString::number(version)).toStdString().c_str();
 
     return version;
 }
 
-bool PatchKitLocalPatcher::isInstalled() const
+bool PatchKitLocalPatcher::checkIfFilesExist(const QStringList& t_filesList)
 {
-    QList<QString> filesToCheck;
+    logInfo("Checking whether files from list exists.");
 
-    qDebug() << "Checking whether patcher is installed.";
-
-    filesToCheck << QDir::cleanPath(patcherDirectory + "/" + installationInfoFileName);
-    filesToCheck << QDir::cleanPath(patcherDirectory + "/" + versionInfoFileName);
-    filesToCheck << QDir::cleanPath(patcherDirectory + "/" + manifsetFileName);
-
-    for(int i = 0; i < filesToCheck.size(); i++)
+    for (int i = 0; i < t_filesList.size(); i++)
     {
-        if(!QFile::exists(filesToCheck[i]))
+        if (!QFile::exists(t_filesList[i]))
         {
-            qDebug() << QString("%1 doesn't exists. Patcher is not installed.").arg(filesToCheck[i]).toStdString().c_str();
+            logInfo("%1 doesn't exists.", .arg(t_filesList[i]));
             return false;
         }
-        else
-        {
-            qDebug() << QString("%1 exists.").arg(filesToCheck[i]).toStdString().c_str();
-        }
-    }
 
-    qDebug() << "Patcher is installed.";
+        logInfo("%1 exists.", .arg(t_filesList[i]));
+    }
 
     return true;
 }
 
-void PatchKitLocalPatcher::install(const QString& t_filePath, int t_version) const
+void PatchKitLocalPatcher::createDirIfNotExists(const QString& t_dirPath)
 {
-    //TODO:
-}
+    logInfo("Creating directory - %1", .arg(t_dirPath));
 
-void PatchKitLocalPatcher::uninstall() const
-{
-    qDebug() << "Reading installation info.";
-    QFile installationInfoFile(QDir::cleanPath(patcherDirectory + "/" + installationInfoFileName));
+    QDir dir = QDir(t_dirPath);
 
-    if(!installationInfoFile.exists())
+    if (!dir.exists())
     {
-        qWarning() << "Installation info missing! Assuming that patcher is uninstalled.";
-    }
-    else
-    {
-        if(!installationInfoFile.open(QFile::ReadOnly))
+        if (!dir.mkpath("."))
         {
-            throw LauncherException("Couldn't open installation info file.");
+            throw LauncherException(QString("Couldn't create directory - %1").arg(t_dirPath));
         }
-
-        QString installationInfoContents(installationInfoFile.readAll());
-
-        QStringList installFiles = installationInfoContents.split(QChar('\n'));
-
-        for(int i = 0; i < installFiles.size(); i++)
-        {
-            QString fileFullPath = QDir::cleanPath(patcherDirectory + "/" + installFiles[i]);
-
-            QFileInfo fileInfo(fileFullPath);
-
-            if(fileInfo.exists())
-            {
-                if(fileInfo.isFile())
-                {
-                    qDebug() << QString("Deleting file %1").arg(fileFullPath).toStdString().c_str();
-                    QFile::remove(fileFullPath);
-                }
-                else if(fileInfo.isDir())
-                {
-                    qDebug() << QString("Deleting direcetory %1").arg(fileFullPath).toStdString().c_str();
-                    QDir(fileFullPath).removeRecursively();
-                }
-            }
-        }
-
-        qDebug() << "Deleting installation info.";
-        installationInfoFile.close();
-        installationInfoFile.remove();
-    }
-
-    qDebug() << "Deleting version info.";
-    QFile versionInfoFile(QDir::cleanPath(patcherDirectory + "/" + versionInfoFileName));
-    if(versionInfoFile.exists())
-    {
-        versionInfoFile.remove();
     }
 }
 
-void PatchKitLocalPatcher::start(const QString& t_applicationSecret) const
+void PatchKitLocalPatcher::extractZip(const QString& t_zipFilePath, const QString& t_extractDirPath, QStringList& t_extractedFilesList)
 {
-    QString exeFileName;
-    QString exeArguments;
+    logInfo("Extracting zip file - %1", .arg(t_zipFilePath));
 
-    readPatcherManifset(exeFileName, exeArguments);
+    QuaZip zipFile(t_zipFilePath);
 
-    qDebug() << QString("Preparing run command from format - %1 %2").arg(exeFileName, exeArguments).toStdString().c_str();
+    if (!zipFile.open(QuaZip::mdUnzip))
+    {
+        throw LauncherException("Couldn't open zip file.");
+    }
 
-    qDebug() << "Formating run command.";
+    zipFile.goToFirstFile();
 
-    exeFileName = formatPatcherManifest(exeFileName, t_applicationSecret);
-    exeFileName = formatPatcherManifest(exeArguments, t_applicationSecret);
+    do
+    {
+        QString zipEntryName = zipFile.getCurrentFileName();
 
-    qDebug() << QString("Run command - %1 %2").arg(exeFileName, exeArguments).toStdString().c_str();
+        QString zipEntryPath = QDir::cleanPath(t_extractDirPath + "/" + zipEntryName);
 
+        if (isDirZipEntry(zipEntryName))
+        {
+            extractDirZipEntry(zipEntryPath);
+        }
+        else
+        {
+            QuaZipFile zipEntry(&zipFile);
+            extractFileZipEntry(zipEntry, zipEntryPath);
+        }
 
+        t_extractedFilesList.append(zipEntryName);
+    }
+    while (zipFile.goToNextFile());
+
+    zipFile.close();
+}
+
+void PatchKitLocalPatcher::extractDirZipEntry(const QString& t_zipEntryPath)
+{
+    createDirIfNotExists(t_zipEntryPath);
+}
+
+void PatchKitLocalPatcher::extractFileZipEntry(QuaZipFile& t_zipEntry, const QString& t_zipEntryPath)
+{
+    if (!t_zipEntry.open(QIODevice::ReadOnly) || t_zipEntry.getZipError() != UNZ_OK)
+    {
+        throw LauncherException("Couldn't read zip entry.");
+    }
+
+    QFileInfo zipEntryFileInfo(t_zipEntryPath);
+
+    createDirIfNotExists(zipEntryFileInfo.absolutePath());
+
+    QFile zipEntryFile(zipEntryFileInfo.absoluteFilePath());
+
+    if (!zipEntryFile.open(QIODevice::WriteOnly))
+    {
+        throw LauncherException("Couldn't open file for extracting.");
+    }
+
+    copyDeviceData(t_zipEntry, zipEntryFile);
+
+    zipEntryFile.close();
+}
+
+bool PatchKitLocalPatcher::isDirZipEntry(const QString& t_zipEntryName)
+{
+    return t_zipEntryName.endsWith('/') || t_zipEntryName.endsWith('\\');
+}
+
+void PatchKitLocalPatcher::copyDeviceData(QIODevice& readDevice, QIODevice& writeDevice)
+{
+    qint64 bufferSize = 4096;
+    std::unique_ptr<char> buffer(new char[bufferSize]);
+
+    while (!readDevice.atEnd())
+    {
+        qint64 readSize = readDevice.read(buffer.get(), bufferSize);
+        if (readSize > 0)
+        {
+            writeDevice.write(buffer.get(), readSize);
+        }
+    }
 }
 
 void PatchKitLocalPatcher::readPatcherManifset(QString& t_exeFileName, QString& t_exeArguments) const
 {
-    qDebug() << "Reading patcher manifest.";
+    logInfo("Reading patcher manifest.");
 
-    QFile manifestFile(QDir::cleanPath(patcherDirectory + "/" + manifsetFileName));
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(readFileContents(manifestFilePath).toUtf8());
 
-    if(!manifestFile.open(QFile::ReadOnly))
-    {
-        throw LauncherException("Couldn't open patcher manifest file.");
-    }
-
-    QString manifestFileContents(manifestFile.readAll());
-
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(manifestFileContents.toUtf8());
-
-    if(!jsonDocument.isObject())
+    if (!jsonDocument.isObject())
     {
         throw LauncherException("Invaild format of patcher manifest file.");
     }
 
     QJsonObject jsonObject = jsonDocument.object();
 
-    if(!jsonObject.contains("exe_fileName") || !jsonObject.contains("exe_arguments"))
+    if (!jsonObject.contains("exe_fileName") || !jsonObject.contains("exe_arguments"))
     {
         throw LauncherException("Invaild format of patcher manifest file.");
     }
@@ -174,7 +315,7 @@ void PatchKitLocalPatcher::readPatcherManifset(QString& t_exeFileName, QString& 
     QJsonValue exeFileNameJsonValue = jsonObject.value("exe_fileName");
     QJsonValue exeArgumentsJsonValue = jsonObject.value("exe_arguments");
 
-    if(!exeFileNameJsonValue.isString() || exeArgumentsJsonValue.isString())
+    if (!exeFileNameJsonValue.isString() || !exeArgumentsJsonValue.isString())
     {
         throw LauncherException("Invaild format of patcher manifest file.");
     }
@@ -183,13 +324,15 @@ void PatchKitLocalPatcher::readPatcherManifset(QString& t_exeFileName, QString& 
     t_exeArguments = exeArgumentsJsonValue.toString();
 }
 
-QString PatchKitLocalPatcher::formatPatcherManifest(const QString& t_stringToFormat, const QString& t_applicationSecret) const
+QString PatchKitLocalPatcher::formatPatcherManifest(const QString& t_stringToFormat, const QByteArray& t_encodedApplicationSecret) const
 {
     QString result(t_stringToFormat);
 
-    result = result.replace("{installdir}", installationDirectory);
-    result = result.replace("{exedir}", patcherDirectory);
-    result = result.replace("{secret}", t_applicationSecret);
+    QString applicationSecret = QString::fromUtf8(t_encodedApplicationSecret.toBase64());
+
+    result = result.replace("{installdir}", installationDirectoryPath);
+    result = result.replace("{exedir}", patcherDirectoryPath);
+    result = result.replace("{secret}", applicationSecret);
 
     return result;
 }

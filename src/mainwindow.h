@@ -1,41 +1,37 @@
+/*
+* Copyright (C) Upsoft 2016
+* License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
+*/
+
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
-
-namespace Ui {
-class MainWindow;
-}
+#include "ui_mainwindow.h"
+#include "launcherthread.h"
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *t_parent = nullptr);
-    ~MainWindow();
+    MainWindow(std::shared_ptr<LauncherThread> t_launcherThread, QWidget* t_parent);
 
-signals:
-    void cancelled();
-
-public slots:
-    void cancel();
-    void finish();
+private slots:
     void setStatus(const QString& t_status) const;
     void setProgress(int t_progress) const;
 
 protected:
-    void showEvent(QShowEvent *t_event) Q_DECL_OVERRIDE;
-    void mouseMoveEvent(QMouseEvent *t_event) Q_DECL_OVERRIDE;
-    void mousePressEvent(QMouseEvent *t_event) Q_DECL_OVERRIDE;
-    void closeEvent(QCloseEvent *t_event) Q_DECL_OVERRIDE;
+    void showEvent(QShowEvent* t_event) override;
+    void mouseMoveEvent(QMouseEvent* t_event) override;
+    void mousePressEvent(QMouseEvent* t_event) override;
+    void closeEvent(QCloseEvent* t_event) override;
 
 private:
-    bool m_allowClose;
-    int m_bytesDownloaded;
-    int m_totalBytes;
+    std::shared_ptr<LauncherThread> m_launcherThread;
+
     QPoint m_dragPosition;
-    Ui::MainWindow * const m_ui;
+
+    std::unique_ptr<Ui::MainWindow> m_ui;
 };
 
 #endif // MAINWINDOW_H

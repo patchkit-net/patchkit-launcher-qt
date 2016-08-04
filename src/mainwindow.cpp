@@ -1,37 +1,30 @@
-#include "mainwindow.h"
-#include "ui_mainwindow.h"
+/*
+* Copyright (C) Upsoft 2016
+* License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
+*/
+
 #include <QShowEvent>
-#include <QApplication>
 #include <QDesktopWidget>
 
-MainWindow::MainWindow(QWidget *t_parent) :
+#include "mainwindow.h"
+#include "ui_mainwindow.h"
+#include "launcherlog.h"
+
+MainWindow::MainWindow(std::shared_ptr<LauncherThread> t_launcherThread, QWidget* t_parent) :
     QMainWindow(t_parent, Qt::FramelessWindowHint),
-    m_bytesDownloaded(0),
-    m_totalBytes(0),
-    m_ui(new Ui::MainWindow),
-    m_allowClose(false)
+    m_launcherThread(t_launcherThread),
+    m_ui(new Ui::MainWindow)
 {
     m_ui->setupUi(this);
-    connect(m_ui->cancelButton, &QPushButton::clicked, this, &MainWindow::cancel);
-}
 
-MainWindow::~MainWindow()
-{
-    if(m_ui != nullptr)
-    {
-        delete m_ui;
-    }
-}
+    // Thread --> UI
+    connect(m_launcherThread.get(), &LauncherThread::statusChanged, this, &MainWindow::setStatus);
+    connect(m_launcherThread.get(), &LauncherThread::progressChanged, this, &MainWindow::setProgress);
 
-void MainWindow::cancel()
-{
-    emit cancelled();
-}
+    connect(m_launcherThread.get(), &LauncherThread::finished, this, &MainWindow::close);
 
-void MainWindow::finish()
-{
-    m_allowClose = true;
-    close();
+    // Thread <-- UI
+    connect(m_ui->cancelButton, &QPushButton::clicked, m_launcherThread.get(), &LauncherThread::cancel);
 }
 
 void MainWindow::setStatus(const QString& t_status) const
@@ -44,15 +37,27 @@ void MainWindow::setProgress(int t_progress) const
     m_ui->progressBar->setValue(t_progress);
 }
 
-void MainWindow::showEvent(QShowEvent *t_event)
+void MainWindow::showEvent(QShowEvent* t_event)
 {
+    logInfo("Setting launcher window geometry.");
+
     const QRect availableSize = QApplication::desktop()->availableGeometry(this);
     move((availableSize.width() - width()) / 2, (availableSize.height() - height()) / 2);
 
     t_event->accept();
 }
 
-void MainWindow::mousePressEvent(QMouseEvent *t_event)
+void MainWindow::mouseMoveEvent(QMouseEvent* t_event)
+{
+    if (t_event->buttons() & Qt::LeftButton && !m_ui->cancelButton->underMouse())
+    {
+        move(t_event->globalPos() - m_dragPosition);
+        t_event->accept();
+    }
+}
+
+
+void MainWindow::mousePressEvent(QMouseEvent* t_event)
 {
     if (t_event->button() == Qt::LeftButton && !m_ui->cancelButton->underMouse())
     {
@@ -63,22 +68,16 @@ void MainWindow::mousePressEvent(QMouseEvent *t_event)
 
 void MainWindow::closeEvent(QCloseEvent* t_event)
 {
-    if(m_allowClose)
+    logInfo("Close window request.");
+    if (m_launcherThread->isFinished())
     {
+        logInfo("Allowing the window to be closed.");
         t_event->accept();
     }
     else
     {
-        cancel();
+        logInfo("Not allowing window to be closed - launcher thread is still running. Cancelling launcher thread.");
+        m_launcherThread->cancel();
         t_event->ignore();
-    }
-}
-
-void MainWindow::mouseMoveEvent(QMouseEvent *t_event)
-{
-    if (t_event->buttons() & Qt::LeftButton && !m_ui->cancelButton->underMouse())
-    {
-        move(t_event->globalPos() - m_dragPosition);
-        t_event->accept();
     }
 }

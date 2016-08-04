@@ -1,57 +1,73 @@
-#include "patchkitremotepatcher.h"
-#include "launcherexception.h"
-#include "launchercancelledexception.h"
 #include <QtNetwork/QtNetwork>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonValue>
+
+#include "patchkitremotepatcher.h"
+#include "launcherexception.h"
+#include "launchercancelledexception.h"
+#include "launcherlog.h"
+#include <memory>
 
 PatchKitRemotePatcher::PatchKitRemotePatcher() :
     m_isCancelled(false)
 {
 }
 
-int PatchKitRemotePatcher::getVersion(const QString& t_patcherSecret)
+int PatchKitRemotePatcher::getVersion(const LauncherData& data)
 {
-    QString jsonData = downloadString(QString("http://api.patchkit.net/1/apps/%1/versions/latest/id").arg(t_patcherSecret));
+    logInfo("Fetching newest patcher version.");
 
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(jsonData.toUtf8());
+    QString json = downloadString(QString("http://api.patchkit.net/1/apps/%1/versions/latest/id").arg(data.patcherSecret()));
 
-    if(!jsonDocument.isObject())
-    {
-        throw LauncherException("Couldn't read version id from JSON data.");
-    }
-
-    QJsonObject jsonObject = jsonDocument.object();
-
-    if(!jsonObject.contains("id"))
-    {
-        throw LauncherException("Couldn't read version id from JSON data.");
-    }
-
-    int idValue = jsonObject.value("id").toInt(-1);
-
-    if(idValue == -1)
-    {
-        throw LauncherException(QString("Couldn't read version id from JSON data."));
-    }
-
-    return idValue;
+    return parseVersionJson(json);
 }
 
-QString PatchKitRemotePatcher::download(const QString& t_patcherSecret, int t_version)
+QString PatchKitRemotePatcher::download(const LauncherData& data, int t_version)
 {
-    QStringList contentUrls = getContentUrls(t_patcherSecret, t_version);
+    logInfo("Downloading patcher %1 version", .arg(QString::number(t_version)));
 
-    QString filePath("file.zip");
+    QStringList contentUrls = getContentUrls(data.patcherSecret(), t_version);
 
-    downloadFile(filePath, contentUrls[0]);
+    for (int i = 0; i < contentUrls.size(); i++)
+    {
+        QString filePath = QString("file-%1.zip").arg(QString::number(i));
 
-    return filePath;
+        logInfo("Downloading from %1", .arg(contentUrls[i]));
+
+        try
+        {
+            downloadFile(filePath, contentUrls[i]);
+        }
+        catch (QException& exception)
+        {
+            if (QFile::exists(filePath))
+            {
+                QFile::remove(filePath);
+            }
+            logWarning(exception.what());
+            continue;
+        }
+        catch (...)
+        {
+            if (QFile::exists(filePath))
+            {
+                QFile::remove(filePath);
+            }
+            logWarning("Unknown exception while downloading patcher.");
+            continue;
+        }
+
+        return filePath;
+    }
+
+    throw LauncherException(QString("Unable to download patcher %1 version").arg(QString::number(t_version)));
 }
 
 void PatchKitRemotePatcher::cancel()
 {
+    logInfo("Cancelling remote patcher operations.");
+
     m_isCancelled = true;
 
     emit cancelled();
@@ -59,41 +75,80 @@ void PatchKitRemotePatcher::cancel()
 
 QStringList PatchKitRemotePatcher::getContentUrls(const QString& t_patcherSecret, int t_version) const
 {
-    QString jsonData = downloadString(QString("http://api.patchkit.net/1/apps/%1/versions/%2/content_urls").arg(t_patcherSecret, QString::number(t_version)));
+    logInfo("Fetching content urls for patcher %1 version.", .arg(QString::number(t_version)));
 
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(jsonData.toUtf8());
+    QString json = downloadString(QString("http://api.patchkit.net/1/apps/%1/versions/%2/content_urls").arg(t_patcherSecret, QString::number(t_version)));
 
-    if(!jsonDocument.isArray())
+    return parseContentUrlsJson(json);
+}
+
+int PatchKitRemotePatcher::parseVersionJson(const QString& t_json)
+{
+    logInfo("Parsing version from json.");
+    logDebug(t_json);
+
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(t_json.toUtf8());
+
+    if (!jsonDocument.isObject())
+    {
+        throw LauncherException("Couldn't read version id from JSON data.");
+    }
+
+    QJsonObject jsonObject = jsonDocument.object();
+
+    if (!jsonObject.contains("id"))
+    {
+        throw LauncherException("Couldn't read version id from JSON data.");
+    }
+
+    int idValue = jsonObject.value("id").toInt(-1);
+
+    if (idValue == -1)
+    {
+        throw LauncherException(QString("Couldn't read version id from JSON data."));
+    }
+
+    return idValue;
+}
+
+QStringList PatchKitRemotePatcher::parseContentUrlsJson(const QString& t_json)
+{
+    logInfo("Parsing content urls from json.");
+    logDebug(t_json);
+
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(t_json.toUtf8());
+
+    if (!jsonDocument.isArray())
     {
         throw LauncherException("Couldn't read content urls from JSON data.");
     }
 
     QJsonArray jsonArray = jsonDocument.array();
 
-    if(jsonArray.size() == 0)
+    if (jsonArray.size() == 0)
     {
         throw LauncherException("Empty content urls.");
     }
 
     QStringList result;
 
-    for(int i = 0; i < jsonArray.size(); i++)
+    for (int i = 0; i < jsonArray.size(); i++)
     {
-        if(!jsonArray[i].isObject())
+        if (!jsonArray[i].isObject())
         {
             throw LauncherException("Couldn't read content urls from JSON data.");
         }
 
         QJsonObject jsonObject = jsonArray[i].toObject();
 
-        if(!jsonObject.contains("url"))
+        if (!jsonObject.contains("url"))
         {
             throw LauncherException("Couldn't read content urls from JSON data.");
         }
 
         QJsonValue jsonValue = jsonObject.value("url");
 
-        if(!jsonValue.isString())
+        if (!jsonValue.isString())
         {
             throw LauncherException("Couldn't read content urls from JSON data.");
         }
@@ -104,12 +159,95 @@ QStringList PatchKitRemotePatcher::getContentUrls(const QString& t_patcherSecret
     return result;
 }
 
+QString PatchKitRemotePatcher::downloadString(const QString& t_urlPath) const
+{
+    logInfo("Downloading string from %1", .arg(t_urlPath));
+
+    std::auto_ptr<QNetworkAccessManager> accessManager;
+    std::auto_ptr<QNetworkReply> reply;
+    getNetworkReply(t_urlPath, accessManager, reply);
+
+    QString result = QString(reply->readAll());
+
+    return result;
+}
+
+void PatchKitRemotePatcher::downloadFile(const QString& t_filePath, const QString& t_urlPath) const
+{
+    logInfo("Downloading file from %1", .arg(t_urlPath));
+
+    std::auto_ptr<QNetworkAccessManager> accessManager;
+    std::auto_ptr<QNetworkReply> reply;
+    getNetworkReply(t_urlPath, accessManager, reply);
+
+    waitForFileDownload(reply);
+    writeDownloadedReplyToFile(reply, t_filePath);
+}
+
+void PatchKitRemotePatcher::waitForFileDownload(std::auto_ptr<QNetworkReply>& t_reply) const
+{
+    logInfo("Waiting for file download.");
+
+    connect(t_reply.get(), &QNetworkReply::downloadProgress, this, &PatchKitRemotePatcher::downloadProgressChanged);
+
+    QEventLoop finishedLoop;
+
+    connect(t_reply.get(), &QNetworkReply::finished, &finishedLoop, &QEventLoop::quit);
+
+    connect(this, &PatchKitRemotePatcher::cancelled, &finishedLoop, &QEventLoop::quit);
+
+    finishedLoop.exec();
+
+    disconnect(t_reply.get(), &QNetworkReply::downloadProgress, this, &PatchKitRemotePatcher::downloadProgressChanged);
+
+    if (m_isCancelled)
+    {
+        throw LauncherCancelledException();
+    }
+}
+
+void PatchKitRemotePatcher::writeDownloadedReplyToFile(std::auto_ptr<QNetworkReply>& t_reply, const QString& t_filePath) const
+{
+    logInfo("Writing downloaded data to file - %1", .arg(t_filePath));
+
+    QFile file(t_filePath);
+
+    if (!file.open(QFile::WriteOnly))
+    {
+        throw LauncherException("Couldn't open file for download.");
+    }
+
+    qint64 bufferSize = 4096;
+    std::unique_ptr<char> buffer(new char[bufferSize]);
+
+    while (!t_reply->atEnd())
+    {
+        qint64 readSize = t_reply->read(buffer.get(), bufferSize);
+        if (readSize > 0)
+        {
+            file.write(buffer.get(), readSize);
+        }
+    }
+
+    file.close();
+}
+
 void PatchKitRemotePatcher::getNetworkReply(const QString& t_urlPath, std::auto_ptr<QNetworkAccessManager>& t_accessManager, std::auto_ptr<QNetworkReply>& t_reply) const
 {
-    qDebug() << QString("Getting network reply from %1").arg(t_urlPath).toStdString().c_str();
+    logInfo("Getting network reply from %1", .arg(t_urlPath));
+
     QUrl url(t_urlPath);
     t_accessManager = std::auto_ptr<QNetworkAccessManager>(new QNetworkAccessManager());
-    t_reply = std::auto_ptr<QNetworkReply>(t_accessManager.get()->get( QNetworkRequest(url)));
+    t_reply = std::auto_ptr<QNetworkReply>(t_accessManager.get()->get(QNetworkRequest(url)));
+
+    waitForNetworkReply(t_reply);
+
+    validateNetworkReply(t_reply);
+}
+
+void PatchKitRemotePatcher::waitForNetworkReply(std::auto_ptr<QNetworkReply>& t_reply) const
+{
+    logInfo("Waiting for network reply to be ready.");
 
     QEventLoop readyReadLoop;
     connect(t_reply.get(), &QNetworkReply::readyRead, &readyReadLoop, &QEventLoop::quit);
@@ -120,86 +258,45 @@ void PatchKitRemotePatcher::getNetworkReply(const QString& t_urlPath, std::auto_
 
     connect(&timeoutTimer, &QTimer::timeout, &readyReadLoop, &QEventLoop::quit);
 
-    timeoutTimer.setInterval(downloadTimeoutInSeconds *1000);
+    timeoutTimer.setInterval(downloadTimeoutInSeconds * 1000);
     timeoutTimer.setSingleShot(true);
     timeoutTimer.start();
 
     readyReadLoop.exec();
-
-    if(m_isCancelled)
-    {
-        throw LauncherCancelledException();
-    }
-
-    if(!timeoutTimer.isActive())
-    {
-        throw LauncherException("Request timeout.");
-    }
-
-    if(t_reply.get()->error() != QNetworkReply::NoError)
-    {
-        throw LauncherException(t_reply.get()->errorString());
-    }
-
-    QVariant statusCode = t_reply.get()->attribute(QNetworkRequest::HttpStatusCodeAttribute);
-
-    if(!statusCode.isValid())
-    {
-        throw LauncherException("Couldn't read HTTP status code from reply.");
-    }
-
-    int statusCodeValue = statusCode.toInt();
-
-    if(statusCodeValue != 200)
-    {
-        throw LauncherException(QString("Invaild reply HTTP status code - %1").arg(statusCodeValue));
-    }
-
-    qDebug() << QString("Reply status code - %1").arg(statusCodeValue).toStdString().c_str();
-}
-
-QString PatchKitRemotePatcher::downloadString(const QString& t_urlPath) const
-{
-    std::auto_ptr<QNetworkAccessManager> accessManager;
-    std::auto_ptr<QNetworkReply> reply;
-    getNetworkReply(t_urlPath, accessManager, reply);
-
-    QString result = QString(reply->readAll());
-
-    qDebug() << result;
-
-    return result;
-}
-
-void PatchKitRemotePatcher::downloadFile(const QString& t_filePath, const QString& t_urlPath) const
-{
-    std::auto_ptr<QNetworkAccessManager> accessManager;
-    std::auto_ptr<QNetworkReply> reply;
-    getNetworkReply(t_urlPath, accessManager, reply);
-
-    connect(reply.get(), &QNetworkReply::downloadProgress, this, &PatchKitRemotePatcher::downloadProgress);
-
-    QEventLoop finishedLoop;
-    connect(reply.get(), &QNetworkReply::finished, &finishedLoop, &QEventLoop::quit);
-
-    connect(this, &PatchKitRemotePatcher::cancelled, &finishedLoop, &QEventLoop::quit);
-
-    finishedLoop.exec();
 
     if (m_isCancelled)
     {
         throw LauncherCancelledException();
     }
 
-    QFile file(t_filePath);
-
-    if(!file.open(QFile::WriteOnly))
+    if (!timeoutTimer.isActive())
     {
-        throw LauncherException("Couldn't open file for download.");
+        throw LauncherException("Request timeout");
+    }
+}
+
+void PatchKitRemotePatcher::validateNetworkReply(std::auto_ptr<QNetworkReply>& t_reply) const
+{
+    logInfo("Validating network reply.");
+
+    if (t_reply.get()->error() != QNetworkReply::NoError)
+    {
+        throw LauncherException(t_reply.get()->errorString());
     }
 
-    file.write(reply->readAll());
+    QVariant statusCode = t_reply.get()->attribute(QNetworkRequest::HttpStatusCodeAttribute);
 
-    file.flush();
-    file.close();
+    if (!statusCode.isValid())
+    {
+        throw LauncherException("Couldn't read HTTP status code from reply.");
+    }
+
+    int statusCodeValue = statusCode.toInt();
+
+    if (statusCodeValue != 200)
+    {
+        throw LauncherException(QString("Invaild reply HTTP status code - %1").arg(statusCodeValue));
+    }
+
+    logDebug("Reply status code - %1", .arg(statusCodeValue));
 }

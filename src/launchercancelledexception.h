@@ -1,3 +1,8 @@
+/*
+* Copyright (C) Upsoft 2016
+* License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
+*/
+
 #ifndef LAUNCHERCANCELLEDEXCEPTION_H
 #define LAUNCHERCANCELLEDEXCEPTION_H
 
@@ -6,7 +11,14 @@
 class LauncherCancelledException : public LauncherException
 {
 public:
-    LauncherCancelledException();
+    LauncherCancelledException() : LauncherException("Launcher has been cancelled.")
+    {
+    }
+
+    static void raise()
+    {
+        throw LauncherCancelledException();
+    }
 };
 
 #endif // LAUNCHERCANCELLEDEXCEPTION_H

@@ -1,65 +1,72 @@
+/*
+* Copyright (C) Upsoft 2016
+* License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
+*/
+
+#include <QFile>
+#include <memory>
+
 #include "launcherdata.h"
 #include "launcherexception.h"
-#include <qdatastream.h>
-#include <qfile.h>
+#include "launcherlog.h"
 
 LauncherData LauncherData::loadFromFile(const QString& t_fileName)
 {
+    logInfo("Loading launcher data from file %1", .arg(t_fileName));
+
     QFile file(t_fileName);
 
-    if(!file.open(QFile::ReadOnly))
+    if (!file.open(QFile::ReadOnly))
     {
-        throw LauncherException("Couldn't open launcher data file.");
+        throw LauncherException(QString("Couldn't open launcher data file from %1").arg(t_fileName));
     }
 
-    LauncherData data;
+    QDataStream fileStream(&file);
 
-    try
-    {
-        QDataStream fileStream(&file);
+    fileStream.setByteOrder(QDataStream::LittleEndian);
 
-        fileStream.setByteOrder(QDataStream::LittleEndian);
+    QByteArray encodedPatcherSecret = readStringBytes(fileStream);
+    QByteArray encodedApplicationSecret = readStringBytes(fileStream);
 
-        data.patcherSecret = readAndDecodeString(fileStream);
-        data.gameSecret = readAndDecodeString(fileStream);
-    }
-    catch(...)
-    {
-        file.close();
-        throw;
-    }
     file.close();
 
-    return data;
+    return LauncherData(encodedPatcherSecret, encodedApplicationSecret);
 }
 
-QString LauncherData::readAndDecodeString(QDataStream& t_fileStream)
+LauncherData::LauncherData(const QByteArray& t_encodedPatcherSecret, const QByteArray& t_encodedApplicationSecret) :
+    m_encodedPatcherSecret(t_encodedPatcherSecret),
+    m_encodedApplicationSecret(t_encodedApplicationSecret)
+{
+    m_patcherSecret = decodeSecret(m_encodedPatcherSecret);
+    m_applicationSecret = decodeSecret(m_encodedApplicationSecret);
+}
+
+QByteArray LauncherData::readStringBytes(QDataStream& t_fileStream)
 {
     qint32 len;
     t_fileStream >> len;
 
-    std::auto_ptr<char> bytes(new char[len]);
+    QByteArray bytes(new char[len], len);
 
-    t_fileStream.readRawData(bytes.get(), len);
+    t_fileStream.readRawData(bytes.data(), len);
 
-    QString result = decodeString(bytes.get(), len);
-    return result;
+    return bytes;
 }
 
-QString LauncherData::decodeString(const char *t_bytes, int t_len)
+QString LauncherData::decodeSecret(const QByteArray& t_encodedSecret)
 {
-    std::auto_ptr<char> temp(new char[t_len]);
+    std::unique_ptr<char> temp(new char[t_encodedSecret.size()]);
+    memcpy(temp.get(), t_encodedSecret.data(), t_encodedSecret.size());
 
-    memcpy(temp.get(), t_bytes, t_len);
-    for(int i = 0; i < t_len; i++)
+    for (int i = 0; i < t_encodedSecret.size(); i++)
     {
         char b = temp.get()[i];
         bool lsb = (b & 1) > 0;
         b = b >> 1;
         b = b | (lsb ? 128 : 0);
-        b = (char) ~b;
+        b = static_cast<char>(~b);
         temp.get()[i] = b;
     }
 
-    return QString::fromUtf16(reinterpret_cast<const ushort*>(temp.get()), t_len/2);
+    return QString::fromUtf16(reinterpret_cast<const ushort*>(temp.get()), t_encodedSecret.size() / 2);
 }
