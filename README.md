@@ -1,6 +1,43 @@
 # patchkit-launcher-qt
 PatchKit launcher made in Qt.
 
+## Building
+
+### Requirements
+* Installed [Qt Framework](https://www.qt.io/download/)
+* Microsoft Visual Studio (only for Windows)
+
+### Windows building
+
+First of all you need to setup the envirnonment.
+**x86**
+``` Batch
+[PATH_TO_QT_INSTALLATION]/msvc2015/bin/qtenv2.bat
+[PATH_TO_VISUAL_STUDIO_INSTALLATION]/VC/bin/vcvarsall.bat x86
+```
+
+**x64**
+``` Batch
+[PATH_TO_QT_INSTALLATION]/msvc2015_64/bin/qtenv2.bat
+[PATH_TO_VISUAL_STUDIO_INSTALLATION]/VC/bin/vcvarsall.bat x64
+```
+
+Now generate makefile with qmake.
+``` Batch
+qmake -r -spec win32-msvc2015
+```
+
+Compile.
+**Release**
+``` Batch
+nmake -f Makefile.Release
+```
+
+**Debug**
+``` Batch
+nmake -f Makefile.Debug
+```
+
 ## Code style
 
 ### Files
