@@ -163,8 +163,8 @@ QString PatchKitRemotePatcher::downloadString(const QString& t_urlPath) const
 {
     logInfo("Downloading string from %1", .arg(t_urlPath));
 
-    std::auto_ptr<QNetworkAccessManager> accessManager;
-    std::auto_ptr<QNetworkReply> reply;
+    std::shared_ptr<QNetworkAccessManager> accessManager;
+    std::shared_ptr<QNetworkReply> reply;
     getNetworkReply(t_urlPath, accessManager, reply);
 
     QString result = QString(reply->readAll());
@@ -176,15 +176,15 @@ void PatchKitRemotePatcher::downloadFile(const QString& t_filePath, const QStrin
 {
     logInfo("Downloading file from %1", .arg(t_urlPath));
 
-    std::auto_ptr<QNetworkAccessManager> accessManager;
-    std::auto_ptr<QNetworkReply> reply;
+    std::shared_ptr<QNetworkAccessManager> accessManager;
+    std::shared_ptr<QNetworkReply> reply;
     getNetworkReply(t_urlPath, accessManager, reply);
 
     waitForFileDownload(reply);
     writeDownloadedReplyToFile(reply, t_filePath);
 }
 
-void PatchKitRemotePatcher::waitForFileDownload(std::auto_ptr<QNetworkReply>& t_reply) const
+void PatchKitRemotePatcher::waitForFileDownload(std::shared_ptr<QNetworkReply>& t_reply) const
 {
     logInfo("Waiting for file download.");
 
@@ -206,7 +206,7 @@ void PatchKitRemotePatcher::waitForFileDownload(std::auto_ptr<QNetworkReply>& t_
     }
 }
 
-void PatchKitRemotePatcher::writeDownloadedReplyToFile(std::auto_ptr<QNetworkReply>& t_reply, const QString& t_filePath) const
+void PatchKitRemotePatcher::writeDownloadedReplyToFile(std::shared_ptr<QNetworkReply>& t_reply, const QString& t_filePath) const
 {
     logInfo("Writing downloaded data to file - %1", .arg(t_filePath));
 
@@ -232,20 +232,20 @@ void PatchKitRemotePatcher::writeDownloadedReplyToFile(std::auto_ptr<QNetworkRep
     file.close();
 }
 
-void PatchKitRemotePatcher::getNetworkReply(const QString& t_urlPath, std::auto_ptr<QNetworkAccessManager>& t_accessManager, std::auto_ptr<QNetworkReply>& t_reply) const
+void PatchKitRemotePatcher::getNetworkReply(const QString& t_urlPath, std::shared_ptr<QNetworkAccessManager>& t_accessManager, std::shared_ptr<QNetworkReply>& t_reply) const
 {
     logInfo("Getting network reply from %1", .arg(t_urlPath));
 
     QUrl url(t_urlPath);
-    t_accessManager = std::auto_ptr<QNetworkAccessManager>(new QNetworkAccessManager());
-    t_reply = std::auto_ptr<QNetworkReply>(t_accessManager.get()->get(QNetworkRequest(url)));
+    t_accessManager = std::shared_ptr<QNetworkAccessManager>(new QNetworkAccessManager());
+    t_reply = std::shared_ptr<QNetworkReply>(t_accessManager.get()->get(QNetworkRequest(url)));
 
     waitForNetworkReply(t_reply);
 
     validateNetworkReply(t_reply);
 }
 
-void PatchKitRemotePatcher::waitForNetworkReply(std::auto_ptr<QNetworkReply>& t_reply) const
+void PatchKitRemotePatcher::waitForNetworkReply(std::shared_ptr<QNetworkReply>& t_reply) const
 {
     logInfo("Waiting for network reply to be ready.");
 
@@ -275,7 +275,7 @@ void PatchKitRemotePatcher::waitForNetworkReply(std::auto_ptr<QNetworkReply>& t_
     }
 }
 
-void PatchKitRemotePatcher::validateNetworkReply(std::auto_ptr<QNetworkReply>& t_reply) const
+void PatchKitRemotePatcher::validateNetworkReply(std::shared_ptr<QNetworkReply>& t_reply) const
 {
     logInfo("Validating network reply.");
 

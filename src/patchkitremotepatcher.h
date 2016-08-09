@@ -8,6 +8,7 @@
 
 #include <QtNetwork/QtNetwork>
 
+#include <memory>
 #include "remotepatcher.h"
 
 class PatchKitRemotePatcher : public RemotePatcher
@@ -35,14 +36,14 @@ private:
     QString downloadString(const QString& t_urlPath) const;
 
     void downloadFile(const QString& t_filePath, const QString& t_urlPath) const;
-    void waitForFileDownload(std::auto_ptr<QNetworkReply>& t_reply) const;
-    void writeDownloadedReplyToFile(std::auto_ptr<QNetworkReply>& t_reply, const QString& t_filePath) const;
+    void waitForFileDownload(std::shared_ptr<QNetworkReply>& t_reply) const;
+    void writeDownloadedReplyToFile(std::shared_ptr<QNetworkReply>& t_reply, const QString& t_filePath) const;
 
     void getNetworkReply(const QString& t_urlPath,
-                         std::auto_ptr<QNetworkAccessManager>& t_accessManager,
-                         std::auto_ptr<QNetworkReply>& t_reply) const;
-    void waitForNetworkReply(std::auto_ptr<QNetworkReply>& t_reply) const;
-    void validateNetworkReply(std::auto_ptr<QNetworkReply>& t_reply) const;
+                         std::shared_ptr<QNetworkAccessManager>& t_accessManager,
+                         std::shared_ptr<QNetworkReply>& t_reply) const;
+    void waitForNetworkReply(std::shared_ptr<QNetworkReply>& t_reply) const;
+    void validateNetworkReply(std::shared_ptr<QNetworkReply>& t_reply) const;
 
     
 
