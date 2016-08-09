@@ -14,11 +14,6 @@ public:
     LauncherCancelledException() : LauncherException("Launcher has been cancelled.")
     {
     }
-
-    static void raise()
-    {
-        throw LauncherCancelledException();
-    }
 };
 
 #endif // LAUNCHERCANCELLEDEXCEPTION_H
