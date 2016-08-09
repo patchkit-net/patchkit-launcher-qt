@@ -21,7 +21,7 @@ public:
     {
     }
 
-    const char* what() const override
+    const char* what() const throw() override
     {
         return m_message.c_str();
     }
