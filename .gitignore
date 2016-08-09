@@ -9,3 +9,7 @@
 /src/patchkit-launcher-qt.vcxproj
 /src/patchkit-launcher-qt.VC.db
 /src/patchkit-launcher-qt.VC.VC.opendb
+/src/ui_mainwindow.h
+/src/Makefile
+/src/Makefile.Debug
+/src/Makefile.Release
