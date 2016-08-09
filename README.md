@@ -10,6 +10,7 @@ PatchKit launcher made in Qt.
 ### Windows building
 
 First of all you need to setup the envirnonment.
+
 **x86**
 ``` Batch
 [PATH_TO_QT_INSTALLATION]/msvc2015/bin/qtenv2.bat
@@ -28,6 +29,7 @@ qmake -r -spec win32-msvc2015
 ```
 
 Compile.
+
 **Release**
 ``` Batch
 nmake -f Makefile.Release
