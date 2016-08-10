@@ -35,10 +35,16 @@ win32 {
     }
 }
 
-unix {
+unix:!macx {
     QMAKE_CXXFLAGS += -std=c++0x
     debug:LIBS += $$PWD/lib/quazip/linux_x86_64/libquazipd.a -lz
     release:LIBS += $$PWD/lib/quazip/linux_x86_64/libquazip.a -lz
+}
+
+macx {
+    QMAKE_CXXFLAGS += -std=c++0x
+    debug:LIBS += $$PWD/lib/quazip/macosx_x86_64/libquazipd.a -lz
+    release:LIBS += $$PWD/lib/quazip/macosx_x86_64/libquazip.a -lz
 }
 
 SOURCES += launcherconfiguration.cpp \
