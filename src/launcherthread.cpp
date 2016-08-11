@@ -68,7 +68,7 @@ void LauncherThread::run()
 
             logInfo("Fallback - trying to use previous patcher installation.");
 
-            if (!m_localPatcher->isInstalled())
+            if (m_localPatcher->isInstalled())
             {
                 logInfo("Fallback success - found previous patcher installation.");
             }
