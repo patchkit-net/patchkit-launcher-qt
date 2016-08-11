@@ -9,10 +9,57 @@
 #include "patchkitremotepatcher.h"
 #include "launcherconfiguration.h"
 #include "launcherlog.h"
+#include <QtMessageHandler>
+#include <QMessageBox>
 
 LauncherConfiguration createLauncherConfiguration()
 {
     return LauncherConfiguration("launcher.dat");
+}
+
+void logMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString& msg)
+{
+    QString txt = msg;
+    txt.prepend(" - ");
+
+    QDateTime date;
+    txt.prepend(date.currentDateTime().toString());
+
+    if(type == QtDebugMsg)
+    {
+        txt.prepend("[DEBUG]    ");
+    }
+    else if(type == QtInfoMsg)
+    {
+        txt.prepend("[INFO]     ");
+    }
+    else if(type == QtWarningMsg)
+    {
+        txt.prepend("[WARNING]  ");
+    }
+    else if(type == QtCriticalMsg)
+    {
+        txt.prepend("[CRITICAL] ");
+        QMessageBox::critical(nullptr, "Error!", "An error occured!", QMessageBox::Ok, QMessageBox::NoButton);
+    }
+    else if(type == QtFatalMsg)
+    {
+        txt.prepend("[FATAL]    ");
+        QMessageBox::critical(nullptr, "Error!", "An error occured!", QMessageBox::Ok, QMessageBox::NoButton);
+    }
+    else if(type == QtSystemMsg)
+    {
+        txt.prepend("[SYSTEM]   ");
+    }
+
+    QFile logFile("Launcher-log.txt");
+
+    if(logFile.open(QIODevice::WriteOnly | QIODevice::Append))
+    {
+        QTextStream logStream(&logFile);
+        logStream << txt << endl << flush;
+        logFile.close();
+    }
 }
 
 int main(int argc, char* argv[])
@@ -23,6 +70,8 @@ int main(int argc, char* argv[])
     logDebug("Setting current directory to - %1", .arg(application.applicationDirPath()));
     QDir::setCurrent(application.applicationDirPath());
 #endif
+
+    qInstallMessageHandler(logMessageHandler);
 
     std::shared_ptr<RemotePatcher> remotePatcher(new PatchKitRemotePatcher());
     std::shared_ptr<LocalPatcher> localPatcher(new PatchKitLocalPatcher());
@@ -49,6 +98,7 @@ int main(int argc, char* argv[])
         {
             logWarning("Launcher thread couldn't be cancelled - terminating thread.");
             launcherThread->terminate();
+            launcherThread->wait();
         }
     }
 
