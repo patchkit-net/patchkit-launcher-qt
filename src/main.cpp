@@ -40,12 +40,10 @@ void logMessageHandler(QtMsgType type, const QMessageLogContext &context, const 
     else if(type == QtCriticalMsg)
     {
         txt.prepend("[CRITICAL] ");
-        QMessageBox::critical(nullptr, "Error!", "An error occured!", QMessageBox::Ok, QMessageBox::NoButton);
     }
     else if(type == QtFatalMsg)
     {
         txt.prepend("[FATAL]    ");
-        QMessageBox::critical(nullptr, "Error!", "An error occured!", QMessageBox::Ok, QMessageBox::NoButton);
     }
     else if(type == QtSystemMsg)
     {
@@ -66,12 +64,20 @@ int main(int argc, char* argv[])
 {
     QApplication application(argc, argv);
 
+#ifdef Q_OS_OSX
+    QDir applicationDir(application.applicationDirPath());
+    applicationDir.cdUp();
+    applicationDir.cd("Resources");
+    QDir::setCurrent(applicationDir.absolutePath());
+#else
 #ifdef QT_DEBUG
-    logDebug("Setting current directory to - %1", .arg(application.applicationDirPath()));
     QDir::setCurrent(application.applicationDirPath());
+#endif
 #endif
 
     qInstallMessageHandler(logMessageHandler);
+
+    logInfo("Current directory - %1", .arg(QDir::current().path()));
 
     std::shared_ptr<RemotePatcher> remotePatcher(new PatchKitRemotePatcher());
     std::shared_ptr<LocalPatcher> localPatcher(new PatchKitLocalPatcher());
@@ -100,6 +106,11 @@ int main(int argc, char* argv[])
             launcherThread->terminate();
             launcherThread->wait();
         }
+    }
+
+    if(!launcherThread->isSuccess())
+    {
+        QMessageBox::critical(nullptr, "Error!", "An error has occured!", QMessageBox::Ok, QMessageBox::NoButton);
     }
 
     return result;

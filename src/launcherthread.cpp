@@ -82,6 +82,7 @@ void LauncherThread::run()
         emit statusChanged(QString("Starting..."));
 
         m_localPatcher->start(data);
+        m_isSuccess = true;
     }
     catch (LauncherCancelledException&)
     {
@@ -103,7 +104,8 @@ LauncherThread::LauncherThread(const LauncherConfiguration& t_configuration,
     m_remotePatcher(t_remotePatcher),
     m_localPatcher(t_localPatcher),
     m_configuration(t_configuration),
-    m_isCancelled(false)
+    m_isCancelled(false),
+    m_isSuccess(false)
 {
     logDebug("Moving m_remotePatcher and m_localPatcher to launcher thread.");
     m_remotePatcher->moveToThread(this);
@@ -121,6 +123,11 @@ void LauncherThread::cancel()
     */
     QMetaObject::invokeMethod(m_remotePatcher.get(), "cancel");
     QMetaObject::invokeMethod(m_localPatcher.get(), "cancel");
+}
+
+bool LauncherThread::isSuccess()
+{
+    return m_isSuccess;
 }
 
 void LauncherThread::setDownloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes)

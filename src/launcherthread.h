@@ -28,6 +28,7 @@ public:
 
     void cancel();
 
+    bool isSuccess();
 signals:
     void statusChanged(const QString& t_status);
     void progressChanged(int t_progress);
@@ -42,6 +43,7 @@ private:
     const LauncherConfiguration m_configuration;
 
     bool m_isCancelled;
+    bool m_isSuccess;
 
     const int downloadedProgressValue = 90;
 };
