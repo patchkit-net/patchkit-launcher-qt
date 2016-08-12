@@ -139,7 +139,7 @@ catch(LauncherException &exception)
 Launcher data file is storing information about patcher and application secret. Both secrets are encrypted and written in raw format.
 Data file location depends on the platform:
 
-* Windows - launcher data file is stored in launcher executable resources under `3151` id as resource of type RT_RCDATA (type id - `10`). [Read more.](https://msdn.microsoft.com/pl-pl/library/windows/desktop/ms648009(v=vs.85).aspx)
+* Windows - launcher data file is stored in launcher executable resources under `3151` id as resource of type `RT_RCDATA` (type id - `10`). [Read more.](https://msdn.microsoft.com/pl-pl/library/windows/desktop/ms648009(v=vs.85).aspx)
 * Mac OSX - it's placed in the Resources directory of bundle
 * Linux - it's placed next to the launcher executable 
 
