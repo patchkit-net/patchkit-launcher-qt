@@ -271,6 +271,10 @@ void PatchKitLocalPatcher::extractFileZipEntry(QuaZipFile& t_zipEntry, const QSt
 
     copyDeviceData(t_zipEntry, zipEntryFile);
 
+#ifdef Q_OS_MAC || Q_OS_MAC64 || Q_OS_MACX || Q_OS_UNIX
+    system(QString("chmod +x \"%1\"").arg(zipEntryFileInfo.absoluteFilePath()).toStdString().c_str());
+#endif
+
     zipEntryFile.close();
 }
 

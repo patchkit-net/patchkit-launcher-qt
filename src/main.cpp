@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
 {
     QApplication application(argc, argv);
 
-#ifdef Q_OS_OSX
+#ifdef Q_OS_MAC || Q_OS_MAC64 || Q_OS_MACX
     QDir applicationDir(application.applicationDirPath());
     applicationDir.cdUp();
     applicationDir.cd("Resources");
