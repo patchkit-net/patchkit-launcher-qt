@@ -13,3 +13,4 @@
 /src/Makefile
 /src/Makefile.Debug
 /src/Makefile.Release
+/build-*
