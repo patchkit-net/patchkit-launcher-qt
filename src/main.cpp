@@ -12,9 +12,9 @@
 #include <QtMessageHandler>
 #include <QMessageBox>
 
-LauncherConfiguration createLauncherConfiguration()
+LauncherConfiguration createLauncherConfiguration(const QString& t_applicationFilePath)
 {
-    return LauncherConfiguration("launcher.dat");
+    return LauncherConfiguration("launcher.dat", t_applicationFilePath, 3151, 10);
 }
 
 void logMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString& msg)
@@ -50,6 +50,14 @@ void logMessageHandler(QtMsgType type, const QMessageLogContext &context, const 
         txt.prepend("[SYSTEM]   ");
     }
 
+    txt.append(" (");
+    txt.append(QFileInfo(context.file).fileName());
+    txt.append(":");
+    txt.append(QString::number(context.line));
+    txt.append(")");
+
+    QTextStream(stdout) << txt << endl;
+
     QFile logFile("Launcher-log.txt");
 
     if(logFile.open(QIODevice::WriteOnly | QIODevice::Append))
@@ -64,7 +72,15 @@ int main(int argc, char* argv[])
 {
     QApplication application(argc, argv);
 
-#ifdef Q_OS_MAC || Q_OS_MAC64 || Q_OS_MACX
+    qInstallMessageHandler(logMessageHandler);
+
+    // This information is required by launcher configuration but as documentation states about QCoreApplication::applicationFilePath()
+    // "The function also assumes that the current directory has not been changed by the application."
+    // And this is the thing that we are doing - later we're changing the current directory.
+    // That's why we need to save it before it's too late.
+    QString applicationFilePath = application.applicationFilePath();
+
+#ifdef Q_OS_OSX
     QDir applicationDir(application.applicationDirPath());
     applicationDir.cdUp();
     applicationDir.cd("Resources");
@@ -75,14 +91,12 @@ int main(int argc, char* argv[])
 #endif
 #endif
 
-    qInstallMessageHandler(logMessageHandler);
-
     logInfo("Current directory - %1", .arg(QDir::current().path()));
 
     std::shared_ptr<RemotePatcher> remotePatcher(new PatchKitRemotePatcher());
     std::shared_ptr<LocalPatcher> localPatcher(new PatchKitLocalPatcher());
     std::shared_ptr<LauncherThread> launcherThread(new LauncherThread(
-        createLauncherConfiguration(),
+        createLauncherConfiguration(applicationFilePath),
         remotePatcher,
         localPatcher));
 

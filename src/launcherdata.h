@@ -10,7 +10,13 @@
 
 struct LauncherData
 {
+    LauncherData();
+
     static LauncherData loadFromFile(const QString& t_fileName);
+
+#ifdef Q_OS_WIN
+    static LauncherData loadFromResource(const QString& t_applicationFilePath, int t_resourceId, int t_resourceTypeId);
+#endif
 
     QString patcherSecret() const
     {
@@ -33,6 +39,8 @@ struct LauncherData
     }
 
 private:
+    static LauncherData loadFromDataStream(QDataStream& t_dataStream);
+
     QString m_patcherSecret;
     QString m_applicationSecret;
     QByteArray m_encodedPatcherSecret;
@@ -40,7 +48,7 @@ private:
 
     LauncherData(const QByteArray& t_encodedPatcherSecret, const QByteArray& t_encodedApplicationSecret);
 
-    static QByteArray readStringBytes(QDataStream& t_fileStream);
+    static QByteArray readStringBytes(QDataStream& t_dataStream);
     static QString decodeSecret(const QByteArray& t_encodedSecret);
 };
 

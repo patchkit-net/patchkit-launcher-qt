@@ -139,7 +139,6 @@ void PatchKitLocalPatcher::writeFileContents(const QString& t_filePath, const QS
 
     QTextStream fileTextStream(&file);
     fileTextStream << t_fileContents;
-
     file.close();
 }
 
@@ -271,11 +270,13 @@ void PatchKitLocalPatcher::extractFileZipEntry(QuaZipFile& t_zipEntry, const QSt
 
     copyDeviceData(t_zipEntry, zipEntryFile);
 
-#ifdef Q_OS_MAC || Q_OS_MAC64 || Q_OS_MACX || Q_OS_UNIX
-    system(QString("chmod +x \"%1\"").arg(zipEntryFileInfo.absoluteFilePath()).toStdString().c_str());
-#endif
-
     zipEntryFile.close();
+
+#if defined(Q_OS_OSX) || defined(Q_OS_UNIX)
+
+    system(QString("chmod +x \"%1\"").arg(zipEntryFileInfo.absoluteFilePath()).toStdString().c_str());
+
+#endif
 }
 
 bool PatchKitLocalPatcher::isDirZipEntry(const QString& t_zipEntryName)

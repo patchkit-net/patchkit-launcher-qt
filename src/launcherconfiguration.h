@@ -10,9 +10,12 @@
 
 struct LauncherConfiguration
 {
-    explicit LauncherConfiguration(const QString& t_dataFileName);
+    explicit LauncherConfiguration(const QString& t_dataFileName, const QString& t_applicationFilePath, int t_dataResourceId, int t_dataResourceTypeId);
 
     const QString dataFileName;
+    const QString applicationFilePath;
+    const int dataResourceId;
+    const int dataResourceTypeId;
 };
 
 #endif // LAUNCHERCONFIGURATION_H

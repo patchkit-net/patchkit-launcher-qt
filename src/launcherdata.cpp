@@ -9,6 +9,11 @@
 #include "launcherdata.h"
 #include "launcherexception.h"
 #include "launcherlog.h"
+#include "launcherwindowsexeresources.h"
+
+LauncherData::LauncherData()
+{
+}
 
 LauncherData LauncherData::loadFromFile(const QString& t_fileName)
 {
@@ -23,12 +28,36 @@ LauncherData LauncherData::loadFromFile(const QString& t_fileName)
 
     QDataStream fileStream(&file);
 
-    fileStream.setByteOrder(QDataStream::LittleEndian);
-
-    QByteArray encodedPatcherSecret = readStringBytes(fileStream);
-    QByteArray encodedApplicationSecret = readStringBytes(fileStream);
+    LauncherData data = loadFromDataStream(fileStream);
 
     file.close();
+
+    return data;
+}
+
+#ifdef Q_OS_WIN
+
+LauncherData LauncherData::loadFromResource(const QString& t_applicationFilePath, int t_resourceId, int t_resourceTypeId)
+{
+    logInfo("Loading launcher data from resource of id %1 and type id %2 from file %3", .arg(QString::number(t_resourceId),
+                                                                                              QString::number(t_resourceTypeId),
+                                                                                              t_applicationFilePath));
+
+    std::shared_ptr<QByteArray> resourceData = LauncherWindowsExeResources::extract(t_applicationFilePath, t_resourceId, t_resourceTypeId);
+
+    QDataStream resourceStream(resourceData.get(), QIODevice::ReadOnly);
+
+    return loadFromDataStream(resourceStream);
+}
+
+#endif
+
+LauncherData LauncherData::loadFromDataStream(QDataStream& t_dataStream)
+{
+    t_dataStream.setByteOrder(QDataStream::LittleEndian);
+
+    QByteArray encodedPatcherSecret = readStringBytes(t_dataStream);
+    QByteArray encodedApplicationSecret = readStringBytes(t_dataStream);
 
     return LauncherData(encodedPatcherSecret, encodedApplicationSecret);
 }
@@ -41,14 +70,21 @@ LauncherData::LauncherData(const QByteArray& t_encodedPatcherSecret, const QByte
     m_applicationSecret = decodeSecret(m_encodedApplicationSecret);
 }
 
-QByteArray LauncherData::readStringBytes(QDataStream& t_fileStream)
+QByteArray LauncherData::readStringBytes(QDataStream& t_dataStream)
 {
     qint32 len;
-    t_fileStream >> len;
+
+    if(t_dataStream.readRawData(reinterpret_cast<char*>(&len), 4) != 4)
+    {
+        throw LauncherException("Corrupted data file.");
+    }
 
     QByteArray bytes(new char[len], len);
 
-    t_fileStream.readRawData(bytes.data(), len);
+    if(t_dataStream.readRawData(bytes.data(), len) != len)
+    {
+        throw LauncherException("Corrupted data file.");
+    }
 
     return bytes;
 }

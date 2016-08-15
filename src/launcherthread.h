@@ -28,7 +28,7 @@ public:
 
     void cancel();
 
-    bool isSuccess();
+    bool isSuccess() const;
 signals:
     void statusChanged(const QString& t_status);
     void progressChanged(int t_progress);
@@ -37,6 +37,17 @@ private slots:
     void setDownloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes);
 
 private:
+#ifdef Q_OS_WIN
+    void runWithDataFromResource();
+#endif
+    void runWithDataFromFile();
+
+    void runWithData(const LauncherData& t_data);
+
+    void checkPatcher(const LauncherData& t_data);
+    bool checkPatcherFallback();
+    void startPatcher(const LauncherData& t_data);
+
     std::shared_ptr<RemotePatcher> m_remotePatcher;
     std::shared_ptr<LocalPatcher> m_localPatcher;
 
