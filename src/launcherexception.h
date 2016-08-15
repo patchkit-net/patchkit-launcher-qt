@@ -3,8 +3,7 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#ifndef LAUNCHEREXCEPTION_H
-#define LAUNCHEREXCEPTION_H
+#pragma once
 
 #include <QException>
 
@@ -39,5 +38,3 @@ public:
 private:
     const std::string m_message;
 };
-
-#endif // LAUNCHEREXCEPTION_H

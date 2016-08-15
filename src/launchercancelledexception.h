@@ -3,8 +3,7 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#ifndef LAUNCHERCANCELLEDEXCEPTION_H
-#define LAUNCHERCANCELLEDEXCEPTION_H
+#pragma once
 
 #include "launcherexception.h"
 
@@ -15,5 +14,3 @@ public:
     {
     }
 };
-
-#endif // LAUNCHERCANCELLEDEXCEPTION_H

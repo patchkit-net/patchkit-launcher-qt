@@ -3,8 +3,7 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
 #include "ui_mainwindow.h"
 #include "launcherthread.h"
@@ -33,5 +32,3 @@ private:
 
     std::unique_ptr<Ui::MainWindow> m_ui;
 };
-
-#endif // MAINWINDOW_H

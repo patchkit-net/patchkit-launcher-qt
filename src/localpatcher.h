@@ -3,8 +3,7 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#ifndef LOCALPATCHER_H
-#define LOCALPATCHER_H
+#pragma once
 
 #include <QObject>
 #include <QString>
@@ -33,5 +32,3 @@ public:
     // Cancels any above operation. If cancellation is successful, LauncherCancelledException is thrown by the operation.
     virtual void cancel() = 0;
 };
-
-#endif // LOCALPATCHER_H

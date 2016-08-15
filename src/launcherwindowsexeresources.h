@@ -1,5 +1,9 @@
-#ifndef LAUNCHERWINDOWSEXERESOURCES_H
-#define LAUNCHERWINDOWSEXERESOURCES_H
+/*
+* Copyright (C) Upsoft 2016
+* License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
+*/
+
+#pragma once
 
 #include <QObject>
 #include <memory>
@@ -13,5 +17,3 @@ public:
 };
 
 #endif
-
-#endif // LAUNCHERWINDOWSEXERESOURCES_H

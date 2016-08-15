@@ -3,8 +3,7 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#ifndef PATCHKITLOCALPATCHER_H
-#define PATCHKITLOCALPATCHER_H
+#pragma once
 
 #include "localpatcher.h"
 #include "quazipfile.h"
@@ -61,5 +60,3 @@ private:
     // Note that this path is relative to patcherDirectoryPath.
     const QString installationDirectoryPath = "../app";
 };
-
-#endif // PATCHKITLOCALPATCHER_H

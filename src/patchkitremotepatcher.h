@@ -3,8 +3,7 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#ifndef PATCHKITREMOTEPATCHER_H
-#define PATCHKITREMOTEPATCHER_H
+#pragma once
 
 #include <QtNetwork/QtNetwork>
 
@@ -31,7 +30,7 @@ private:
     QStringList getContentUrls(const QString& t_patcherSecret, int t_version) const;
 
     static int parseVersionJson(const QString& t_json);
-    static QStringList parseContentUrlsJson(const QString &t_json);
+    static QStringList parseContentUrlsJson(const QString& t_json);
 
     QString downloadString(const QString& t_urlPath) const;
 
@@ -45,13 +44,8 @@ private:
     void waitForNetworkReply(std::shared_ptr<QNetworkReply>& t_reply) const;
     void validateNetworkReply(std::shared_ptr<QNetworkReply>& t_reply) const;
 
-    
-
-    
 
     bool m_isCancelled;
 
     const int downloadTimeoutInSeconds = 10;
 };
-
-#endif // PATCHKITREMOTEPATCHER_H

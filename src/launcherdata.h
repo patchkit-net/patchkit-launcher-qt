@@ -3,8 +3,7 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#ifndef LAUNCHERDATA_H
-#define LAUNCHERDATA_H
+#pragma once
 
 #include <QDataStream>
 
@@ -51,5 +50,3 @@ private:
     static QByteArray readStringBytes(QDataStream& t_dataStream);
     static QString decodeSecret(const QByteArray& t_encodedSecret);
 };
-
-#endif // LAUNCHERDATA_H

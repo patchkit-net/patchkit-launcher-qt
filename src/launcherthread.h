@@ -3,8 +3,7 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#ifndef LAUNCHERTHREAD_H
-#define LAUNCHERTHREAD_H
+#pragma once
 
 #include <QThread>
 #include <memory>
@@ -58,5 +57,3 @@ private:
 
     const int downloadedProgressValue = 90;
 };
-
-#endif // LAUNCHERTHREAD_H

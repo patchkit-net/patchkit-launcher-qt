@@ -3,8 +3,7 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#ifndef REMOTEPATCHER_H
-#define REMOTEPATCHER_H
+#pragma once
 
 #include <QObject>
 #include <QString>
@@ -26,5 +25,3 @@ public:
 signals:
     void downloadProgressChanged(const long long& t_bytesDownloaded, const long long& t_totalBytes);
 };
-
-#endif // REMOTEPATCHER_H

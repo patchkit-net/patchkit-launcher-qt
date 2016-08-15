@@ -3,8 +3,7 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#ifndef LAUNCHERCONFIGURATION_H
-#define LAUNCHERCONFIGURATION_H
+#pragma once
 
 #include <QString>
 
@@ -17,5 +16,3 @@ struct LauncherConfiguration
     const int dataResourceId;
     const int dataResourceTypeId;
 };
-
-#endif // LAUNCHERCONFIGURATION_H
