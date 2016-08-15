@@ -49,6 +49,14 @@ Data file location depends on the platform:
 * Mac OSX - it's placed in the Resources directory of bundle.
 * Linux - it's placed next to the launcher executable .
 
+## Log file
+
+Launcher produces a log file during it's execution named `Launcher-log.txt`. It's location depends on the platform
+
+* Windows - log file is located next to executable.
+* Mac OSX - log file is located in bundle `Resources` directory.
+* Linux - log file is located next to executable.
+
 ## Using Visual Studio as editor
 
 Install [Qt Visual Studio Add-in](https://visualstudiogallery.msdn.microsoft.com/c89ff880-8509-47a4-a262-e4fa07168408).
