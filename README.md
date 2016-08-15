@@ -11,19 +11,19 @@ PatchKit launcher made in Qt.
 
 First of all you need to setup the envirnonment.
 
-**x86**
+**For x86 envirnonment**
 ``` Batch
-[PATH_TO_QT_INSTALLATION]/msvc2015/bin/qtenv2.bat
-[PATH_TO_VISUAL_STUDIO_INSTALLATION]/VC/bin/vcvarsall.bat x86
+[X86_QT_INSTALLATION_ROOT]/bin/qtenv2.bat
+[VS_ROOT]/VC/bin/vcvarsall.bat
 ```
 
-**x64**
+**For x64 envirnonment**
 ``` Batch
-[PATH_TO_QT_INSTALLATION]/msvc2015_64/bin/qtenv2.bat
-[PATH_TO_VISUAL_STUDIO_INSTALLATION]/VC/bin/vcvarsall.bat x64
+[X64_QT_INSTALLATION_ROOT]/bin/qtenv2.bat
+[VS_ROOT]/VC/bin/vcvarsall.bat x64
 ```
 
-Now generate makefile with qmake.
+Now generate Makefile with qmake.
 ``` Batch
 qmake -r -spec win32-msvc2015
 ```
@@ -39,6 +39,21 @@ nmake -f Makefile.Release
 ``` Batch
 nmake -f Makefile.Debug
 ```
+
+## Launcher data file
+
+Launcher data file is storing information about patcher and application secret. Both secrets are encrypted and written in raw format.
+Data file location depends on the platform:
+
+* Windows - launcher data file is stored in launcher executable resources under `3151` id as resource of type `RT_RCDATA` (type id - `10`). [Read more](https://msdn.microsoft.com/pl-pl/library/windows/desktop/ms648009(v=vs.85).aspx). If the resource is missing or corrupted, the launcher is searching for data file next to launcher location (the same method as Linux does).
+* Mac OSX - it's placed in the Resources directory of bundle.
+* Linux - it's placed next to the launcher executable .
+
+## Using Visual Studio as editor
+
+Install [Qt Visual Studio Add-in](https://visualstudiogallery.msdn.microsoft.com/c89ff880-8509-47a4-a262-e4fa07168408).
+
+Then you will be able to open Qt project (*patchkit-launcher-qt.pro*) with Visual Studio by entering *Qt5* menu from toolbar and selecting *Open Qt Project File (.pro)* option. Project will be automaticaly generated and opened within a solution. Note that Visual Studio project (*patchkit-launcher-qt.vcxproj*) shouldn't be added to the repository. If you want make some modifications to project setup you need to modify *patchkit-launcher-qt.pro* file manually and regenerate Visual Studio project. 
 
 ## Code style
 
@@ -133,19 +148,3 @@ catch(LauncherException &exception)
 	...
 }
 ```
-
-## Launcher data file
-
-Launcher data file is storing information about patcher and application secret. Both secrets are encrypted and written in raw format.
-Data file location depends on the platform:
-
-* Windows - launcher data file is stored in launcher executable resources under `3151` id as resource of type `RT_RCDATA` (type id - `10`). [Read more](https://msdn.microsoft.com/pl-pl/library/windows/desktop/ms648009(v=vs.85).aspx). If the resource is missing, the launcher is searching for data file next to launcher location (the same method as Linux does).
-* Mac OSX - it's placed in the Resources directory of bundle
-* Linux - it's placed next to the launcher executable 
-
-## Using Visual Studio as editor
-
-Install [Qt Visual Studio Add-in](https://visualstudiogallery.msdn.microsoft.com/c89ff880-8509-47a4-a262-e4fa07168408).
-
-Then you will be able to open Qt project (*patchkit-launcher-qt.pro*) with Visual Studio by entering *Qt5* menu from toolbar and selecting *Open Qt Project File (.pro)* option. Project will be automaticaly generated and opened within a solution. Note that Visual Studio project (*patchkit-launcher-qt.vcxproj*) shouldn't be added to the repository. If you want make some modifications to project setup you need to modify *patchkit-launcher-qt.pro* file manually and regenerate Visual Studio project. This means that if you are adding some files you need to add them manually to *patchkit-launcher-qt.pro* file.
-
