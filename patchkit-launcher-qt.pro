@@ -30,8 +30,13 @@ win32 {
 
 unix:!macx {
     QMAKE_CXXFLAGS += -std=c++0x
-    debug:LIBS += $$PWD/lib/quazip/linux_x86_64/libquazipd.a -lz
-    release:LIBS += $$PWD/lib/quazip/linux_x86_64/libquazip.a -lz
+    !contains(QMAKE_TARGET.arch, x86_64) {
+        debug:LIBS += $$PWD/lib/quazip/linux_i386/libquazipd.a -lz
+        release:LIBS += $$PWD/lib/quazip/linux_i386/libquazip.a -lz
+    } else {
+        debug:LIBS += $$PWD/lib/quazip/linux_x86_64/libquazipd.a -lz
+        release:LIBS += $$PWD/lib/quazip/linux_x86_64/libquazip.a -lz
+    }
 }
 
 macx {
