@@ -24,11 +24,11 @@ public:
     void cancel() override;
 
 private:
+    // Helper functions
+
     static void writeFileContents(const QString& t_filePath, const QString& t_fileContents);
 
     static QString readFileContents(const QString& t_filePath);
-
-    static int parseVersionInfoToNumber(const QString& t_versionInfoFileContents);
 
     static bool checkIfFilesExist(const QStringList& t_filesList);
 
@@ -46,10 +46,14 @@ private:
 
     static void copyDeviceData(QIODevice& t_readDevice, QIODevice& t_writeDevice);
 
+    // Operations helper functions
+
+    static int parseVersionInfoToNumber(const QString& t_versionInfoFileContents);
+
     void readPatcherManifset(QString& t_exeFileName,
                              QString& t_exeArguments) const;
 
-    QString formatPatcherManifest(const QString& t_stringToFormat,
+    QString formatPatcherManifestString(const QString& t_stringToFormat,
                                   const QByteArray& t_encodedApplicationSecret) const;
 
     const QString patcherDirectoryPath = "patcher";

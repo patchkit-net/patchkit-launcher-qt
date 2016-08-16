@@ -7,60 +7,71 @@
 #include "launcherthread.h"
 #include "patchkitlocalpatcher.h"
 #include "patchkitremotepatcher.h"
-#include "launcherconfiguration.h"
 #include "launcherlog.h"
 #include <QtMessageHandler>
 #include <QMessageBox>
+
+const QString logFileName = "Launcher-log.txt";
 
 LauncherConfiguration createLauncherConfiguration(const QString& t_applicationFilePath)
 {
     return LauncherConfiguration("launcher.dat", t_applicationFilePath, 3151, 10);
 }
 
-void logMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString& msg)
+void clearPreviousLog()
 {
-    QString txt = msg;
+    if(QFile::exists(logFileName))
+    {
+        QFile::remove(logFileName);
+    }
+}
+
+void logMessageHandler(QtMsgType t_type, const QMessageLogContext& t_context, const QString& t_msg)
+{
+    QString txt = t_msg;
     txt.prepend(" - ");
 
     QDateTime date;
     txt.prepend(date.currentDateTime().toString());
 
-    if(type == QtDebugMsg)
+    if (t_type == QtDebugMsg)
     {
         txt.prepend("[DEBUG]    ");
     }
-    else if(type == QtInfoMsg)
+    else if (t_type == QtInfoMsg)
     {
         txt.prepend("[INFO]     ");
     }
-    else if(type == QtWarningMsg)
+    else if (t_type == QtWarningMsg)
     {
         txt.prepend("[WARNING]  ");
     }
-    else if(type == QtCriticalMsg)
+    else if (t_type == QtCriticalMsg)
     {
         txt.prepend("[CRITICAL] ");
     }
-    else if(type == QtFatalMsg)
+    else if (t_type == QtFatalMsg)
     {
         txt.prepend("[FATAL]    ");
     }
-    else if(type == QtSystemMsg)
+    else if (t_type == QtSystemMsg)
     {
         txt.prepend("[SYSTEM]   ");
     }
 
+#ifdef QT_DEBUG
     txt.append(" (");
-    txt.append(QFileInfo(context.file).fileName());
+    txt.append(QFileInfo(t_context.file).fileName());
     txt.append(":");
-    txt.append(QString::number(context.line));
+    txt.append(QString::number(t_context.line));
     txt.append(")");
+#endif
 
     QTextStream(stdout) << txt << endl;
 
     QFile logFile("Launcher-log.txt");
 
-    if(logFile.open(QIODevice::WriteOnly | QIODevice::Append))
+    if (logFile.open(QIODevice::WriteOnly | QIODevice::Append))
     {
         QTextStream logStream(&logFile);
         logStream << txt << endl << flush;
@@ -90,6 +101,8 @@ int main(int argc, char* argv[])
     QDir::setCurrent(application.applicationDirPath());
 #endif
 #endif
+
+    clearPreviousLog();
 
     logInfo("Current directory - %1", .arg(QDir::current().path()));
 
@@ -122,7 +135,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    if(!launcherThread->isSuccess())
+    if (!launcherThread->noError())
     {
         QMessageBox::critical(nullptr, "Error!", "An error has occured!", QMessageBox::Ok, QMessageBox::NoButton);
     }

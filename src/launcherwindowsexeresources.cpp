@@ -1,12 +1,10 @@
 #include "launcherwindowsexeresources.h"
 #include "launcherexception.h"
-#include <stdio.h>
-#include <tchar.h>
-#include <Windows.h>
-#include <iostream>
-#include <memory>
 
 #ifdef Q_OS_WIN
+
+#include <tchar.h>
+#include <Windows.h>
 
 std::shared_ptr<QByteArray> LauncherWindowsExeResources::extract(const QString& t_executableName, int t_resourceId, int t_resourceTypeId)
 {
@@ -19,7 +17,7 @@ std::shared_ptr<QByteArray> LauncherWindowsExeResources::extract(const QString& 
 
     HRSRC resource = FindResource(executableHandle, MAKEINTRESOURCE(t_resourceId), MAKEINTRESOURCE(t_resourceTypeId));
 
-    if(resource == nullptr)
+    if (resource == nullptr)
     {
         throw LauncherException("Cannot extract resource.");
     }
@@ -47,4 +45,3 @@ std::shared_ptr<QByteArray> LauncherWindowsExeResources::extract(const QString& 
 }
 
 #endif
-

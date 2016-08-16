@@ -57,6 +57,14 @@ void PatchKitLocalPatcher::install(const QString& t_downloadedPath, int t_versio
 
     for (int i = 0; i < installationInfoFileList.size(); i++)
     {
+        QFileInfo installationFileInfo(installationInfoFileList[i]);
+
+#if defined(Q_OS_OSX) || defined(Q_OS_UNIX)
+
+        system(QString("chmod +x \"%1\"").arg(installationFileInfo.absoluteFilePath()).toStdString().c_str());
+
+#endif
+
         installationInfoFileContents += installationInfoFileList[i] + "\n";
     }
 
@@ -111,8 +119,8 @@ void PatchKitLocalPatcher::start(const LauncherData& data)
 
     logDebug("Preparing run command from format - %1 %2", .arg(exeFileName, exeArguments));
 
-    exeFileName = formatPatcherManifest(exeFileName, data.encodedApplicationSecret());
-    exeArguments = formatPatcherManifest(exeArguments, data.encodedApplicationSecret());
+    exeFileName = formatPatcherManifestString(exeFileName, data.encodedApplicationSecret());
+    exeArguments = formatPatcherManifestString(exeArguments, data.encodedApplicationSecret());
 
     logDebug("Starting process with command - %1 %2", .arg(exeFileName, exeArguments));
 
@@ -121,7 +129,7 @@ void PatchKitLocalPatcher::start(const LauncherData& data)
 
 void PatchKitLocalPatcher::cancel()
 {
-    logInfo("Cancelling remote patcher operations.");
+    logInfo("Cancelling local patcher operations.");
 
     // Currently there's no cancellation support.
 }
@@ -158,22 +166,6 @@ QString PatchKitLocalPatcher::readFileContents(const QString& t_filePath)
     file.close();
 
     return fileContents;
-}
-
-int PatchKitLocalPatcher::parseVersionInfoToNumber(const QString& t_versionInfoFileContents)
-{
-    logInfo("Parsing version info to number - %1", .arg(t_versionInfoFileContents));
-
-    bool intParseResult;
-
-    int version = t_versionInfoFileContents.toInt(&intParseResult);
-
-    if (!intParseResult)
-    {
-        throw LauncherException("Couldn't parse version info to number.");
-    }
-
-    return version;
 }
 
 bool PatchKitLocalPatcher::checkIfFilesExist(const QStringList& t_filesList)
@@ -268,15 +260,9 @@ void PatchKitLocalPatcher::extractFileZipEntry(QuaZipFile& t_zipEntry, const QSt
         throw LauncherException("Couldn't open file for extracting.");
     }
 
-    copyDeviceData(t_zipEntry, zipEntryFile);
+    copyDeviceData(reinterpret_cast<QIODevice&>(t_zipEntry), zipEntryFile);
 
     zipEntryFile.close();
-
-#if defined(Q_OS_OSX) || defined(Q_OS_UNIX)
-
-    system(QString("chmod +x \"%1\"").arg(zipEntryFileInfo.absoluteFilePath()).toStdString().c_str());
-
-#endif
 }
 
 bool PatchKitLocalPatcher::isDirZipEntry(const QString& t_zipEntryName)
@@ -297,6 +283,22 @@ void PatchKitLocalPatcher::copyDeviceData(QIODevice& readDevice, QIODevice& writ
             writeDevice.write(buffer.get(), readSize);
         }
     }
+}
+
+int PatchKitLocalPatcher::parseVersionInfoToNumber(const QString& t_versionInfoFileContents)
+{
+    logInfo("Parsing version info to number - %1", .arg(t_versionInfoFileContents));
+
+    bool intParseResult;
+
+    int version = t_versionInfoFileContents.toInt(&intParseResult);
+
+    if (!intParseResult)
+    {
+        throw LauncherException("Couldn't parse version info to number.");
+    }
+
+    return version;
 }
 
 void PatchKitLocalPatcher::readPatcherManifset(QString& t_exeFileName, QString& t_exeArguments) const
@@ -329,7 +331,7 @@ void PatchKitLocalPatcher::readPatcherManifset(QString& t_exeFileName, QString& 
     t_exeArguments = exeArgumentsJsonValue.toString();
 }
 
-QString PatchKitLocalPatcher::formatPatcherManifest(const QString& t_stringToFormat, const QByteArray& t_encodedApplicationSecret) const
+QString PatchKitLocalPatcher::formatPatcherManifestString(const QString& t_stringToFormat, const QByteArray& t_encodedApplicationSecret) const
 {
     QString result(t_stringToFormat);
 

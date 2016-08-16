@@ -27,7 +27,7 @@ public:
 
     void cancel();
 
-    bool isSuccess() const;
+    bool noError() const;
 signals:
     void statusChanged(const QString& t_status);
     void progressChanged(int t_progress);
@@ -43,8 +43,7 @@ private:
 
     void runWithData(const LauncherData& t_data);
 
-    void checkPatcher(const LauncherData& t_data);
-    bool checkPatcherFallback();
+    void updatePatcher(const LauncherData& t_data);
     void startPatcher(const LauncherData& t_data);
 
     std::shared_ptr<RemotePatcher> m_remotePatcher;
@@ -53,7 +52,7 @@ private:
     const LauncherConfiguration m_configuration;
 
     bool m_isCancelled;
-    bool m_isSuccess;
+    bool m_noError;
 
     const int downloadedProgressValue = 90;
 };

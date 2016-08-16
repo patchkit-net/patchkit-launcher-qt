@@ -34,21 +34,25 @@ void LauncherThread::run()
             logWarning("Unknown exception.");
         }
 
-        logWarning("Running with data from resources has failed. Trying to run with data form file located in current directory.");
+        logWarning("Running with data from resources has failed. Trying to run with data from file located in current directory.");
 #endif
 
         runWithDataFromFile();
+        m_noError = true;
     }
     catch (LauncherCancelledException&)
     {
-        logWarning("Launcher has been canceled.");
+        m_noError = true;
+        logInfo("Launcher has been canceled.");
     }
     catch (QException& exception)
     {
+        m_noError = false;
         logCritical(exception.what());
     }
     catch (...)
     {
+        m_noError = false;
         logCritical("Unknown exception.");
     }
 }
@@ -60,7 +64,7 @@ LauncherThread::LauncherThread(const LauncherConfiguration& t_configuration,
     m_localPatcher(t_localPatcher),
     m_configuration(t_configuration),
     m_isCancelled(false),
-    m_isSuccess(false)
+    m_noError(false)
 {
     logDebug("Moving m_remotePatcher and m_localPatcher to launcher thread.");
     m_remotePatcher->moveToThread(this);
@@ -80,9 +84,9 @@ void LauncherThread::cancel()
     QMetaObject::invokeMethod(m_localPatcher.get(), "cancel");
 }
 
-bool LauncherThread::isSuccess() const
+bool LauncherThread::noError() const
 {
-    return m_isSuccess;
+    return m_noError;
 }
 
 void LauncherThread::setDownloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes)
@@ -101,8 +105,8 @@ void LauncherThread::runWithDataFromResource()
     logInfo("Starting launcher with data from resource.");
 
     LauncherData data = LauncherData::loadFromResource(m_configuration.applicationFilePath,
-                                                        m_configuration.dataResourceId,
-                                                        m_configuration.dataResourceTypeId);
+                                                       m_configuration.dataResourceId,
+                                                       m_configuration.dataResourceTypeId);
 
     runWithData(data);
 }
@@ -113,31 +117,43 @@ void LauncherThread::runWithDataFromFile()
 {
     logInfo("Starting launcher with data from file.");
 
-    LauncherData data =  LauncherData::loadFromFile(m_configuration.dataFileName);
+    LauncherData data = LauncherData::loadFromFile(m_configuration.dataFileName);
 
     runWithData(data);
 }
 
-void LauncherThread::runWithData(const LauncherData &t_data)
+void LauncherThread::runWithData(const LauncherData& t_data)
 {
     logInfo("Starting launcher.");
 
     try
     {
-        checkPatcher(t_data);
+        updatePatcher(t_data);
     }
-    catch(QException& exception)
+    catch(LauncherCancelledException&)
     {
-        logWarning(exception.what());
-        if(!checkPatcherFallback())
+        throw;
+    }
+    catch (QException& exception)
+    {
+        if (m_localPatcher->isInstalled())
+        {
+            logWarning(exception.what());
+            logWarning("Updating patcher failed but previous patcher is still available.");
+        }
+        else
         {
             throw;
         }
     }
-    catch(...)
+    catch (...)
     {
-        logWarning("Unknown exception.");
-        if(!checkPatcherFallback())
+        if (m_localPatcher->isInstalled())
+        {
+            logWarning("Unknown exception.");
+            logWarning("Updating patcher failed but previous patcher is still available.");
+        }
+        else
         {
             throw;
         }
@@ -146,9 +162,9 @@ void LauncherThread::runWithData(const LauncherData &t_data)
     startPatcher(t_data);
 }
 
-void LauncherThread::checkPatcher(const LauncherData &t_data)
+void LauncherThread::updatePatcher(const LauncherData& t_data)
 {
-    logInfo("Checking patcher.");
+    logInfo("Updating patcher.");
 
     int version = m_remotePatcher->getVersion(t_data);
     logDebug("Current remote patcher version - %1", .arg(QString::number(version)));
@@ -192,28 +208,11 @@ void LauncherThread::checkPatcher(const LauncherData &t_data)
     }
 }
 
-bool LauncherThread::checkPatcherFallback()
-{
-    logInfo("Trying to use previous patcher installation.");
-
-    if (m_localPatcher->isInstalled())
-    {
-        logInfo("Success - found previous patcher installation.");
-        return true;
-    }
-    else
-    {
-        logWarning("Failure - no previous patcher installation.");
-        return false;
-    }
-}
-
-void LauncherThread::startPatcher(const LauncherData &t_data)
+void LauncherThread::startPatcher(const LauncherData& t_data)
 {
     logInfo("Starting patcher.");
 
     emit statusChanged(QString("Starting..."));
 
     m_localPatcher->start(t_data);
-    m_isSuccess = true;
 }
