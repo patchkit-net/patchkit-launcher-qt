@@ -24,7 +24,14 @@ bool PatchKitLocalPatcher::isInstalled()
     filesToCheck << versionInfoFilePath;
     filesToCheck << manifestFilePath;
 
-    return checkIfFilesExist(filesToCheck);
+    if(checkIfFilesExist(filesToCheck))
+    {
+        QStringList installFiles = readFileContents(installationInfoFilePath).split(QChar('\n'));
+
+        return checkIfFilesExist(installFiles);
+    }
+
+    return false;
 }
 
 int PatchKitLocalPatcher::getVersion()
