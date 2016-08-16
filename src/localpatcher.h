@@ -29,6 +29,7 @@ public:
     // Can assume that patcher is installed.
     virtual void start(const LauncherData& t_data) = 0;
 
+public slots:
     // Cancels any above operation. If cancellation is successful, LauncherCancelledException is thrown by the operation.
     virtual void cancel() = 0;
 };

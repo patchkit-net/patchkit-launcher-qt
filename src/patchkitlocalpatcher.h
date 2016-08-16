@@ -21,6 +21,7 @@ public:
 
     void start(const LauncherData& t_data) override;
 
+public slots:
     void cancel() override;
 
 private:

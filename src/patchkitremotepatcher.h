@@ -21,6 +21,7 @@ public:
 
     QString download(const LauncherData& t_data, int t_version) override;
 
+public slots:
     void cancel() override;
 
 signals:

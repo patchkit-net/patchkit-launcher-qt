@@ -19,6 +19,7 @@ public:
 
     virtual QString download(const LauncherData& t_data, int t_version) = 0;
 
+public slots:
     // Cancels any above operation. If cancellation is successful, LauncherCancelledException is thrown by the operation.
     virtual void cancel() = 0;
 
