@@ -72,7 +72,12 @@ void PatchKitLocalPatcher::install(const QString& t_downloadedPath, int t_versio
 
 #endif
 
-        installationInfoFileContents += installationInfoFileList[i] + "\n";
+        installationInfoFileContents += installationInfoFileList[i];
+
+        if(i != installationInfoFileList.size() - 1)
+        {
+            installationInfoFileContents += "\n";
+        }
     }
 
     writeFileContents(installationInfoFilePath, installationInfoFileContents);
@@ -94,21 +99,19 @@ void PatchKitLocalPatcher::uninstall()
 
         for (int i = 0; i < installFiles.size(); i++)
         {
-            QString fileFullPath = QDir::cleanPath(patcherDirectoryPath + "/" + installFiles[i]);
-
-            QFileInfo fileInfo(fileFullPath);
+            QFileInfo fileInfo(installFiles[i]);
 
             if (fileInfo.exists())
             {
                 if (fileInfo.isFile())
                 {
-                    logInfo("Deleting file %1", .arg(fileFullPath));
-                    QFile::remove(fileFullPath);
+                    logInfo("Deleting file %1", .arg(installFiles[i]));
+                    QFile::remove(installFiles[i]);
                 }
                 else if (fileInfo.isDir())
                 {
-                    logInfo("Deleting directory %1", .arg(fileFullPath));
-                    QDir(fileFullPath).removeRecursively();
+                    logInfo("Deleting directory %1", .arg(installFiles[i]));
+                    QDir(installFiles[i]).removeRecursively();
                 }
             }
         }
@@ -237,7 +240,7 @@ void PatchKitLocalPatcher::extractZip(const QString& t_zipFilePath, const QStrin
             extractFileZipEntry(zipEntry, zipEntryPath);
         }
 
-        t_extractedFilesList.append(zipEntryName);
+        t_extractedFilesList.append(zipEntryPath);
     }
     while (zipFile.goToNextFile());
 
