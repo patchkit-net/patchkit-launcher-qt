@@ -31,7 +31,7 @@ QString PatchKitRemotePatcher::download(const LauncherData& t_data, int t_versio
 
     for (int i = 0; i < contentUrls.size(); i++)
     {
-        if(m_isCancelled)
+        if (m_isCancelled)
         {
             throw LauncherCancelledException();
         }
@@ -44,7 +44,7 @@ QString PatchKitRemotePatcher::download(const LauncherData& t_data, int t_versio
         {
             downloadFile(filePath, contentUrls[i]);
         }
-        catch(LauncherCancelledException&)
+        catch (LauncherCancelledException&)
         {
             throw;
         }

@@ -10,7 +10,7 @@
 QString logFilePath;
 QStringList logHistory;
 
-const char *resolveMessageType(QtMsgType t_type)
+const char* resolveMessageType(QtMsgType t_type)
 {
     if (t_type == QtDebugMsg)
     {
@@ -77,7 +77,7 @@ void LauncherLog::setupLogFile(const QString& t_logFilePath)
     static QString lastLogFilePath;
     static bool isLogInitialized = false;
 
-    if(!isLogInitialized)
+    if (!isLogInitialized)
     {
         qInstallMessageHandler(logHandler);
         isLogInitialized = true;

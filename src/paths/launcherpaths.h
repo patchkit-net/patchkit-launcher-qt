@@ -73,7 +73,7 @@ public:
     {
         return QDir::cleanPath(currentDirPath() + "/" + LauncherConfiguration::applicationDirectoryName);
     }
-    
+
 private:
     static QString m_applicationFilePath;
     static QString m_applicationDirPath;

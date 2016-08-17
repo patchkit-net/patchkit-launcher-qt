@@ -24,7 +24,7 @@ bool PatchKitLocalPatcher::isInstalled()
     filesToCheck << LauncherPaths::patcherVersionInfoFilePath();
     filesToCheck << LauncherPaths::patcherManifestFilePath();
 
-    if(checkIfFilesExist(filesToCheck))
+    if (checkIfFilesExist(filesToCheck))
     {
         QStringList installFiles = readFileContents(LauncherPaths::patcherInstallationInfoFilePath()).split(QChar('\n'));
 
@@ -74,7 +74,7 @@ void PatchKitLocalPatcher::install(const QString& t_downloadedPath, int t_versio
 
         installationInfoFileContents += installationInfoFileList[i];
 
-        if(i != installationInfoFileList.size() - 1)
+        if (i != installationInfoFileList.size() - 1)
         {
             installationInfoFileContents += "\n";
         }

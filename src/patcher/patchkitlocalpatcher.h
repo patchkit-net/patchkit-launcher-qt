@@ -55,5 +55,5 @@ private:
                              QString& t_exeArguments) const;
 
     QString formatPatcherManifestString(const QString& t_stringToFormat,
-                                  const QByteArray& t_encodedApplicationSecret) const;
+                                        const QByteArray& t_encodedApplicationSecret) const;
 };
