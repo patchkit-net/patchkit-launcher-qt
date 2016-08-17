@@ -48,8 +48,8 @@ private:
     static void writeDownloadedReplyToFile(std::shared_ptr<QNetworkReply>& t_reply, const QString& t_filePath);
 
     void getNetworkReply(const QString& t_urlPath,
-        std::shared_ptr<QNetworkAccessManager>& t_accessManager,
-        std::shared_ptr<QNetworkReply>& t_reply) const;
+                         std::shared_ptr<QNetworkAccessManager>& t_accessManager,
+                         std::shared_ptr<QNetworkReply>& t_reply) const;
 
     void waitForNetworkReply(std::shared_ptr<QNetworkReply>& t_reply) const;
 

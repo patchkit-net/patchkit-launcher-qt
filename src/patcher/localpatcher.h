@@ -46,8 +46,8 @@ private:
     static void createDirIfNotExists(const QString& t_dirPath);
 
     static void extractZip(const QString& t_zipFilePath,
-        const QString& t_extractDirPath,
-        QStringList& t_extractedEntriesList);
+                           const QString& t_extractDirPath,
+                           QStringList& t_extractedEntriesList);
 
     static void extractDirZipEntry(const QString& t_zipEntryPath);
 
@@ -62,8 +62,8 @@ private:
     static int parseVersionInfoToNumber(const QString& t_versionInfoFileContents);
 
     void readPatcherManifset(QString& t_exeFileName,
-        QString& t_exeArguments) const;
+                             QString& t_exeArguments) const;
 
     QString formatPatcherManifestString(const QString& t_stringToFormat,
-        const QByteArray& t_encodedApplicationSecret) const;
+                                        const QByteArray& t_encodedApplicationSecret) const;
 };

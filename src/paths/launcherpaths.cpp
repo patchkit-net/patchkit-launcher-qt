@@ -4,6 +4,7 @@
 */
 
 #include "launcherpaths.h"
+#include <QApplication>
 
 QString LauncherPaths::m_applicationFilePath;
 QString LauncherPaths::m_applicationDirPath;

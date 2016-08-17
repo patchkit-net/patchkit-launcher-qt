@@ -8,7 +8,6 @@
 #include "launcherconfiguration.h"
 #include "launcherlog.h"
 #include <QDir>
-#include <QApplication>
 
 class LauncherPaths
 {

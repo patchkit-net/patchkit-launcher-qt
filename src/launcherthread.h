@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include <memory>
-
 #include "launcherdata.h"
 #include "remotepatcher.h"
 #include "localpatcher.h"
