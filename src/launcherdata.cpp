@@ -15,15 +15,15 @@ LauncherData::LauncherData()
 {
 }
 
-LauncherData LauncherData::loadFromFile(const QString& t_fileName)
+LauncherData LauncherData::loadFromFile(const QString& t_filePath)
 {
-    logInfo("Loading launcher data from file %1", .arg(t_fileName));
+    logInfo("Loading launcher data from file %1", .arg(t_filePath));
 
-    QFile file(t_fileName);
+    QFile file(t_filePath);
 
     if (!file.open(QFile::ReadOnly))
     {
-        throw LauncherException(QString("Couldn't open launcher data file from %1").arg(t_fileName));
+        throw LauncherException(QString("Couldn't open launcher data file from %1").arg(t_filePath));
     }
 
     QDataStream fileStream(&file);
@@ -66,8 +66,8 @@ LauncherData::LauncherData(const QByteArray& t_encodedPatcherSecret, const QByte
     m_encodedPatcherSecret(t_encodedPatcherSecret),
     m_encodedApplicationSecret(t_encodedApplicationSecret)
 {
-    m_patcherSecret = decodeSecret(m_encodedPatcherSecret);
-    m_applicationSecret = decodeSecret(m_encodedApplicationSecret);
+    m_patcherSecret = decodeString(m_encodedPatcherSecret);
+    m_applicationSecret = decodeString(m_encodedApplicationSecret);
 }
 
 QByteArray LauncherData::readStringBytes(QDataStream& t_dataStream)
@@ -89,7 +89,7 @@ QByteArray LauncherData::readStringBytes(QDataStream& t_dataStream)
     return bytes;
 }
 
-QString LauncherData::decodeSecret(const QByteArray& t_encodedSecret)
+QString LauncherData::decodeString(const QByteArray& t_encodedSecret)
 {
     std::unique_ptr<char> temp(new char[t_encodedSecret.size()]);
     memcpy(temp.get(), t_encodedSecret.data(), t_encodedSecret.size());

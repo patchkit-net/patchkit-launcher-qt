@@ -7,12 +7,18 @@
 
 #include <QString>
 
-struct LauncherConfiguration
+class LauncherConfiguration
 {
-    explicit LauncherConfiguration(const QString& t_dataFileName, const QString& t_applicationFilePath, int t_dataResourceId, int t_dataResourceTypeId);
+public:
+    const static QString logFileName;
+    const static QString dataFileName;
+    const static int dataResourceId;
+    const static int dataResourceTypeId;
 
-    const QString dataFileName;
-    const QString applicationFilePath;
-    const int dataResourceId;
-    const int dataResourceTypeId;
+    const static QString patcherDirectoryName;
+    const static QString patcherInstallationInfoFileName;
+    const static QString patcherVersionInfoFileName;
+    const static QString patcherManifestFileName;
+
+    const static QString applicationDirectoryName;
 };

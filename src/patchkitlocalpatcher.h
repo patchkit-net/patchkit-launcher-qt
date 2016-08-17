@@ -56,12 +56,4 @@ private:
 
     QString formatPatcherManifestString(const QString& t_stringToFormat,
                                   const QByteArray& t_encodedApplicationSecret) const;
-
-    const QString patcherDirectoryPath = "patcher";
-    const QString installationInfoFilePath = patcherDirectoryPath + "/install_info";
-    const QString versionInfoFilePath = patcherDirectoryPath + "/version_info";
-    const QString manifestFilePath = patcherDirectoryPath + "/patcher.manifest";
-
-    // Note that this path is relative to patcherDirectoryPath.
-    const QString installationDirectoryPath = "../app";
 };

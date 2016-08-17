@@ -9,6 +9,8 @@
 #include "launcherexception.h"
 #include "launchercancelledexception.h"
 #include "launcherlog.h"
+#include "launcherpaths.h"
+#include <qstandardpaths.h>
 
 
 void LauncherThread::run()
@@ -57,12 +59,10 @@ void LauncherThread::run()
     }
 }
 
-LauncherThread::LauncherThread(const LauncherConfiguration& t_configuration,
-                               std::shared_ptr<RemotePatcher> t_remotePatcher,
+LauncherThread::LauncherThread(std::shared_ptr<RemotePatcher> t_remotePatcher,
                                std::shared_ptr<LocalPatcher> t_localPatcher) :
     m_remotePatcher(t_remotePatcher),
     m_localPatcher(t_localPatcher),
-    m_configuration(t_configuration),
     m_isCancelled(false),
     m_noError(false)
 {
@@ -104,9 +104,9 @@ void LauncherThread::runWithDataFromResource()
 {
     logInfo("Starting launcher with data from resource.");
 
-    LauncherData data = LauncherData::loadFromResource(m_configuration.applicationFilePath,
-                                                       m_configuration.dataResourceId,
-                                                       m_configuration.dataResourceTypeId);
+    LauncherData data = LauncherData::loadFromResource(LauncherPaths::applicationFilePath(),
+                                                       LauncherConfiguration::dataResourceId,
+                                                       LauncherConfiguration::dataResourceTypeId);
 
     runWithData(data);
 }
@@ -117,20 +117,24 @@ void LauncherThread::runWithDataFromFile()
 {
     logInfo("Starting launcher with data from file.");
 
-    LauncherData data = LauncherData::loadFromFile(m_configuration.dataFileName);
+    LauncherData data = LauncherData::loadFromFile(LauncherPaths::dataFilePath());
 
     runWithData(data);
 }
 
 void LauncherThread::runWithData(const LauncherData& t_data)
 {
-    logInfo("Starting launcher.");
-
     try
     {
+        logInfo("Starting launcher.");
+
+        setupCurrentDirectory(t_data);
+
+        logInfo("Current directory set to - %1", .arg(LauncherPaths::currentDirPath()));
+
         updatePatcher(t_data);
     }
-    catch(LauncherCancelledException&)
+    catch (LauncherCancelledException&)
     {
         throw;
     }
@@ -160,6 +164,45 @@ void LauncherThread::runWithData(const LauncherData& t_data)
     }
 
     startPatcher(t_data);
+}
+
+void LauncherThread::setupCurrentDirectory(const LauncherData& t_data) const
+{
+    logInfo("Setting current directory.");
+
+#if defined(Q_OS_OSX)
+    QDir resourcesDir(LauncherPaths::applicationDirPath());
+    resourcesDir.cdUp();
+
+	if(!resourcesDir.exists("Resources"))
+	{
+		resourcesDir.mkdir("Resources");
+	}
+    resourcesDir.cd("Resources");
+
+    LauncherPaths::setCurrentDirPath(resourcesDir.absolutePath());
+#elif defined(Q_OS_WIN)
+
+    QString appDataDirName = t_data.applicationSecret().mid(0, 16);
+
+    // TODO: HACK - QStandardPaths is using <APPNAME> as part of the QStandardPaths::AppDataLocation path. Because default name of application is "Launcher" we need to temporarly change it to the unique identifier of application.
+
+    QString previousApplicationName = QCoreApplication::applicationName();
+    QCoreApplication::setApplicationName(appDataDirName);
+
+    QDir appDataDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+
+    QCoreApplication::setApplicationName(previousApplicationName);
+
+    if (!appDataDir.exists())
+    {
+        appDataDir.mkpath(".");
+    }
+
+    LauncherPaths::setCurrentDirPath(appDataDir.absolutePath());
+#else
+    LauncherPaths::setCurrentDirPath(LauncherPaths::applicationDirPath());
+#endif
 }
 
 void LauncherThread::updatePatcher(const LauncherData& t_data)

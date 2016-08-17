@@ -4,13 +4,13 @@
 #include <QJsonValue>
 #include "quazip.h"
 #include "quazipfile.h"
-#include <QDir>
 #include <QProcess>
 #include <memory>
 
 #include "patchkitlocalpatcher.h"
 #include "launcherexception.h"
 #include "launcherlog.h"
+#include "launcherpaths.h"
 #include <qtextstream.h>
 
 
@@ -20,13 +20,13 @@ bool PatchKitLocalPatcher::isInstalled()
 
     QStringList filesToCheck;
 
-    filesToCheck << installationInfoFilePath;
-    filesToCheck << versionInfoFilePath;
-    filesToCheck << manifestFilePath;
+    filesToCheck << LauncherPaths::patcherInstallationInfoFilePath();
+    filesToCheck << LauncherPaths::patcherVersionInfoFilePath();
+    filesToCheck << LauncherPaths::patcherManifestFilePath();
 
     if(checkIfFilesExist(filesToCheck))
     {
-        QStringList installFiles = readFileContents(installationInfoFilePath).split(QChar('\n'));
+        QStringList installFiles = readFileContents(LauncherPaths::patcherInstallationInfoFilePath()).split(QChar('\n'));
 
         return checkIfFilesExist(installFiles);
     }
@@ -38,7 +38,7 @@ int PatchKitLocalPatcher::getVersion()
 {
     logInfo("Reading version info of installed patcher.");
 
-    QString versionInfoFileContents = readFileContents(versionInfoFilePath);
+    QString versionInfoFileContents = readFileContents(LauncherPaths::patcherVersionInfoFilePath());
 
     int version = parseVersionInfoToNumber(versionInfoFileContents);
 
@@ -49,16 +49,16 @@ void PatchKitLocalPatcher::install(const QString& t_downloadedPath, int t_versio
 {
     logInfo("Installing patcher (version %1) from downloaded zip - %2", .arg(QString::number(t_version), t_downloadedPath));
 
-    createDirIfNotExists(patcherDirectoryPath);
+    createDirIfNotExists(LauncherPaths::patcherDirectoryPath());
 
     QStringList installationInfoFileList;
 
-    extractZip(t_downloadedPath, patcherDirectoryPath, installationInfoFileList);
+    extractZip(t_downloadedPath, LauncherPaths::patcherDirectoryPath(), installationInfoFileList);
 
-    installationInfoFileList.append(installationInfoFilePath);
-    installationInfoFileList.append(versionInfoFilePath);
+    installationInfoFileList.append(LauncherPaths::patcherInstallationInfoFilePath());
+    installationInfoFileList.append(LauncherPaths::patcherVersionInfoFilePath());
 
-    writeFileContents(versionInfoFilePath, QString::number(t_version));
+    writeFileContents(LauncherPaths::patcherVersionInfoFilePath(), QString::number(t_version));
 
     QString installationInfoFileContents = "";
 
@@ -80,7 +80,7 @@ void PatchKitLocalPatcher::install(const QString& t_downloadedPath, int t_versio
         }
     }
 
-    writeFileContents(installationInfoFilePath, installationInfoFileContents);
+    writeFileContents(LauncherPaths::patcherInstallationInfoFilePath(), installationInfoFileContents);
 
     QFile::remove(t_downloadedPath);
 }
@@ -89,13 +89,13 @@ void PatchKitLocalPatcher::uninstall()
 {
     logInfo("Uninstalling patcher.");
 
-    if (!QFile::exists(installationInfoFilePath))
+    if (!QFile::exists(LauncherPaths::patcherInstallationInfoFilePath()))
     {
         logWarning("Missing installation info!");
     }
     else
     {
-        QStringList installFiles = readFileContents(installationInfoFilePath).split(QChar('\n'));
+        QStringList installFiles = readFileContents(LauncherPaths::patcherInstallationInfoFilePath()).split(QChar('\n'));
 
         for (int i = 0; i < installFiles.size(); i++)
         {
@@ -315,7 +315,7 @@ void PatchKitLocalPatcher::readPatcherManifset(QString& t_exeFileName, QString& 
 {
     logInfo("Reading patcher manifest.");
 
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(readFileContents(manifestFilePath).toUtf8());
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(readFileContents(LauncherPaths::patcherManifestFilePath()).toUtf8());
 
     if (!jsonDocument.isObject())
     {
@@ -347,8 +347,8 @@ QString PatchKitLocalPatcher::formatPatcherManifestString(const QString& t_strin
 
     QString applicationSecret = QString::fromUtf8(t_encodedApplicationSecret.toBase64());
 
-    result = result.replace("{installdir}", installationDirectoryPath);
-    result = result.replace("{exedir}", patcherDirectoryPath);
+    result = result.replace("{installdir}", LauncherPaths::applicationInstallationDirPath());
+    result = result.replace("{exedir}", LauncherPaths::patcherDirectoryPath());
     result = result.replace("{secret}", applicationSecret);
 
     return result;

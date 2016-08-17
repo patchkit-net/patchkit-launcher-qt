@@ -5,10 +5,14 @@
 
 #include "launcherconfiguration.h"
 
-LauncherConfiguration::LauncherConfiguration(const QString& t_dataFileName, const QString& t_applicationFilePath, int t_dataResourceId, int t_dataResourceTypeId) :
-    dataFileName(t_dataFileName),
-    applicationFilePath(t_applicationFilePath),
-    dataResourceId(t_dataResourceId),
-    dataResourceTypeId(t_dataResourceTypeId)
-{
-}
+const QString LauncherConfiguration::logFileName = "launcher-log.txt";
+const QString LauncherConfiguration::dataFileName = "launcher.dat";
+const int LauncherConfiguration::dataResourceId = 3151;
+const int LauncherConfiguration::dataResourceTypeId = 10;
+
+const QString LauncherConfiguration::patcherDirectoryName = "patcher";
+const QString LauncherConfiguration::patcherInstallationInfoFileName = "install_info";
+const QString LauncherConfiguration::patcherVersionInfoFileName = "version_info";
+const QString LauncherConfiguration::patcherManifestFileName = "patcher.manifest";
+
+const QString LauncherConfiguration::applicationDirectoryName = "app";

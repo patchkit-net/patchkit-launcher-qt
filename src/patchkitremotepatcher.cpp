@@ -16,7 +16,7 @@ PatchKitRemotePatcher::PatchKitRemotePatcher() :
 
 int PatchKitRemotePatcher::getVersion(const LauncherData& t_data)
 {
-    logInfo("Fetching newest patcher version from http://api.patchkit.net/1/apps/%1/versions/latest/id", .arg(safeSecretLog(t_data.patcherSecret())));
+    logInfo("Fetching newest patcher version from http://api.patchkit.net/1/apps/%1/versions/latest/id", .arg(LauncherLog::adjustSecretForLog(t_data.patcherSecret())));
 
     QString json = downloadString(QString("http://api.patchkit.net/1/apps/%1/versions/latest/id").arg(t_data.patcherSecret()));
 
@@ -84,7 +84,7 @@ void PatchKitRemotePatcher::cancel()
 
 QStringList PatchKitRemotePatcher::getContentUrls(const QString& t_patcherSecret, int t_version) const
 {
-    logInfo("Fetching patcher content urls from http://api.patchkit.net/1/apps/%1/versions/%2/content_urls",.arg(safeSecretLog(t_patcherSecret),
+    logInfo("Fetching patcher content urls from http://api.patchkit.net/1/apps/%1/versions/%2/content_urls",.arg(LauncherLog::adjustSecretForLog(t_patcherSecret),
         QString::number(t_version)));
 
     QString json = downloadString(QString("http://api.patchkit.net/1/apps/%1/versions/%2/content_urls").arg(t_patcherSecret, QString::number(t_version)));

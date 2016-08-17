@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <QString>
+#include <qtextstream.h>
 
 #define logStringFormat(message, ...) QString(message)__VA_ARGS__.toStdString().c_str()
 
@@ -14,17 +14,11 @@
 #define logWarning(message, ...) qWarning(logStringFormat(message, ##__VA_ARGS__))
 #define logCritical(message, ...) qCritical(logStringFormat(message, ##__VA_ARGS__))
 
-inline QString safeSecretLog(const QString &secret)
+class LauncherLog
 {
-    QString result = secret;
-    result.chop(2);
-    result = result.remove(0, 2);
-    result = result.append("..");
-    result = result.prepend("..");
-    return result;
-}
+public:
+    static void setupLogFile(const QString& t_logFilePath);
 
-inline QString safeSecretLog(const char* secret)
-{
-    return safeSecretLog(QString(secret));
-}
+    static QString adjustSecretForLog(const QString& t_secret);
+    static QString adjustSecretForLog(const char* t_secret);
+};

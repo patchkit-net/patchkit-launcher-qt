@@ -9,7 +9,6 @@
 #include <memory>
 
 #include "launcherdata.h"
-#include "launcherconfiguration.h"
 #include "remotepatcher.h"
 #include "localpatcher.h"
 
@@ -21,8 +20,7 @@ class LauncherThread : public QThread
 
 public:
     // Note that t_remotePatcher and t_localPatcher are automaticaly moved to this thread - their usage outside of this thread is forbidden.
-    LauncherThread(const LauncherConfiguration& t_configuration,
-                   std::shared_ptr<RemotePatcher> t_remotePatcher,
+    LauncherThread(std::shared_ptr<RemotePatcher> t_remotePatcher,
                    std::shared_ptr<LocalPatcher> t_localPatcher);
 
     void cancel();
@@ -43,13 +41,13 @@ private:
 
     void runWithData(const LauncherData& t_data);
 
+    void setupCurrentDirectory(const LauncherData& t_data) const;
+
     void updatePatcher(const LauncherData& t_data);
     void startPatcher(const LauncherData& t_data);
 
     std::shared_ptr<RemotePatcher> m_remotePatcher;
     std::shared_ptr<LocalPatcher> m_localPatcher;
-
-    const LauncherConfiguration m_configuration;
 
     bool m_isCancelled;
     bool m_noError;
