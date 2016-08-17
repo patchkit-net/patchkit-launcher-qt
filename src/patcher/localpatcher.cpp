@@ -7,14 +7,14 @@
 #include <QProcess>
 #include <memory>
 
-#include "patchkitlocalpatcher.h"
+#include "localpatcher.h"
 #include "launcherexception.h"
 #include "launcherlog.h"
 #include "launcherpaths.h"
 #include <qtextstream.h>
 
 
-bool PatchKitLocalPatcher::isInstalled()
+bool LocalPatcher::isInstalled()
 {
     logInfo("Checking whether patcher is installed.");
 
@@ -34,7 +34,7 @@ bool PatchKitLocalPatcher::isInstalled()
     return false;
 }
 
-int PatchKitLocalPatcher::getVersion()
+int LocalPatcher::getVersion()
 {
     logInfo("Reading version info of installed patcher.");
 
@@ -45,7 +45,7 @@ int PatchKitLocalPatcher::getVersion()
     return version;
 }
 
-void PatchKitLocalPatcher::install(const QString& t_downloadedPath, int t_version)
+void LocalPatcher::install(const QString& t_downloadedPath, int t_version)
 {
     logInfo("Installing patcher (version %1) from downloaded zip - %2", .arg(QString::number(t_version), t_downloadedPath));
 
@@ -85,7 +85,7 @@ void PatchKitLocalPatcher::install(const QString& t_downloadedPath, int t_versio
     QFile::remove(t_downloadedPath);
 }
 
-void PatchKitLocalPatcher::uninstall()
+void LocalPatcher::uninstall()
 {
     logInfo("Uninstalling patcher.");
 
@@ -118,7 +118,7 @@ void PatchKitLocalPatcher::uninstall()
     }
 }
 
-void PatchKitLocalPatcher::start(const LauncherData& data)
+void LocalPatcher::start(const LauncherData& data)
 {
     logInfo("Starting patcher.");
 
@@ -137,14 +137,14 @@ void PatchKitLocalPatcher::start(const LauncherData& data)
     QProcess::startDetached(exeFileName + " " + exeArguments);
 }
 
-void PatchKitLocalPatcher::cancel()
+void LocalPatcher::cancel()
 {
     logInfo("Cancelling local patcher operations.");
 
     // Currently there's no cancellation support.
 }
 
-void PatchKitLocalPatcher::writeFileContents(const QString& t_filePath, const QString& t_fileContents)
+void LocalPatcher::writeFileContents(const QString& t_filePath, const QString& t_fileContents)
 {
     logInfo("Writing file contents to %1", .arg(t_filePath));
 
@@ -160,7 +160,7 @@ void PatchKitLocalPatcher::writeFileContents(const QString& t_filePath, const QS
     file.close();
 }
 
-QString PatchKitLocalPatcher::readFileContents(const QString& t_filePath)
+QString LocalPatcher::readFileContents(const QString& t_filePath)
 {
     logInfo("Reading file contents from %1", .arg(t_filePath));
 
@@ -178,7 +178,7 @@ QString PatchKitLocalPatcher::readFileContents(const QString& t_filePath)
     return fileContents;
 }
 
-bool PatchKitLocalPatcher::checkIfFilesExist(const QStringList& t_filesList)
+bool LocalPatcher::checkIfFilesExist(const QStringList& t_filesList)
 {
     logInfo("Checking whether files from list exists.");
 
@@ -196,7 +196,7 @@ bool PatchKitLocalPatcher::checkIfFilesExist(const QStringList& t_filesList)
     return true;
 }
 
-void PatchKitLocalPatcher::createDirIfNotExists(const QString& t_dirPath)
+void LocalPatcher::createDirIfNotExists(const QString& t_dirPath)
 {
     logInfo("Creating directory - %1", .arg(t_dirPath));
 
@@ -211,7 +211,7 @@ void PatchKitLocalPatcher::createDirIfNotExists(const QString& t_dirPath)
     }
 }
 
-void PatchKitLocalPatcher::extractZip(const QString& t_zipFilePath, const QString& t_extractDirPath, QStringList& t_extractedFilesList)
+void LocalPatcher::extractZip(const QString& t_zipFilePath, const QString& t_extractDirPath, QStringList& t_extractedFilesList)
 {
     logInfo("Extracting zip file - %1", .arg(t_zipFilePath));
 
@@ -247,12 +247,12 @@ void PatchKitLocalPatcher::extractZip(const QString& t_zipFilePath, const QStrin
     zipFile.close();
 }
 
-void PatchKitLocalPatcher::extractDirZipEntry(const QString& t_zipEntryPath)
+void LocalPatcher::extractDirZipEntry(const QString& t_zipEntryPath)
 {
     createDirIfNotExists(t_zipEntryPath);
 }
 
-void PatchKitLocalPatcher::extractFileZipEntry(QuaZipFile& t_zipEntry, const QString& t_zipEntryPath)
+void LocalPatcher::extractFileZipEntry(QuaZipFile& t_zipEntry, const QString& t_zipEntryPath)
 {
     if (!t_zipEntry.open(QIODevice::ReadOnly) || t_zipEntry.getZipError() != UNZ_OK)
     {
@@ -275,12 +275,12 @@ void PatchKitLocalPatcher::extractFileZipEntry(QuaZipFile& t_zipEntry, const QSt
     zipEntryFile.close();
 }
 
-bool PatchKitLocalPatcher::isDirZipEntry(const QString& t_zipEntryName)
+bool LocalPatcher::isDirZipEntry(const QString& t_zipEntryName)
 {
     return t_zipEntryName.endsWith('/') || t_zipEntryName.endsWith('\\');
 }
 
-void PatchKitLocalPatcher::copyDeviceData(QIODevice& readDevice, QIODevice& writeDevice)
+void LocalPatcher::copyDeviceData(QIODevice& readDevice, QIODevice& writeDevice)
 {
     qint64 bufferSize = 4096;
     std::unique_ptr<char> buffer(new char[bufferSize]);
@@ -295,7 +295,7 @@ void PatchKitLocalPatcher::copyDeviceData(QIODevice& readDevice, QIODevice& writ
     }
 }
 
-int PatchKitLocalPatcher::parseVersionInfoToNumber(const QString& t_versionInfoFileContents)
+int LocalPatcher::parseVersionInfoToNumber(const QString& t_versionInfoFileContents)
 {
     logInfo("Parsing version info to number - %1", .arg(t_versionInfoFileContents));
 
@@ -311,7 +311,7 @@ int PatchKitLocalPatcher::parseVersionInfoToNumber(const QString& t_versionInfoF
     return version;
 }
 
-void PatchKitLocalPatcher::readPatcherManifset(QString& t_exeFileName, QString& t_exeArguments) const
+void LocalPatcher::readPatcherManifset(QString& t_exeFileName, QString& t_exeArguments) const
 {
     logInfo("Reading patcher manifest.");
 
@@ -341,7 +341,7 @@ void PatchKitLocalPatcher::readPatcherManifset(QString& t_exeFileName, QString& 
     t_exeArguments = exeArgumentsJsonValue.toString();
 }
 
-QString PatchKitLocalPatcher::formatPatcherManifestString(const QString& t_stringToFormat, const QByteArray& t_encodedApplicationSecret) const
+QString LocalPatcher::formatPatcherManifestString(const QString& t_stringToFormat, const QByteArray& t_encodedApplicationSecret) const
 {
     QString result(t_stringToFormat);
 

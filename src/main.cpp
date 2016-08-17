@@ -7,8 +7,6 @@
 #include "launcherpaths.h"
 #include "mainwindow.h"
 #include "launcherthread.h"
-#include "patchkitlocalpatcher.h"
-#include "patchkitremotepatcher.h"
 #include "launcherlog.h"
 #include <QtMessageHandler>
 #include <QMessageBox>
@@ -20,11 +18,7 @@ int main(int argc, char* argv[])
 
     LauncherPaths::initialize();
 
-    //TODO: Delete RemotePatcher and LocalPatcher - use only PatchKitRemotePatcher and PatchKitLocalPatcher.
-    std::shared_ptr<RemotePatcher> remotePatcher(new PatchKitRemotePatcher());
-    std::shared_ptr<LocalPatcher> localPatcher(new PatchKitLocalPatcher());
-
-    std::shared_ptr<LauncherThread> launcherThread(new LauncherThread(remotePatcher, localPatcher));
+    std::shared_ptr<LauncherThread> launcherThread(new LauncherThread());
 
     MainWindow mainWindow(launcherThread, nullptr);
 

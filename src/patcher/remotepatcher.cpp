@@ -3,18 +3,18 @@
 #include <QJsonObject>
 #include <QJsonValue>
 
-#include "patchkitremotepatcher.h"
+#include "remotepatcher.h"
 #include "launcherexception.h"
 #include "launchercancelledexception.h"
 #include "launcherlog.h"
 #include <memory>
 
-PatchKitRemotePatcher::PatchKitRemotePatcher() :
+RemotePatcher::RemotePatcher() :
     m_isCancelled(false)
 {
 }
 
-int PatchKitRemotePatcher::getVersion(const LauncherData& t_data)
+int RemotePatcher::getVersion(const LauncherData& t_data)
 {
     logInfo("Fetching newest patcher version from http://api.patchkit.net/1/apps/%1/versions/latest/id", .arg(LauncherLog::adjustSecretForLog(t_data.patcherSecret())));
 
@@ -23,7 +23,7 @@ int PatchKitRemotePatcher::getVersion(const LauncherData& t_data)
     return parseVersionJson(json);
 }
 
-QString PatchKitRemotePatcher::download(const LauncherData& t_data, int t_version)
+QString RemotePatcher::download(const LauncherData& t_data, int t_version)
 {
     logInfo("Downloading patcher %1 version", .arg(QString::number(t_version)));
 
@@ -73,7 +73,7 @@ QString PatchKitRemotePatcher::download(const LauncherData& t_data, int t_versio
     throw LauncherException(QString("Unable to download patcher %1 version").arg(QString::number(t_version)));
 }
 
-void PatchKitRemotePatcher::cancel()
+void RemotePatcher::cancel()
 {
     logInfo("Cancelling remote patcher operations.");
 
@@ -82,7 +82,7 @@ void PatchKitRemotePatcher::cancel()
     emit cancelled();
 }
 
-QStringList PatchKitRemotePatcher::getContentUrls(const QString& t_patcherSecret, int t_version) const
+QStringList RemotePatcher::getContentUrls(const QString& t_patcherSecret, int t_version) const
 {
     logInfo("Fetching patcher content urls from http://api.patchkit.net/1/apps/%1/versions/%2/content_urls",.arg(LauncherLog::adjustSecretForLog(t_patcherSecret),
         QString::number(t_version)));
@@ -92,7 +92,7 @@ QStringList PatchKitRemotePatcher::getContentUrls(const QString& t_patcherSecret
     return parseContentUrlsJson(json);
 }
 
-int PatchKitRemotePatcher::parseVersionJson(const QString& t_json)
+int RemotePatcher::parseVersionJson(const QString& t_json)
 {
     logInfo("Parsing version from json.");
     logDebug(t_json);
@@ -121,7 +121,7 @@ int PatchKitRemotePatcher::parseVersionJson(const QString& t_json)
     return idValue;
 }
 
-QStringList PatchKitRemotePatcher::parseContentUrlsJson(const QString& t_json)
+QStringList RemotePatcher::parseContentUrlsJson(const QString& t_json)
 {
     logInfo("Parsing content urls from json.");
     logDebug(t_json);
@@ -169,7 +169,7 @@ QStringList PatchKitRemotePatcher::parseContentUrlsJson(const QString& t_json)
     return result;
 }
 
-QString PatchKitRemotePatcher::downloadString(const QString& t_urlPath) const
+QString RemotePatcher::downloadString(const QString& t_urlPath) const
 {
     std::shared_ptr<QNetworkAccessManager> accessManager;
     std::shared_ptr<QNetworkReply> reply;
@@ -180,7 +180,7 @@ QString PatchKitRemotePatcher::downloadString(const QString& t_urlPath) const
     return result;
 }
 
-void PatchKitRemotePatcher::downloadFile(const QString& t_filePath, const QString& t_urlPath) const
+void RemotePatcher::downloadFile(const QString& t_filePath, const QString& t_urlPath) const
 {
     std::shared_ptr<QNetworkAccessManager> accessManager;
     std::shared_ptr<QNetworkReply> reply;
@@ -190,21 +190,21 @@ void PatchKitRemotePatcher::downloadFile(const QString& t_filePath, const QStrin
     writeDownloadedReplyToFile(reply, t_filePath);
 }
 
-void PatchKitRemotePatcher::waitForFileDownload(std::shared_ptr<QNetworkReply>& t_reply) const
+void RemotePatcher::waitForFileDownload(std::shared_ptr<QNetworkReply>& t_reply) const
 {
     logInfo("Waiting for file download.");
 
-    connect(t_reply.get(), &QNetworkReply::downloadProgress, this, &PatchKitRemotePatcher::downloadProgressChanged);
+    connect(t_reply.get(), &QNetworkReply::downloadProgress, this, &RemotePatcher::downloadProgressChanged);
 
     QEventLoop finishedLoop;
 
     connect(t_reply.get(), &QNetworkReply::finished, &finishedLoop, &QEventLoop::quit);
 
-    connect(this, &PatchKitRemotePatcher::cancelled, &finishedLoop, &QEventLoop::quit);
+    connect(this, &RemotePatcher::cancelled, &finishedLoop, &QEventLoop::quit);
 
     finishedLoop.exec();
 
-    disconnect(t_reply.get(), &QNetworkReply::downloadProgress, this, &PatchKitRemotePatcher::downloadProgressChanged);
+    disconnect(t_reply.get(), &QNetworkReply::downloadProgress, this, &RemotePatcher::downloadProgressChanged);
 
     if (m_isCancelled)
     {
@@ -212,7 +212,7 @@ void PatchKitRemotePatcher::waitForFileDownload(std::shared_ptr<QNetworkReply>& 
     }
 }
 
-void PatchKitRemotePatcher::writeDownloadedReplyToFile(std::shared_ptr<QNetworkReply>& t_reply, const QString& t_filePath)
+void RemotePatcher::writeDownloadedReplyToFile(std::shared_ptr<QNetworkReply>& t_reply, const QString& t_filePath)
 {
     logInfo("Writing downloaded data to file - %1", .arg(t_filePath));
 
@@ -238,7 +238,7 @@ void PatchKitRemotePatcher::writeDownloadedReplyToFile(std::shared_ptr<QNetworkR
     file.close();
 }
 
-void PatchKitRemotePatcher::getNetworkReply(const QString& t_urlPath, std::shared_ptr<QNetworkAccessManager>& t_accessManager, std::shared_ptr<QNetworkReply>& t_reply) const
+void RemotePatcher::getNetworkReply(const QString& t_urlPath, std::shared_ptr<QNetworkAccessManager>& t_accessManager, std::shared_ptr<QNetworkReply>& t_reply) const
 {
     logInfo("Getting network reply.");
 
@@ -251,14 +251,14 @@ void PatchKitRemotePatcher::getNetworkReply(const QString& t_urlPath, std::share
     validateNetworkReply(t_reply);
 }
 
-void PatchKitRemotePatcher::waitForNetworkReply(std::shared_ptr<QNetworkReply>& t_reply) const
+void RemotePatcher::waitForNetworkReply(std::shared_ptr<QNetworkReply>& t_reply) const
 {
     logInfo("Waiting for network reply to be ready.");
 
     QEventLoop readyReadLoop;
     connect(t_reply.get(), &QNetworkReply::readyRead, &readyReadLoop, &QEventLoop::quit);
 
-    connect(this, &PatchKitRemotePatcher::cancelled, &readyReadLoop, &QEventLoop::quit);
+    connect(this, &RemotePatcher::cancelled, &readyReadLoop, &QEventLoop::quit);
 
     QTimer timeoutTimer;
 
@@ -281,7 +281,7 @@ void PatchKitRemotePatcher::waitForNetworkReply(std::shared_ptr<QNetworkReply>& 
     }
 }
 
-void PatchKitRemotePatcher::validateNetworkReply(std::shared_ptr<QNetworkReply>& t_reply)
+void RemotePatcher::validateNetworkReply(std::shared_ptr<QNetworkReply>& t_reply)
 {
     logInfo("Validating network reply.");
 

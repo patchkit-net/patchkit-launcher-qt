@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <QThread>
 #include <memory>
 
 #include "launcherdata.h"
@@ -19,9 +18,7 @@ class LauncherThread : public QThread
     void run() override;
 
 public:
-    // Note that t_remotePatcher and t_localPatcher are automaticaly moved to this thread - their usage outside of this thread is forbidden.
-    LauncherThread(std::shared_ptr<RemotePatcher> t_remotePatcher,
-                   std::shared_ptr<LocalPatcher> t_localPatcher);
+    LauncherThread();
 
     void cancel();
 
@@ -46,8 +43,8 @@ private:
     void updatePatcher(const LauncherData& t_data);
     void startPatcher(const LauncherData& t_data);
 
-    std::shared_ptr<RemotePatcher> m_remotePatcher;
-    std::shared_ptr<LocalPatcher> m_localPatcher;
+    RemotePatcher m_remotePatcher;
+    LocalPatcher m_localPatcher;
 
     bool m_isCancelled;
     bool m_noError;

@@ -59,16 +59,13 @@ void LauncherThread::run()
     }
 }
 
-LauncherThread::LauncherThread(std::shared_ptr<RemotePatcher> t_remotePatcher,
-                               std::shared_ptr<LocalPatcher> t_localPatcher) :
-    m_remotePatcher(t_remotePatcher),
-    m_localPatcher(t_localPatcher),
+LauncherThread::LauncherThread() :
     m_isCancelled(false),
     m_noError(false)
 {
     logDebug("Moving m_remotePatcher and m_localPatcher to launcher thread.");
-    m_remotePatcher->moveToThread(this);
-    m_localPatcher->moveToThread(this);
+    m_remotePatcher.moveToThread(this);
+    m_localPatcher.moveToThread(this);
 }
 
 void LauncherThread::cancel()
@@ -80,8 +77,8 @@ void LauncherThread::cancel()
     /* We don't know from which thread this method is called so we need to make sure that both RemotePatcher::cancel
        and LocalPatcher::cancel are called from their threads.
     */
-    QMetaObject::invokeMethod(m_remotePatcher.get(), "cancel");
-    QMetaObject::invokeMethod(m_localPatcher.get(), "cancel");
+    QMetaObject::invokeMethod(&m_remotePatcher, "cancel");
+    QMetaObject::invokeMethod(&m_localPatcher, "cancel");
 }
 
 bool LauncherThread::noError() const
@@ -140,7 +137,7 @@ void LauncherThread::runWithData(const LauncherData& t_data)
     }
     catch (QException& exception)
     {
-        if (m_localPatcher->isInstalled())
+        if (m_localPatcher.isInstalled())
         {
             logWarning(exception.what());
             logWarning("Updating patcher failed but previous patcher is still available.");
@@ -152,7 +149,7 @@ void LauncherThread::runWithData(const LauncherData& t_data)
     }
     catch (...)
     {
-        if (m_localPatcher->isInstalled())
+        if (m_localPatcher.isInstalled())
         {
             logWarning("Unknown exception.");
             logWarning("Updating patcher failed but previous patcher is still available.");
@@ -209,42 +206,42 @@ void LauncherThread::updatePatcher(const LauncherData& t_data)
 {
     logInfo("Updating patcher.");
 
-    int version = m_remotePatcher->getVersion(t_data);
+    int version = m_remotePatcher.getVersion(t_data);
     logDebug("Current remote patcher version - %1", .arg(QString::number(version)));
 
     emit progressChanged(0);
     emit statusChanged(QString("Waiting..."));
 
-    if (m_localPatcher->isInstalled())
+    if (m_localPatcher.isInstalled())
     {
         logInfo("Found patcher installation.");
 
-        if (version != m_localPatcher->getVersion())
+        if (version != m_localPatcher.getVersion())
         {
             logInfo("Local version is different from remote version. Uninstalling local patcher so new version will be installed.");
-            m_localPatcher->uninstall();
+            m_localPatcher.uninstall();
         }
     }
 
-    if (!m_localPatcher->isInstalled())
+    if (!m_localPatcher.isInstalled())
     {
         logInfo("Patcher is not installed. Downloading the newest version of patcher.");
 
         emit statusChanged(QString("Downloading..."));
 
         logDebug("Connecting downloadProgressChanged signal from remote patcher to slot from launcher thread.");
-        connect(m_remotePatcher.get(), &RemotePatcher::downloadProgressChanged, this, &LauncherThread::setDownloadProgress);
+        connect(&m_remotePatcher, &RemotePatcher::downloadProgressChanged, this, &LauncherThread::setDownloadProgress);
 
-        QString downloadedPath = m_remotePatcher->download(t_data, version);
+        QString downloadedPath = m_remotePatcher.download(t_data, version);
         logInfo("Patcher has been downloaded to %1", .arg(downloadedPath));
 
         logDebug("Disconnecting downloadProgressChanged signal from remote patcher to slot from launcher thread.");
-        disconnect(m_remotePatcher.get(), &RemotePatcher::downloadProgressChanged, this, &LauncherThread::setDownloadProgress);
+        disconnect(&m_remotePatcher, &RemotePatcher::downloadProgressChanged, this, &LauncherThread::setDownloadProgress);
 
         emit progressChanged(downloadedProgressValue);
         emit statusChanged(QString("Installing..."));
 
-        m_localPatcher->install(downloadedPath, version);
+        m_localPatcher.install(downloadedPath, version);
         logInfo("Patcher has been installed.");
 
         emit progressChanged(100);
@@ -257,5 +254,5 @@ void LauncherThread::startPatcher(const LauncherData& t_data)
 
     emit statusChanged(QString("Starting..."));
 
-    m_localPatcher->start(t_data);
+    m_localPatcher.start(t_data);
 }
