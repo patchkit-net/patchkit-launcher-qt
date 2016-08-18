@@ -17,19 +17,20 @@ struct LauncherData
     static LauncherData loadFromResource(const QString& t_applicationFilePath, int t_resourceId, int t_resourceTypeId);
 #endif
 
+    QString overwritePatcherSecret;
+
     QString patcherSecret() const
     {
-        return m_patcherSecret;
+        if(overwritePatcherSecret.isEmpty())
+        {
+            return m_patcherSecret;
+        }
+        return overwritePatcherSecret;
     }
 
     QString applicationSecret() const
     {
         return m_applicationSecret;
-    }
-
-    QByteArray encodedPatcherSecret() const
-    {
-        return m_encodedPatcherSecret;
     }
 
     QByteArray encodedApplicationSecret() const
@@ -42,7 +43,6 @@ private:
 
     QString m_patcherSecret;
     QString m_applicationSecret;
-    QByteArray m_encodedPatcherSecret;
     QByteArray m_encodedApplicationSecret;
 
     LauncherData(const QByteArray& t_encodedPatcherSecret, const QByteArray& t_encodedApplicationSecret);

@@ -63,10 +63,9 @@ LauncherData LauncherData::loadFromDataStream(QDataStream& t_dataStream)
 }
 
 LauncherData::LauncherData(const QByteArray& t_encodedPatcherSecret, const QByteArray& t_encodedApplicationSecret) :
-    m_encodedPatcherSecret(t_encodedPatcherSecret),
     m_encodedApplicationSecret(t_encodedApplicationSecret)
 {
-    m_patcherSecret = decodeString(m_encodedPatcherSecret);
+    m_patcherSecret = decodeString(t_encodedPatcherSecret);
     m_applicationSecret = decodeString(m_encodedApplicationSecret);
 }
 
