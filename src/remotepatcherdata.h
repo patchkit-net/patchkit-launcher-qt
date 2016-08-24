@@ -15,6 +15,8 @@ class RemotePatcherData : public QObject
 public:
     int getVersion(const Data& t_data, CancellationToken t_cancellationToken);
 
+    QString getPatcherSecret(const Data& t_data, CancellationToken t_cancellationToken);
+
     QString download(const Data& t_data, int t_version, CancellationToken t_cancellationToken);
 
 signals:
@@ -24,6 +26,8 @@ private:
     static QStringList getContentUrls(const QString& t_patcherSecret, int t_version, CancellationToken t_cancellationToken);
 
     static int parseVersionJson(const QString& t_json);
+
+    static  QString parsePatcherSecret(const QString& t_json);
 
     static QStringList parseContentUrlsJson(const QString& t_json);
 };

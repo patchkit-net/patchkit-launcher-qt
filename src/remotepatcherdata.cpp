@@ -20,6 +20,16 @@ int RemotePatcherData::getVersion(const Data& t_data, CancellationToken t_cancel
     return parseVersionJson(result);
 }
 
+QString RemotePatcherData::getPatcherSecret(const Data& t_data, CancellationToken t_cancellationToken)
+{
+    logInfo("Fetching newest patcher secret from http://api.patchkit.net/1/apps/%1", .arg(Logger::adjustSecretForLog(t_data.applicationSecret())));
+
+    Downloader downloader;
+    
+    QString result = downloader.downloadString(QString("http://api.patchkit.net/1/apps/%1").arg(t_data.applicationSecret()), Config::downloadTimeoutMsec, t_cancellationToken);
+
+    return parsePatcherSecret(result);
+}
 
 QString RemotePatcherData::download(const Data& t_data, int t_version, CancellationToken t_cancellationToken)
 {
@@ -111,6 +121,27 @@ int RemotePatcherData::parseVersionJson(const QString& t_json)
     }
 
     return idValue;
+}
+
+QString RemotePatcherData::parsePatcherSecret(const QString& t_json)
+{
+    logInfo("Parsing patcher secret from json.");
+
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(t_json.toUtf8());
+
+    if (!jsonDocument.isObject())
+    {
+        throw Exception("Couldn't read patcher secret from JSON data.");
+    }
+
+    QJsonObject jsonObject = jsonDocument.object();
+
+    if (!jsonObject.contains("patcher_secret"))
+    {
+        throw Exception("Couldn't read patcher secret from JSON data.");
+    }
+
+    return jsonObject.value("patcher_secret").toString();
 }
 
 QStringList RemotePatcherData::parseContentUrlsJson(const QString& t_json)

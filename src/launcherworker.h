@@ -35,7 +35,9 @@ private:
 #endif
     void runWithDataFromFile();
 
-    void runWithData(const Data& t_data);
+    void runWithData(Data& t_data);
+
+    bool tryToFetchPatcherSecret(Data& t_data);
 
     void setupCurrentDirectory(const Data& t_data) const;
 

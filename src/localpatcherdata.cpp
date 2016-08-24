@@ -23,7 +23,6 @@ bool LocalPatcherData::isInstalled()
 
     filesToCheck << Locations::patcherInstallationInfoFilePath();
     filesToCheck << Locations::patcherVersionInfoFilePath();
-    filesToCheck << Locations::patcherManifestFilePath();
 
     if (checkIfFilesExist(filesToCheck))
     {

@@ -109,11 +109,22 @@ void LauncherWorker::runWithDataFromFile()
     runWithData(data);
 }
 
-void LauncherWorker::runWithData(const Data& t_data)
+void LauncherWorker::runWithData(Data& t_data)
 {
     try
     {
         logInfo("Starting launcher.");
+
+        QSettings settings("UpSoft", t_data.applicationSecret().remove(0, 2).append("launcher-"));
+
+        if(tryToFetchPatcherSecret(t_data))
+        {
+            settings.setValue("patcher_sercet", t_data.overwritePatcherSecret);
+        }
+        else if (settings.contains("patcher_secret"))
+        {
+            t_data.overwritePatcherSecret = settings.value("patcher_secret").toString();
+        }
 
         setupCurrentDirectory(t_data);
 
@@ -151,6 +162,29 @@ void LauncherWorker::runWithData(const Data& t_data)
     }
 
     startPatcher(t_data);
+}
+
+bool LauncherWorker::tryToFetchPatcherSecret(Data& t_data)
+{
+    try
+    {
+        t_data.overwritePatcherSecret = m_remotePatcher.getPatcherSecret(t_data, m_cancellationTokenSource);
+        return true;
+    }
+    catch(CancelledException&)
+    {
+        throw;
+    }
+    catch (QException& exception)
+    {
+        logWarning(exception.what());
+        return false;
+    }
+    catch(...)
+    {
+        logWarning("Unknown exception while fetching patcher secret.");
+        return false;
+    }
 }
 
 void LauncherWorker::setupCurrentDirectory(const Data& t_data) const
