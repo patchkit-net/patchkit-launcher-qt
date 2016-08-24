@@ -1,2 +1,8 @@
 *.pro.user
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
 bin/
+.vs/
+Debug/
+Release/
