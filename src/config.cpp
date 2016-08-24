@@ -13,6 +13,7 @@ const int Config::dataResourceTypeId = 10;
 const QString Config::patcherDirectoryName = "patcher";
 const QString Config::patcherInstallationInfoFileName = "install_info";
 const QString Config::patcherVersionInfoFileName = "version_info";
+const QString Config::patcherIdInfoFileName = "id_info";
 const QString Config::patcherManifestFileName = "patcher.manifest";
 
 const QString Config::applicationDirectoryName = "app";

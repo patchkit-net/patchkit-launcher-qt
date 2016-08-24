@@ -236,20 +236,9 @@ void LauncherWorker::updatePatcher(const Data& t_data)
     emit progressChanged(0);
     emit statusChanged(QString("Waiting..."));
 
-    if (m_localPatcher.isInstalled())
+    if (!m_localPatcher.isInstalledSpecific(version, t_data))
     {
-        logInfo("Found patcher installation.");
-
-        if (version != m_localPatcher.getVersion())
-        {
-            logInfo("Local version is different from remote version. Uninstalling local patcher so new version will be installed.");
-            m_localPatcher.uninstall();
-        }
-    }
-
-    if (!m_localPatcher.isInstalled())
-    {
-        logInfo("Patcher is not installed. Downloading the newest version of patcher.");
+        logInfo("The newest patcher is not installed. Downloading the newest version of patcher.");
 
         emit statusChanged(QString("Downloading..."));
 
@@ -265,7 +254,7 @@ void LauncherWorker::updatePatcher(const Data& t_data)
         emit progressChanged(Config::progressPercentageOfDownload);
         emit statusChanged(QString("Installing..."));
 
-        m_localPatcher.install(downloadedPath, version);
+        m_localPatcher.install(downloadedPath, t_data, version);
         logInfo("Patcher has been installed.");
 
         emit progressChanged(100);

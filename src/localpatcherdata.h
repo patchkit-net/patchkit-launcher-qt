@@ -18,20 +18,14 @@ class LocalPatcherData : public QObject
 public:
     bool isInstalled();
 
-    // Can assume that patcher is installed.
-    int getVersion();
+    bool isInstalledSpecific(int t_version, const Data& t_data);
 
-    // Can assume that patcher is uninstalled.
-    void install(const QString& t_downloadedPath, int t_version);
+    void install(const QString& t_downloadedPath, const Data& t_data, int t_version);
 
-    // Cannot assume that patcher is installed.
-    void uninstall();
-
-    // Can assume that patcher is installed.
     void start(const Data& t_data);
 
 private:
-    // Helper functions
+    void uninstall();
 
     static void writeFileContents(const QString& t_filePath, const QString& t_fileContents);
 
@@ -53,7 +47,9 @@ private:
 
     static void copyDeviceData(QIODevice& t_readDevice, QIODevice& t_writeDevice);
 
-    // Operations helper functions
+    int readVersion();
+
+    static QString getPatcherId(const Data& t_data);
 
     static int parseVersionInfoToNumber(const QString& t_versionInfoFileContents);
 

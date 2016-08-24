@@ -64,6 +64,11 @@ public:
         return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherVersionInfoFileName);
     }
 
+    static QString patcherIdInfoFilePath()
+    {
+        return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherIdInfoFileName);
+    }
+
     static QString patcherManifestFilePath()
     {
         return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherManifestFileName);

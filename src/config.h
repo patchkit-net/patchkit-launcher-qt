@@ -18,6 +18,7 @@ public:
     const static QString patcherDirectoryName;
     const static QString patcherInstallationInfoFileName;
     const static QString patcherVersionInfoFileName;
+    const static QString patcherIdInfoFileName;
     const static QString patcherManifestFileName;
 
     const static QString applicationDirectoryName;

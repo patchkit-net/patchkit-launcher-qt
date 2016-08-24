@@ -23,6 +23,7 @@ bool LocalPatcherData::isInstalled()
 
     filesToCheck << Locations::patcherInstallationInfoFilePath();
     filesToCheck << Locations::patcherVersionInfoFilePath();
+    filesToCheck << Locations::patcherIdInfoFilePath();
 
     if (checkIfFilesExist(filesToCheck))
     {
@@ -34,19 +35,21 @@ bool LocalPatcherData::isInstalled()
     return false;
 }
 
-int LocalPatcherData::getVersion()
+
+bool LocalPatcherData::isInstalledSpecific(int t_version, const Data& t_data)
 {
-    logInfo("Reading version info of installed patcher.");
-
-    QString versionInfoFileContents = readFileContents(Locations::patcherVersionInfoFilePath());
-
-    int version = parseVersionInfoToNumber(versionInfoFileContents);
-
-    return version;
+    if(isInstalled())
+    {
+        return readFileContents(Locations::patcherIdInfoFilePath()) == getPatcherId(t_data) &&
+            readVersion() == t_version;
+    }
+    return false;
 }
 
-void LocalPatcherData::install(const QString& t_downloadedPath, int t_version)
+void LocalPatcherData::install(const QString& t_downloadedPath, const Data& t_data, int t_version)
 {
+    uninstall();
+
     logInfo("Installing patcher (version %1) from downloaded zip - %2", .arg(QString::number(t_version), t_downloadedPath));
 
     createDirIfNotExists(Locations::patcherDirectoryPath());
@@ -57,6 +60,7 @@ void LocalPatcherData::install(const QString& t_downloadedPath, int t_version)
 
     installationInfoFileList.append(Locations::patcherInstallationInfoFilePath());
     installationInfoFileList.append(Locations::patcherVersionInfoFilePath());
+    installationInfoFileList.append(Locations::patcherIdInfoFilePath());
 
     writeFileContents(Locations::patcherVersionInfoFilePath(), QString::number(t_version));
 
@@ -81,8 +85,28 @@ void LocalPatcherData::install(const QString& t_downloadedPath, int t_version)
     }
 
     writeFileContents(Locations::patcherInstallationInfoFilePath(), installationInfoFileContents);
+    writeFileContents(Locations::patcherIdInfoFilePath(), getPatcherId(t_data));
 
     QFile::remove(t_downloadedPath);
+}
+
+void LocalPatcherData::start(const Data& data)
+{
+    logInfo("Starting patcher.");
+
+    QString exeFileName;
+    QString exeArguments;
+
+    readPatcherManifset(exeFileName, exeArguments);
+
+    logDebug("Preparing run command from format - %1 %2", .arg(exeFileName, exeArguments));
+
+    exeFileName = formatPatcherManifestString(exeFileName, data.encodedApplicationSecret());
+    exeArguments = formatPatcherManifestString(exeArguments, data.encodedApplicationSecret());
+
+    logDebug("Starting process with command - %1 %2", .arg(exeFileName, exeArguments));
+
+    QProcess::startDetached(exeFileName + " " + exeArguments);
 }
 
 void LocalPatcherData::uninstall()
@@ -91,7 +115,7 @@ void LocalPatcherData::uninstall()
 
     if (!QFile::exists(Locations::patcherInstallationInfoFilePath()))
     {
-        logWarning("Missing installation info!");
+        logInfo("Missing installation info!");
     }
     else
     {
@@ -116,25 +140,6 @@ void LocalPatcherData::uninstall()
             }
         }
     }
-}
-
-void LocalPatcherData::start(const Data& data)
-{
-    logInfo("Starting patcher.");
-
-    QString exeFileName;
-    QString exeArguments;
-
-    readPatcherManifset(exeFileName, exeArguments);
-
-    logDebug("Preparing run command from format - %1 %2", .arg(exeFileName, exeArguments));
-
-    exeFileName = formatPatcherManifestString(exeFileName, data.encodedApplicationSecret());
-    exeArguments = formatPatcherManifestString(exeArguments, data.encodedApplicationSecret());
-
-    logDebug("Starting process with command - %1 %2", .arg(exeFileName, exeArguments));
-
-    QProcess::startDetached(exeFileName + " " + exeArguments);
 }
 
 void LocalPatcherData::writeFileContents(const QString& t_filePath, const QString& t_fileContents)
@@ -286,6 +291,24 @@ void LocalPatcherData::copyDeviceData(QIODevice& readDevice, QIODevice& writeDev
             writeDevice.write(buffer.get(), readSize);
         }
     }
+}
+
+int LocalPatcherData::readVersion()
+{
+    logInfo("Reading version info of installed patcher.");
+
+    QString versionInfoFileContents = readFileContents(Locations::patcherVersionInfoFilePath());
+
+    int version = parseVersionInfoToNumber(versionInfoFileContents);
+
+    return version;
+}
+
+QString LocalPatcherData::getPatcherId(const Data& t_data)
+{
+    QString id = t_data.patcherSecret().remove(0, 2);
+    id.chop(2);
+    return id;
 }
 
 int LocalPatcherData::parseVersionInfoToNumber(const QString& t_versionInfoFileContents)
