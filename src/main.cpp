@@ -4,8 +4,8 @@
 */
 
 #include "launcher.h"
-#include "launcherlog.h"
-#include <QtMessageHandler>
+
+#include "logger.h"
 
 int main(int argc, char* argv[])
 {

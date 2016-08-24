@@ -7,15 +7,15 @@
 
 #include <QException>
 
-class LauncherException : public QException
+class Exception : public QException
 {
 public:
-    LauncherException(const QString& t_message) :
+    Exception(const QString& t_message) :
         m_message(t_message.toStdString())
     {
     }
 
-    LauncherException(const char* t_message) :
+    Exception(const char* t_message) :
         m_message(t_message)
     {
     }
@@ -25,9 +25,9 @@ public:
         return m_message.c_str();
     }
 
-    LauncherException* clone() const override
+    Exception* clone() const override
     {
-        return new LauncherException(*this);
+        return new Exception(*this);
     }
 
     void raise() const override

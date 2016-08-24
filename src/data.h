@@ -7,21 +7,21 @@
 
 #include <QDataStream>
 
-struct LauncherData
+struct Data
 {
-    LauncherData();
+    Data();
 
-    static LauncherData loadFromFile(const QString& t_filePath);
+    static Data loadFromFile(const QString& t_filePath);
 
 #ifdef Q_OS_WIN
-    static LauncherData loadFromResource(const QString& t_applicationFilePath, int t_resourceId, int t_resourceTypeId);
+    static Data loadFromResources(const QString& t_applicationFilePath, int t_resourceId, int t_resourceTypeId);
 #endif
 
     QString overwritePatcherSecret;
 
     QString patcherSecret() const
     {
-        if(overwritePatcherSecret.isEmpty())
+        if (overwritePatcherSecret.isEmpty())
         {
             return m_patcherSecret;
         }
@@ -39,13 +39,13 @@ struct LauncherData
     }
 
 private:
-    static LauncherData loadFromDataStream(QDataStream& t_dataStream);
+    static Data loadFromDataStream(QDataStream& t_dataStream);
 
     QString m_patcherSecret;
     QString m_applicationSecret;
     QByteArray m_encodedApplicationSecret;
 
-    LauncherData(const QByteArray& t_encodedPatcherSecret, const QByteArray& t_encodedApplicationSecret);
+    Data(const QByteArray& t_encodedPatcherSecret, const QByteArray& t_encodedApplicationSecret);
 
     static QByteArray readStringBytes(QDataStream& t_dataStream);
     static QString decodeString(const QByteArray& t_encodedSecret);

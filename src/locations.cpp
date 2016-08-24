@@ -3,13 +3,14 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#include "launcherpaths.h"
+#include "locations.h"
+
 #include <QApplication>
 
-QString LauncherPaths::m_applicationFilePath;
-QString LauncherPaths::m_applicationDirPath;
+QString Locations::m_applicationFilePath;
+QString Locations::m_applicationDirPath;
 
-void LauncherPaths::initialize()
+void Locations::initialize()
 {
     m_applicationFilePath = QApplication::applicationFilePath();
     m_applicationDirPath = QApplication::applicationDirPath();

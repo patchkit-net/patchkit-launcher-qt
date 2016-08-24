@@ -8,10 +8,10 @@
 #include <QObject>
 #include <QString>
 
-#include "launcherdata.h"
+#include "data.h"
 #include "quazipfile.h"
 
-class LocalPatcher : public QObject
+class LocalPatcherData : public QObject
 {
     Q_OBJECT
 
@@ -28,11 +28,7 @@ public:
     void uninstall();
 
     // Can assume that patcher is installed.
-    void start(const LauncherData& t_data);
-
-public slots:
-    // Cancels any above operation. If cancellation is successful, LauncherCancelledException is thrown by the operation.
-    void cancel();
+    void start(const Data& t_data);
 
 private:
     // Helper functions

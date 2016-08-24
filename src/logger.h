@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <qtextstream.h>
+#include <QString>
 
 #define logStringFormat(message, ...) QString(message)__VA_ARGS__.toStdString().c_str()
 
@@ -14,7 +14,7 @@
 #define logWarning(message, ...) qWarning(logStringFormat(message, ##__VA_ARGS__))
 #define logCritical(message, ...) qCritical(logStringFormat(message, ##__VA_ARGS__))
 
-class LauncherLog
+class Logger
 {
 public:
     static void setupLogFile(const QString& t_logFilePath);

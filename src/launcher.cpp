@@ -4,13 +4,15 @@
 */
 
 #include "launcher.h"
-#include "log/launcherlog.h"
-#include "paths/launcherpaths.h"
+
 #include <QMessageBox>
+
+#include "logger.h"
+#include "locations.h"
 
 Launcher::Launcher(const QApplication& t_application)
 {
-    LauncherPaths::initialize();
+    Locations::initialize();
     connect(&t_application, &QApplication::aboutToQuit, this, &Launcher::cleanup);
 }
 
@@ -18,34 +20,34 @@ void Launcher::start()
 {
     logInfo("Starting launcher.");
 
-    m_thread = std::make_shared<LauncherThread>();
+    m_worker = std::make_shared<LauncherWorker>();
 
-    m_mainWindow = std::make_unique<MainWindow>(m_thread, nullptr);
+    m_mainWindow = std::make_unique<MainWindow>(m_worker, nullptr);
 
     logInfo("Showing main window.");
     m_mainWindow->show();
 
-    logInfo("Starting launcher thread.");
-    m_thread->start();
+    logInfo("Starting launcher worker.");
+    m_worker->start();
 
-    connect(m_thread.get(), &QThread::finished, this, &Launcher::finish);
+    connect(m_worker.get(), &QThread::finished, this, &Launcher::finish);
 }
 
 void Launcher::finish()
 {
-    disconnect(m_thread.get(), &QThread::finished, this, &Launcher::finish);
+    disconnect(m_worker.get(), &QThread::finished, this, &Launcher::finish);
 
-    logInfo("Launcher thread has finished. Checking result.");
+    logInfo("Launcher worker has finished. Checking result.");
 
-    if (m_thread->noError())
+    if (m_worker->noError())
     {
-        logInfo("Launcher thread has no errors! Closing launcher application with status 0.");
+        logInfo("Launcher worker has no errors! Closing launcher application with status 0.");
 
         QApplication::quit();
     }
     else
     {
-        logWarning("Launcher thread has failed! Asking for retry.");
+        logWarning("Launcher worker has failed! Asking for retry.");
 
         int retryRunDialogResult = QMessageBox::critical(nullptr, "Error!", "An error has occured! Would you like to retry?", QMessageBox::Yes, QMessageBox::No);
 
@@ -64,21 +66,21 @@ void Launcher::finish()
 
 void Launcher::cleanup()
 {
-    if (m_thread)
+    if (m_worker)
     {
-        if (m_thread->isRunning())
+        if (m_worker->isRunning())
         {
             logWarning("Application is about to be closed but launcher thread is still working - cancelling thread and waiting 2s for result.");
-            m_thread->cancel();
-            if (!m_thread->wait(2000))
+            m_worker->cancel();
+            if (!m_worker->wait(2000))
             {
                 logWarning("Launcher thread couldn't be cancelled - terminating thread.");
-                m_thread->terminate();
-                m_thread->wait();
+                m_worker->terminate();
+                m_worker->wait();
             }
         }
 
-        if (!m_thread->noError())
+        if (!m_worker->noError())
         {
             logCritical("An error has occured!");
         }

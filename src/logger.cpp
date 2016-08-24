@@ -3,9 +3,12 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#include "launcherlog.h"
-#include <qdatetime.h>
-#include <QDir>
+#include "logger.h"
+
+#include <QString>
+#include <QDateTime>
+#include <QFileInfo>
+#include <QTextStream>
 
 QString logFilePath;
 QStringList logHistory;
@@ -72,7 +75,7 @@ void logHandler(QtMsgType t_type, const QMessageLogContext& t_context, const QSt
     }
 }
 
-void LauncherLog::setupLogFile(const QString& t_logFilePath)
+void Logger::setupLogFile(const QString& t_logFilePath)
 {
     static QString lastLogFilePath;
     static bool isLogInitialized = false;
@@ -106,7 +109,7 @@ void LauncherLog::setupLogFile(const QString& t_logFilePath)
     }
 }
 
-QString LauncherLog::adjustSecretForLog(const QString& t_secret)
+QString Logger::adjustSecretForLog(const QString& t_secret)
 {
     QString result = t_secret;
     result.chop(2);
@@ -116,7 +119,7 @@ QString LauncherLog::adjustSecretForLog(const QString& t_secret)
     return result;
 }
 
-QString LauncherLog::adjustSecretForLog(const char* t_secret)
+QString Logger::adjustSecretForLog(const char* t_secret)
 {
     return adjustSecretForLog(QString(t_secret));
 }

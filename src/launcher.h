@@ -6,7 +6,9 @@
 #pragma once
 
 #include <memory>
+
 #include "mainwindow.h"
+#include "launcherworker.h"
 
 class Launcher : public QObject
 {
@@ -23,5 +25,5 @@ private slots:
 
 private:
     std::unique_ptr<MainWindow> m_mainWindow;
-    std::shared_ptr<LauncherThread> m_thread;
+    std::shared_ptr<LauncherWorker> m_worker;
 };

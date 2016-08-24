@@ -45,30 +45,10 @@ macx {
     release:LIBS += $$PWD/lib/quazip/macosx_x86_64/libquazip.a -lz
 }
 
-SOURCES += $$PWD/src/*.cpp \
-           $$PWD/src/configuration/*.cpp \
-           $$PWD/src/data/*.cpp \
-           $$PWD/src/log/*.cpp \
-           $$PWD/src/patcher/*.cpp \
-           $$PWD/src/paths/*.cpp \
-           $$PWD/src/ui/*.cpp
+SOURCES     += $$PWD/src/*.cpp
 
-HEADERS += $$PWD/src/*.h \
-           $$PWD/src/configuration/*.h \
-           $$PWD/src/data/*.h \
-           $$PWD/src/exceptions/*.h \
-           $$PWD/src/log/*.h \
-           $$PWD/src/patcher/*.h \
-           $$PWD/src/paths/*.h \
-           $$PWD/src/ui/*.h
+HEADERS     += $$PWD/src/*.h
 
-INCLUDEPATH += $$PWD/src \
-               $$PWD/src/configuration \
-               $$PWD/src/data \
-               $$PWD/src/exceptions \
-               $$PWD/src/log \
-               $$PWD/src/patcher \
-               $$PWD/src/paths \
-               $$PWD/src/ui
+INCLUDEPATH += $$PWD/src
 
-FORMS    += $$PWD/src/ui/*.ui
+FORMS       += $$PWD/src/*.ui

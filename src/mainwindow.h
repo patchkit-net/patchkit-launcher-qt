@@ -6,14 +6,14 @@
 #pragma once
 
 #include "ui_mainwindow.h"
-#include "launcherthread.h"
+#include "launcherworker.h"
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    MainWindow(std::shared_ptr<LauncherThread> t_launcherThread, QWidget* t_parent);
+    MainWindow(std::shared_ptr<LauncherWorker> t_launcherWorker, QWidget* t_parent);
 
 private slots:
     void setStatus(const QString& t_status) const;
@@ -26,7 +26,7 @@ protected:
     void closeEvent(QCloseEvent* t_event) override;
 
 private:
-    std::shared_ptr<LauncherThread> m_launcherThread;
+    std::shared_ptr<LauncherWorker> m_launcherWorker;
 
     QPoint m_dragPosition;
 

@@ -7,7 +7,7 @@
 
 #include <QString>
 
-class LauncherConfiguration
+class Config
 {
 public:
     const static QString logFileName;
@@ -21,4 +21,7 @@ public:
     const static QString patcherManifestFileName;
 
     const static QString applicationDirectoryName;
+
+    const static int downloadTimeoutMsec;
+    const static int progressPercentageOfDownload;
 };

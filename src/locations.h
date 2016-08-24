@@ -5,11 +5,12 @@
 
 #pragma once
 
-#include "launcherconfiguration.h"
-#include "launcherlog.h"
 #include <QDir>
 
-class LauncherPaths
+#include "config.h"
+#include "logger.h"
+
+class Locations
 {
 public:
     static void initialize();
@@ -40,37 +41,37 @@ public:
 
         QDir::setCurrent(currentDir.path());
 
-        LauncherLog::setupLogFile(logFilePath());
+        Logger::setupLogFile(logFilePath());
     }
 
     static QString dataFilePath()
     {
-        return QDir::cleanPath(applicationDirPath() + "/" + LauncherConfiguration::dataFileName);
+        return QDir::cleanPath(applicationDirPath() + "/" + Config::dataFileName);
     }
 
     static QString patcherDirectoryPath()
     {
-        return QDir::cleanPath(currentDirPath() + "/" + LauncherConfiguration::patcherDirectoryName);
+        return QDir::cleanPath(currentDirPath() + "/" + Config::patcherDirectoryName);
     }
 
     static QString patcherInstallationInfoFilePath()
     {
-        return QDir::cleanPath(patcherDirectoryPath() + "/" + LauncherConfiguration::patcherDirectoryName);
+        return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherDirectoryName);
     }
 
     static QString patcherVersionInfoFilePath()
     {
-        return QDir::cleanPath(patcherDirectoryPath() + "/" + LauncherConfiguration::patcherVersionInfoFileName);
+        return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherVersionInfoFileName);
     }
 
     static QString patcherManifestFilePath()
     {
-        return QDir::cleanPath(patcherDirectoryPath() + "/" + LauncherConfiguration::patcherManifestFileName);
+        return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherManifestFileName);
     }
 
     static QString applicationInstallationDirPath()
     {
-        return QDir::cleanPath(currentDirPath() + "/" + LauncherConfiguration::applicationDirectoryName);
+        return QDir::cleanPath(currentDirPath() + "/" + Config::applicationDirectoryName);
     }
 
 private:
@@ -79,6 +80,6 @@ private:
 
     static QString logFilePath()
     {
-        return QDir::cleanPath(currentDirPath() + "/" + LauncherConfiguration::logFileName);
+        return QDir::cleanPath(currentDirPath() + "/" + Config::logFileName);
     }
 };

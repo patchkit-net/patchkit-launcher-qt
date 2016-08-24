@@ -3,28 +3,29 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
+#include "mainwindow.h"
+
 #include <QShowEvent>
 #include <QDesktopWidget>
 
-#include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "launcherlog.h"
+#include "logger.h"
 
-MainWindow::MainWindow(std::shared_ptr<LauncherThread> t_launcherThread, QWidget* t_parent) :
+MainWindow::MainWindow(std::shared_ptr<LauncherWorker> t_launcherThread, QWidget* t_parent) :
     QMainWindow(t_parent, Qt::FramelessWindowHint),
-    m_launcherThread(t_launcherThread),
+    m_launcherWorker(t_launcherThread),
     m_ui(new Ui::MainWindow)
 {
     m_ui->setupUi(this);
 
     // Thread --> UI
-    connect(m_launcherThread.get(), &LauncherThread::statusChanged, this, &MainWindow::setStatus);
-    connect(m_launcherThread.get(), &LauncherThread::progressChanged, this, &MainWindow::setProgress);
+    connect(m_launcherWorker.get(), &LauncherWorker::statusChanged, this, &MainWindow::setStatus);
+    connect(m_launcherWorker.get(), &LauncherWorker::progressChanged, this, &MainWindow::setProgress);
 
-    connect(m_launcherThread.get(), &LauncherThread::finished, this, &MainWindow::close);
+    connect(m_launcherWorker.get(), &LauncherWorker::finished, this, &MainWindow::close);
 
     // Thread <-- UI
-    connect(m_ui->cancelButton, &QPushButton::clicked, m_launcherThread.get(), &LauncherThread::cancel);
+    connect(m_ui->cancelButton, &QPushButton::clicked, m_launcherWorker.get(), &LauncherWorker::cancel);
 }
 
 void MainWindow::setStatus(const QString& t_status) const
@@ -39,7 +40,7 @@ void MainWindow::setProgress(int t_progress) const
 
 void MainWindow::showEvent(QShowEvent* t_event)
 {
-    logInfo("Setting launcher window geometry.");
+    logInfo("Setting launcher window position.");
 
     const QRect availableSize = QApplication::desktop()->availableGeometry(this);
     move((availableSize.width() - width()) / 2, (availableSize.height() - height()) / 2);
@@ -69,7 +70,7 @@ void MainWindow::mousePressEvent(QMouseEvent* t_event)
 void MainWindow::closeEvent(QCloseEvent* t_event)
 {
     logInfo("Close window request.");
-    if (m_launcherThread->isFinished())
+    if (m_launcherWorker->isFinished())
     {
         logInfo("Allowing the window to be closed.");
         t_event->accept();
@@ -77,7 +78,7 @@ void MainWindow::closeEvent(QCloseEvent* t_event)
     else
     {
         logInfo("Not allowing window to be closed - launcher thread is still running. Cancelling launcher thread.");
-        m_launcherThread->cancel();
+        m_launcherWorker->cancel();
         t_event->ignore();
     }
 }
