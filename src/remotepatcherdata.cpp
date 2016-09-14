@@ -7,6 +7,7 @@
 
 #include "logger.h"
 #include "config.h"
+#include "timeoutexception.h"
 
 int RemotePatcherData::getVersion(const Data& t_data, CancellationToken t_cancellationToken)
 {
@@ -79,6 +80,36 @@ QString RemotePatcherData::download(const Data& t_data, int t_version, Cancellat
     }
 
     throw Exception(QString("Unable to download patcher %1 version").arg(QString::number(t_version)));
+}
+
+QString RemotePatcherData::getStringFromApi(const QString &t_resourceUrl, CancellationToken t_cancellationToken)
+{
+    logInfo("Downloading string from API.");
+
+    int timeout = Config::downloadTimeoutMsec;
+
+
+}
+
+QString RemotePatcherData::getStringFromApi(const QString &t_resourceUrl, CancellationToken t_cancellationToken, int t_timeout)
+{
+    Downloader downloader;
+
+    for(int i = 0; i < Config::apiUrls.length(); i++)
+    {
+        QString url = Config::apiUrls[i] + "/" + t_resourceUrl;
+
+        try
+        {
+            QString result = downloader.downloadString(url, t_timeout, t_cancellationToken);
+        }
+        catch(TimeoutException&)
+        {
+            continue;
+        }
+
+        return result;
+    }
 }
 
 QStringList RemotePatcherData::getContentUrls(const QString& t_patcherSecret, int t_version, CancellationToken t_cancellationToken)

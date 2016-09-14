@@ -20,3 +20,5 @@ const QString Config::applicationDirectoryName = "app";
 
 const int Config::downloadTimeoutMsec = 10000;
 const int Config::progressPercentageOfDownload = 90;
+
+const QStringList Config::apiUrls = (QStringList() << "http://api.patchkit.net/");

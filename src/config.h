@@ -6,6 +6,7 @@
 #pragma once
 
 #include <QString>
+#include <QStringList>
 
 class Config
 {
@@ -25,4 +26,6 @@ public:
 
     const static int downloadTimeoutMsec;
     const static int progressPercentageOfDownload;
+
+    const static QStringList apiUrls;
 };

@@ -23,6 +23,10 @@ signals:
     void downloadProgressChanged(const long long& t_bytesDownloaded, const long long& t_totalBytes);
 
 private:
+    static QString getStringFromApi(const QString& t_resourceUrl, CancellationToken t_cancellationToken);
+
+    static QString getStringFromApi(const QString& t_resourceUrl, CancellationToken t_cancellationToken, int t_timeout);
+
     static QStringList getContentUrls(const QString& t_patcherSecret, int t_version, CancellationToken t_cancellationToken);
 
     static int parseVersionJson(const QString& t_json);
