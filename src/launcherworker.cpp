@@ -82,7 +82,7 @@ void LauncherWorker::setDownloadProgress(const long long& t_bytesDownloaded, con
     long long totalKilobytes = t_totalBytes / 1024;
 
     emit statusChanged(QString("Downloading %1 / %2 KB").arg(QString::number(kilobytesDownloaded), QString::number(totalKilobytes)));
-    emit progressChanged(qCeil(qreal(t_bytesDownloaded) / t_totalBytes));
+    emit progressChanged(qCeil((qreal(t_bytesDownloaded) / t_totalBytes) * 100.0));
 }
 
 #ifdef Q_OS_WIN
@@ -251,13 +251,11 @@ void LauncherWorker::updatePatcher(const Data& t_data)
         logDebug("Disconnecting downloadProgressChanged signal from remote patcher to slot from launcher thread.");
         disconnect(&m_remotePatcher, &RemotePatcherData::downloadProgressChanged, this, &LauncherWorker::setDownloadProgress);
 
-        emit progressChanged(1.0f);
+        emit progressChanged(100);
         emit statusChanged(QString("Installing..."));
 
         m_localPatcher.install(downloadedPath, t_data, version);
         logInfo("Patcher has been installed.");
-
-        emit progressChanged(100);
     }
 }
 

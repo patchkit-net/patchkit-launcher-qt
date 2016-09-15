@@ -21,11 +21,11 @@ QString Api::downloadString(const QString& t_resourceUrl, QStringList t_cacheApi
 
     int timeout = t_extendedTimeout ? Config::maxConnectionTimeoutMsec : Config::minConnectionTimeoutMsec;
 
-    if(downloadStringFromServer(Config::mainApiUrl, timeout, result, statusCode, t_cancellationToken))
+    if(downloadStringFromServer(Config::mainApiUrl + "/" + t_resourceUrl, timeout, result, statusCode, t_cancellationToken))
     {
         if(!isVaild(statusCode))
         {
-            throw Exception(QString("API response error. Status code - {0}").arg(statusCode));
+            throw Exception(QString("API response error. Status code - %1").arg(QString::number(statusCode)));
         }
 
         return result;
@@ -33,7 +33,7 @@ QString Api::downloadString(const QString& t_resourceUrl, QStringList t_cacheApi
 
     for(int i = 0; i < t_cacheApiUrls.length(); i++)
     {
-        if(downloadStringFromServer(t_cacheApiUrls[i], timeout, result, statusCode, t_cancellationToken))
+        if(downloadStringFromServer(t_cacheApiUrls[i] + "/" + t_resourceUrl, timeout, result, statusCode, t_cancellationToken))
         {
             if(isVaild(statusCode))
             {

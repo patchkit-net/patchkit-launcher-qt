@@ -46,7 +46,7 @@ void Downloader::fetchReply(const QString& t_urlPath, std::shared_ptr<QNetworkAc
 
     QUrl url(t_urlPath);
     t_accessManager = std::make_shared<QNetworkAccessManager>();
-    t_reply = std::shared_ptr<QNetworkReply>(t_accessManager.get()->get(QNetworkRequest(url)));
+    t_reply = std::shared_ptr<QNetworkReply>(t_accessManager->get(QNetworkRequest(url)));
 }
 
 void Downloader::waitForReply(std::shared_ptr<QNetworkReply>& t_reply, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) const
@@ -82,17 +82,15 @@ void Downloader::validateReply(std::shared_ptr<QNetworkReply>& t_reply) const
 {
     logInfo("Validating network reply.");
 
-    if (t_reply.get()->error() != QNetworkReply::NoError)
+    if (t_reply->error() != QNetworkReply::NoError)
     {
-        throw Exception(t_reply.get()->errorString());
+        throw Exception(t_reply->errorString());
     }
-
-
 }
 
 int Downloader::getReplyStatusCode(std::shared_ptr<QNetworkReply> &t_reply) const
 {
-    QVariant statusCode = t_reply.get()->attribute(QNetworkRequest::HttpStatusCodeAttribute);
+    QVariant statusCode = t_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
 
     if (!statusCode.isValid())
     {
