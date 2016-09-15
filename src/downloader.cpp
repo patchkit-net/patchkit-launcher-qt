@@ -26,7 +26,7 @@ void Downloader::downloadFile(const QString& t_urlPath, const QString& t_filePat
     disconnect(reply.get(), &QNetworkReply::downloadProgress, this, &Downloader::downloadProgressChanged);
 }
 
-QString Downloader::downloadString(const QString& t_urlPath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) const
+QString Downloader::downloadString(const QString& t_urlPath, int t_requestTimeoutMsec, int& t_replyStatusCode, CancellationToken t_cancellationToken) const
 {
     std::shared_ptr<QNetworkAccessManager> accessManager;
     std::shared_ptr<QNetworkReply> reply;
@@ -34,6 +34,8 @@ QString Downloader::downloadString(const QString& t_urlPath, int t_requestTimeou
     fetchReply(t_urlPath, accessManager, reply);
     waitForReply(reply, t_requestTimeoutMsec, t_cancellationToken);
     validateReply(reply);
+
+    t_replyStatusCode = getReplyStatusCode(reply);
 
     return reply->readAll();
 }
@@ -85,6 +87,11 @@ void Downloader::validateReply(std::shared_ptr<QNetworkReply>& t_reply) const
         throw Exception(t_reply.get()->errorString());
     }
 
+
+}
+
+int Downloader::getReplyStatusCode(std::shared_ptr<QNetworkReply> &t_reply) const
+{
     QVariant statusCode = t_reply.get()->attribute(QNetworkRequest::HttpStatusCodeAttribute);
 
     if (!statusCode.isValid())
@@ -94,12 +101,9 @@ void Downloader::validateReply(std::shared_ptr<QNetworkReply>& t_reply) const
 
     int statusCodeValue = statusCode.toInt();
 
-    if (statusCodeValue != 200)
-    {
-        throw Exception(QString("Invaild reply HTTP status code - %1").arg(statusCodeValue));
-    }
-
     logDebug("Reply status code - %1", .arg(statusCodeValue));
+
+    return statusCodeValue;
 }
 
 void Downloader::waitForFileDownload(std::shared_ptr<QNetworkReply>& t_reply, CancellationToken t_cancellationToken) const

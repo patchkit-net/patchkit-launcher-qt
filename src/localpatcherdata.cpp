@@ -155,7 +155,6 @@ void LocalPatcherData::writeFileContents(const QString& t_filePath, const QStrin
 
     QTextStream fileTextStream(&file);
     fileTextStream << t_fileContents;
-    file.close();
 }
 
 QString LocalPatcherData::readFileContents(const QString& t_filePath)
@@ -169,11 +168,7 @@ QString LocalPatcherData::readFileContents(const QString& t_filePath)
         throw Exception(QString("Couldn't open file %1 for reading").arg(t_filePath));
     }
 
-    QString fileContents(file.readAll());
-
-    file.close();
-
-    return fileContents;
+    return file.readAll();
 }
 
 bool LocalPatcherData::checkIfFilesExist(const QStringList& t_filesList)

@@ -7,6 +7,7 @@
 
 #include "data.h"
 #include "downloader.h"
+#include "api.h"
 
 class RemotePatcherData : public QObject
 {
@@ -23,7 +24,9 @@ signals:
     void downloadProgressChanged(const long long& t_bytesDownloaded, const long long& t_totalBytes);
 
 private:
-    static QStringList getContentUrls(const QString& t_patcherSecret, int t_version, CancellationToken t_cancellationToken);
+    Api m_api;
+
+    QStringList getContentUrls(const QString& t_patcherSecret, int t_version, CancellationToken t_cancellationToken);
 
     static int parseVersionJson(const QString& t_json);
 

@@ -7,15 +7,13 @@
 
 #include "logger.h"
 #include "config.h"
+#include "timeoutexception.h"
 
 int RemotePatcherData::getVersion(const Data& t_data, CancellationToken t_cancellationToken)
 {
     logInfo("Fetching newest patcher version from http://api.patchkit.net/1/apps/%1/versions/latest/id", .arg(Logger::adjustSecretForLog(t_data.patcherSecret())));
 
-    Downloader downloader;
-    connect(&downloader, &Downloader::downloadProgressChanged, this, &RemotePatcherData::downloadProgressChanged);
-
-    QString result = downloader.downloadString(QString("http://api.patchkit.net/1/apps/%1/versions/latest/id").arg(t_data.patcherSecret()), Config::downloadTimeoutMsec, t_cancellationToken);
+    QString result = m_api.downloadString(QString("http://api.patchkit.net/1/apps/%1/versions/latest/id").arg(t_data.patcherSecret()), t_cancellationToken);
 
     return parseVersionJson(result);
 }
@@ -24,9 +22,7 @@ QString RemotePatcherData::getPatcherSecret(const Data& t_data, CancellationToke
 {
     logInfo("Fetching newest patcher secret from http://api.patchkit.net/1/apps/%1", .arg(Logger::adjustSecretForLog(t_data.applicationSecret())));
 
-    Downloader downloader;
-    
-    QString result = downloader.downloadString(QString("http://api.patchkit.net/1/apps/%1").arg(t_data.applicationSecret()), Config::downloadTimeoutMsec, t_cancellationToken);
+    QString result = m_api.downloadString(QString("http://api.patchkit.net/1/apps/%1").arg(t_data.applicationSecret()), t_cancellationToken);
 
     return parsePatcherSecret(result);
 }
@@ -50,7 +46,14 @@ QString RemotePatcherData::download(const Data& t_data, int t_version, Cancellat
 
         try
         {
-            downloader.downloadFile(contentUrls[i], filePath, Config::downloadTimeoutMsec, t_cancellationToken);
+            try
+            {
+                downloader.downloadFile(contentUrls[i], filePath, Config::minConnectionTimeoutMsec, t_cancellationToken);
+            }
+            catch(TimeoutException&)
+            {
+                downloader.downloadFile(contentUrls[i], filePath, Config::maxConnectionTimeoutMsec, t_cancellationToken);
+            }
         }
         catch (CancelledException&)
         {
@@ -86,10 +89,7 @@ QStringList RemotePatcherData::getContentUrls(const QString& t_patcherSecret, in
     logInfo("Fetching patcher content urls from http://api.patchkit.net/1/apps/%1/versions/%2/content_urls",.arg(Logger::adjustSecretForLog(t_patcherSecret),
         QString::number(t_version)));
 
-    Downloader downloader;
-
-    //TODO: Use timeout from configuration.
-    QString result = downloader.downloadString(QString("http://api.patchkit.net/1/apps/%1/versions/%2/content_urls").arg(t_patcherSecret, QString::number(t_version)), 10000, t_cancellationToken);
+    QString result = m_api.downloadString(QString("http://api.patchkit.net/1/apps/%1/versions/%2/content_urls").arg(t_patcherSecret, QString::number(t_version)), t_cancellationToken);
 
     return parseContentUrlsJson(result);
 }

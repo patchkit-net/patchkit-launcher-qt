@@ -6,11 +6,13 @@
 #pragma once
 
 #include <QString>
+#include <QStringList>
 
 class Config
 {
 public:
     const static QString logFileName;
+
     const static QString dataFileName;
     const static int dataResourceId;
     const static int dataResourceTypeId;
@@ -23,6 +25,9 @@ public:
 
     const static QString applicationDirectoryName;
 
-    const static int downloadTimeoutMsec;
-    const static int progressPercentageOfDownload;
+    const static int minConnectionTimeoutMsec;
+    const static int maxConnectionTimeoutMsec;
+
+    const static QString mainApiUrl;
+    const static QStringList cacheApiUrls;
 };

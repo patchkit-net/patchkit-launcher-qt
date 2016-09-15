@@ -17,7 +17,7 @@ class Downloader : public QObject
 public:
     void downloadFile(const QString& t_urlPath, const QString& t_filePath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) const;
 
-    QString downloadString(const QString& t_urlPath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) const;
+    QString downloadString(const QString& t_urlPath, int t_requestTimeoutMsec, int& t_replyStatusCode, CancellationToken t_cancellationToken) const;
 
 signals:
     void downloadProgressChanged(const long long& t_bytesDownloaded, const long long& t_totalBytes);
@@ -28,6 +28,8 @@ private:
     void waitForReply(std::shared_ptr<QNetworkReply>& t_reply, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) const;
 
     void validateReply(std::shared_ptr<QNetworkReply>& t_reply) const;
+
+    int getReplyStatusCode(std::shared_ptr<QNetworkReply>& t_reply) const;
 
     void waitForFileDownload(std::shared_ptr<QNetworkReply>& t_reply, CancellationToken t_cancellationToken) const;
 
