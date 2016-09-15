@@ -6,6 +6,7 @@
 #include "config.h"
 
 const QString Config::logFileName = "launcher-log.txt";
+
 const QString Config::dataFileName = "launcher.dat";
 const int Config::dataResourceId = 3151;
 const int Config::dataResourceTypeId = 10;
@@ -18,7 +19,10 @@ const QString Config::patcherManifestFileName = "patcher.manifest";
 
 const QString Config::applicationDirectoryName = "app";
 
-const int Config::downloadTimeoutMsec = 10000;
-const int Config::progressPercentageOfDownload = 90;
+const int Config::minConnectionTimeoutMsec = 10000;
+const int Config::maxConnectionTimeoutMsec = 30000;
 
-const QStringList Config::apiUrls = (QStringList() << "http://api.patchkit.net/");
+const QString Config::mainApiUrl = "http://api.patchkit.net/";
+const QStringList Config::cacheApiUrls = (QStringList() << "http://api-cache-1.patchkit.net/" 
+                                                        << "http://api-cache-2.patchkit.net/" 
+                                                        << "http://api-cache-3.patchkit.net/");

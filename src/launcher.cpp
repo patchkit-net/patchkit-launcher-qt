@@ -24,13 +24,13 @@ void Launcher::start()
 
     m_mainWindow = std::make_unique<MainWindow>(m_worker, nullptr);
 
+    connect(m_worker.get(), &QThread::finished, this, &Launcher::finish);
+
     logInfo("Showing main window.");
     m_mainWindow->show();
 
     logInfo("Starting launcher worker.");
     m_worker->start();
-
-    connect(m_worker.get(), &QThread::finished, this, &Launcher::finish);
 }
 
 void Launcher::finish()
