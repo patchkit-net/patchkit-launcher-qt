@@ -203,24 +203,34 @@ void LauncherWorker::setupCurrentDirectory(const Data& t_data) const
 
     Locations::setCurrentDirPath(resourcesDir.absolutePath());
 #elif defined(Q_OS_WIN)
+    QFile permissionsCheckFile(QDir::cleanPath(Locations::applicationDirPath() + "/.permissions_check"));
 
-    QString appDataDirName = t_data.applicationSecret().mid(0, 16);
-
-    // TODO: HACK - QStandardPaths is using <APPNAME> as part of the QStandardPaths::AppDataLocation path. Because default name of application is "Launcher" we need to temporarly change it to the unique identifier of application.
-
-    QString previousApplicationName = QCoreApplication::applicationName();
-    QCoreApplication::setApplicationName(appDataDirName);
-
-    QDir appDataDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
-
-    QCoreApplication::setApplicationName(previousApplicationName);
-
-    if (!appDataDir.exists())
+    if (permissionsCheckFile.open(QIODevice::WriteOnly | QIODevice::Append))
     {
-        appDataDir.mkpath(".");
-    }
+        permissionsCheckFile.remove();
 
-    Locations::setCurrentDirPath(appDataDir.absolutePath());
+        Locations::setCurrentDirPath(Locations::applicationDirPath());
+    }
+    else
+    {
+        QString appDataDirName = t_data.applicationSecret().mid(0, 16);
+
+        // TODO: HACK - QStandardPaths is using <APPNAME> as part of the QStandardPaths::AppDataLocation path. Because default name of application is "Launcher" we need to temporarly change it to the unique identifier of application.
+
+        QString previousApplicationName = QCoreApplication::applicationName();
+        QCoreApplication::setApplicationName(appDataDirName);
+
+        QDir appDataDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+
+        QCoreApplication::setApplicationName(previousApplicationName);
+
+        if (!appDataDir.exists())
+        {
+            appDataDir.mkpath(".");
+        }
+
+        Locations::setCurrentDirPath(appDataDir.absolutePath());
+    }
 #else
     Locations::setCurrentDirPath(Locations::applicationDirPath());
 #endif
