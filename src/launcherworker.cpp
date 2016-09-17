@@ -121,7 +121,7 @@ void LauncherWorker::runWithData(Data& t_data)
 
         QSettings settings("UpSoft", t_data.applicationSecret().remove(0, 2).append("launcher-"));
 
-        if(tryToFetchPatcherSecret(t_data))
+        if (tryToFetchPatcherSecret(t_data))
         {
             settings.setValue("patcher_sercet", t_data.overwritePatcherSecret);
         }
@@ -179,7 +179,7 @@ bool LauncherWorker::tryToFetchPatcherSecret(Data& t_data)
         t_data.overwritePatcherSecret = m_remotePatcher.getPatcherSecret(t_data, m_cancellationTokenSource);
         return true;
     }
-    catch(CancelledException&)
+    catch (CancelledException&)
     {
         throw;
     }
@@ -192,7 +192,7 @@ bool LauncherWorker::tryToFetchPatcherSecret(Data& t_data)
         logWarning(exception.what());
         return false;
     }
-    catch(...)
+    catch (...)
     {
         logWarning("Unknown exception while fetching patcher secret.");
         return false;
@@ -273,7 +273,7 @@ void LauncherWorker::startPatcher(const Data& t_data)
 
 void LauncherWorker::checkIfCurrentDirectoryIsWritable()
 {
-    if(!Locations::isCurrentDirWritable())
+    if (!Locations::isCurrentDirWritable())
     {
 #if defined(Q_OS_WIN)
         ShellExecuteA(nullptr, "runas", Locations::applicationFilePath().toStdString().c_str(), nullptr, nullptr, SW_SHOWNORMAL);
