@@ -44,6 +44,20 @@ public:
         Logger::setupLogFile(logFilePath());
     }
 
+    static bool isCurrentDirWritable()
+    {
+        QFile permissionsCheckFile(QDir::cleanPath(currentDirPath() + "/.writable_check"));
+
+        if (permissionsCheckFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        {
+            permissionsCheckFile.remove();
+
+            return true;
+        }
+
+        return false;
+    }
+
     static QString dataFilePath()
     {
         return QDir::cleanPath(applicationDirPath() + "/" + Config::dataFileName);

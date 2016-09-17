@@ -86,8 +86,6 @@ void LocalPatcherData::install(const QString& t_downloadedPath, const Data& t_da
 
     writeFileContents(Locations::patcherInstallationInfoFilePath(), installationInfoFileContents);
     writeFileContents(Locations::patcherIdInfoFilePath(), getPatcherId(t_data));
-
-    QFile::remove(t_downloadedPath);
 }
 
 void LocalPatcherData::start(const Data& data)

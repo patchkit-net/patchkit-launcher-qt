@@ -27,7 +27,7 @@ QString RemotePatcherData::getPatcherSecret(const Data& t_data, CancellationToke
     return parsePatcherSecret(result);
 }
 
-QString RemotePatcherData::download(const Data& t_data, int t_version, CancellationToken t_cancellationToken)
+void RemotePatcherData::download(const QString& t_downloadPath, const Data& t_data, int t_version, CancellationToken t_cancellationToken)
 {
     logInfo("Downloading patcher %1 version", .arg(QString::number(t_version)));
 
@@ -40,19 +40,19 @@ QString RemotePatcherData::download(const Data& t_data, int t_version, Cancellat
     {
         t_cancellationToken.throwIfCancelled();
 
-        QString filePath = QString("file-%1.zip").arg(QString::number(i));
-
         logInfo("Downloading from %1", .arg(contentUrls[i]));
 
         try
         {
             try
             {
-                downloader.downloadFile(contentUrls[i], filePath, Config::minConnectionTimeoutMsec, t_cancellationToken);
+                downloader.downloadFile(contentUrls[i], t_downloadPath, Config::minConnectionTimeoutMsec, t_cancellationToken);
+                return;
             }
             catch(TimeoutException&)
             {
-                downloader.downloadFile(contentUrls[i], filePath, Config::maxConnectionTimeoutMsec, t_cancellationToken);
+                downloader.downloadFile(contentUrls[i], t_downloadPath, Config::maxConnectionTimeoutMsec, t_cancellationToken);
+                return;
             }
         }
         catch (CancelledException&)
@@ -61,24 +61,20 @@ QString RemotePatcherData::download(const Data& t_data, int t_version, Cancellat
         }
         catch (QException& exception)
         {
-            if (QFile::exists(filePath))
+            if (QFile::exists(t_downloadPath))
             {
-                QFile::remove(filePath);
+                QFile::remove(t_downloadPath);
             }
             logWarning(exception.what());
-            continue;
         }
         catch (...)
         {
-            if (QFile::exists(filePath))
+            if (QFile::exists(t_downloadPath))
             {
-                QFile::remove(filePath);
+                QFile::remove(t_downloadPath);
             }
             logWarning("Unknown exception while downloading patcher.");
-            continue;
         }
-
-        return filePath;
     }
 
     throw Exception(QString("Unable to download patcher %1 version").arg(QString::number(t_version)));

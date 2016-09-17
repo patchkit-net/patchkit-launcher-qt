@@ -18,7 +18,7 @@ public:
 
     QString getPatcherSecret(const Data& t_data, CancellationToken t_cancellationToken);
 
-    QString download(const Data& t_data, int t_version, CancellationToken t_cancellationToken);
+    void download(const QString& t_downloadPath, const Data& t_data, int t_version, CancellationToken t_cancellationToken);
 
 signals:
     void downloadProgressChanged(const long long& t_bytesDownloaded, const long long& t_totalBytes);

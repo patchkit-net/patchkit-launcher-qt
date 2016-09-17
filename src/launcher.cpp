@@ -39,13 +39,16 @@ void Launcher::finish()
 
     logInfo("Launcher worker has finished. Checking result.");
 
-    if (m_worker->noError())
+
+
+    if (m_worker->result() == LauncherWorker::CANCELLED || 
+        m_worker->result() == LauncherWorker::SUCCESS)
     {
         logInfo("Launcher worker has no errors! Closing launcher application with status 0.");
 
         QApplication::quit();
     }
-    else
+    else if (m_worker->result() == LauncherWorker::FAILED)
     {
         logWarning("Launcher worker has failed! Asking for retry.");
 
@@ -61,6 +64,11 @@ void Launcher::finish()
             logWarning("Retry denied. Closing launcher application with status 1.");
             QApplication::exit(1);
         }
+    }
+    else if (m_worker->result() == LauncherWorker::FATAL_ERROR)
+    {
+        QMessageBox::critical(nullptr, "Error!", "An error has occured!", QMessageBox::Close);
+        QApplication::exit(1);
     }
 }
 
@@ -80,7 +88,7 @@ void Launcher::cleanup()
             }
         }
 
-        if (!m_worker->noError())
+        if (m_worker->result() == LauncherWorker::FAILED || m_worker->result() == LauncherWorker::FATAL_ERROR)
         {
             logCritical("An error has occured!");
         }

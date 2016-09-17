@@ -9,6 +9,11 @@
 
 #include "logger.h"
 #include "locations.h"
+#include "fatalexception.h"
+
+#if defined(Q_OS_WIN)
+#include <Windows.h>
+#endif
 
 void LauncherWorker::run()
 {
@@ -20,45 +25,44 @@ void LauncherWorker::run()
             runWithDataFromResource();
             return;
         }
-        catch (CancelledException&)
-        {
-            throw;
-        }
-        catch (QException& exception)
+        catch (std::exception& exception)
         {
             logWarning(exception.what());
-        }
-        catch (...)
-        {
-            logWarning("Unknown exception.");
         }
 
         logWarning("Running with data from resources has failed. Trying to run with data from file located in current directory.");
 #endif
 
         runWithDataFromFile();
-        m_noError = true;
+
+        m_result = SUCCESS;
+        logInfo("Launcher has succeed.");
     }
     catch (CancelledException&)
     {
-        m_noError = true;
+        m_result = CANCELLED;
         logInfo("Launcher has been canceled.");
     }
-    catch (QException& exception)
+    catch (FatalException& exception)
     {
-        m_noError = false;
+        m_result = FATAL_ERROR;
         logCritical(exception.what());
+    }
+    catch (std::exception& exception)
+    {
+        m_result = FAILED;
+        logWarning(exception.what());
     }
     catch (...)
     {
-        m_noError = false;
+        m_result = FATAL_ERROR;
         logCritical("Unknown exception.");
     }
 }
 
 LauncherWorker::LauncherWorker() :
     m_cancellationTokenSource(new CancellationTokenSource()),
-    m_noError(false)
+    m_result(NONE)
 {
     m_remotePatcher.moveToThread(this);
     m_localPatcher.moveToThread(this);
@@ -71,9 +75,9 @@ void LauncherWorker::cancel()
     m_cancellationTokenSource->cancel();
 }
 
-bool LauncherWorker::noError() const
+LauncherWorker::Result LauncherWorker::result() const
 {
-    return m_noError;
+    return m_result;
 }
 
 void LauncherWorker::setDownloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes)
@@ -136,7 +140,11 @@ void LauncherWorker::runWithData(Data& t_data)
     {
         throw;
     }
-    catch (QException& exception)
+    catch (FatalException&)
+    {
+        throw;
+    }
+    catch (std::exception& exception)
     {
         if (m_localPatcher.isInstalled())
         {
@@ -175,7 +183,11 @@ bool LauncherWorker::tryToFetchPatcherSecret(Data& t_data)
     {
         throw;
     }
-    catch (QException& exception)
+    catch (FatalException&)
+    {
+        throw;
+    }
+    catch (std::exception& exception)
     {
         logWarning(exception.what());
         return false;
@@ -203,34 +215,7 @@ void LauncherWorker::setupCurrentDirectory(const Data& t_data) const
 
     Locations::setCurrentDirPath(resourcesDir.absolutePath());
 #elif defined(Q_OS_WIN)
-    QFile permissionsCheckFile(QDir::cleanPath(Locations::applicationDirPath() + "/.permissions_check"));
-
-    if (permissionsCheckFile.open(QIODevice::WriteOnly | QIODevice::Append))
-    {
-        permissionsCheckFile.remove();
-
-        Locations::setCurrentDirPath(Locations::applicationDirPath());
-    }
-    else
-    {
-        QString appDataDirName = t_data.applicationSecret().mid(0, 16);
-
-        // TODO: HACK - QStandardPaths is using <APPNAME> as part of the QStandardPaths::AppDataLocation path. Because default name of application is "Launcher" we need to temporarly change it to the unique identifier of application.
-
-        QString previousApplicationName = QCoreApplication::applicationName();
-        QCoreApplication::setApplicationName(appDataDirName);
-
-        QDir appDataDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
-
-        QCoreApplication::setApplicationName(previousApplicationName);
-
-        if (!appDataDir.exists())
-        {
-            appDataDir.mkpath(".");
-        }
-
-        Locations::setCurrentDirPath(appDataDir.absolutePath());
-    }
+    Locations::setCurrentDirPath(Locations::applicationDirPath());
 #else
     Locations::setCurrentDirPath(Locations::applicationDirPath());
 #endif
@@ -248,6 +233,10 @@ void LauncherWorker::updatePatcher(const Data& t_data)
 
     if (!m_localPatcher.isInstalledSpecific(version, t_data))
     {
+        logInfo("Checking whether current directory is writable.");
+
+        checkIfCurrentDirectoryIsWritable();
+
         logInfo("The newest patcher is not installed. Downloading the newest version of patcher.");
 
         emit statusChanged(QString("Downloading..."));
@@ -255,8 +244,10 @@ void LauncherWorker::updatePatcher(const Data& t_data)
         logDebug("Connecting downloadProgressChanged signal from remote patcher to slot from launcher thread.");
         connect(&m_remotePatcher, &RemotePatcherData::downloadProgressChanged, this, &LauncherWorker::setDownloadProgress);
 
-        QString downloadedPath = m_remotePatcher.download(t_data, version, m_cancellationTokenSource);
-        logInfo("Patcher has been downloaded to %1", .arg(downloadedPath));
+        QString downloadPath = QDir::cleanPath(Locations::applicationDirPath() + "/patcher.zip");
+
+        m_remotePatcher.download(downloadPath, t_data, version, m_cancellationTokenSource);
+        logInfo("Patcher has been downloaded to %1", .arg(downloadPath));
 
         logDebug("Disconnecting downloadProgressChanged signal from remote patcher to slot from launcher thread.");
         disconnect(&m_remotePatcher, &RemotePatcherData::downloadProgressChanged, this, &LauncherWorker::setDownloadProgress);
@@ -264,7 +255,9 @@ void LauncherWorker::updatePatcher(const Data& t_data)
         emit progressChanged(100);
         emit statusChanged(QString("Installing..."));
 
-        m_localPatcher.install(downloadedPath, t_data, version);
+        m_localPatcher.install(downloadPath, t_data, version);
+
+        QFile::remove(downloadPath);
         logInfo("Patcher has been installed.");
     }
 }
@@ -276,4 +269,18 @@ void LauncherWorker::startPatcher(const Data& t_data)
     emit statusChanged(QString("Starting..."));
 
     m_localPatcher.start(t_data);
+}
+
+void LauncherWorker::checkIfCurrentDirectoryIsWritable()
+{
+    if(!Locations::isCurrentDirWritable())
+    {
+#if defined(Q_OS_WIN)
+        ShellExecuteA(nullptr, "runas", Locations::applicationFilePath().toStdString().c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+
+        throw CancelledException();
+#else
+        throw FatalException("Current application directory isn't writable.");
+#endif
+    }
 }

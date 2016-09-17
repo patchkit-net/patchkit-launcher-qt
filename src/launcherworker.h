@@ -17,11 +17,20 @@ class LauncherWorker : public QThread
     void run() override;
 
 public:
+    enum Result
+    {
+        NONE,
+        CANCELLED,
+        SUCCESS,
+        FAILED,
+        FATAL_ERROR
+    };
+
     LauncherWorker();
 
     void cancel();
 
-    bool noError() const;
+    Result result() const;
 signals:
     void statusChanged(const QString& t_status);
     void progressChanged(int t_progress);
@@ -44,9 +53,12 @@ private:
     void updatePatcher(const Data& t_data);
     void startPatcher(const Data& t_data);
 
+    void checkIfCurrentDirectoryIsWritable();
+
     RemotePatcherData m_remotePatcher;
     LocalPatcherData m_localPatcher;
 
     std::shared_ptr<CancellationTokenSource> m_cancellationTokenSource;
-    bool m_noError;
+    
+    Result m_result;
 };
