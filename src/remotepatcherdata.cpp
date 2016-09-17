@@ -77,7 +77,7 @@ void RemotePatcherData::download(const QString& t_downloadPath, const Data& t_da
         }
     }
 
-    throw Exception(QString("Unable to download patcher %1 version").arg(QString::number(t_version)));
+    throw std::runtime_error("Unable to download patcher version - " + std::to_string(t_version));
 }
 
 QStringList RemotePatcherData::getContentUrls(const QString& t_patcherSecret, int t_version, CancellationToken t_cancellationToken)
@@ -99,21 +99,21 @@ int RemotePatcherData::parseVersionJson(const QString& t_json)
 
     if (!jsonDocument.isObject())
     {
-        throw Exception("Couldn't read version id from JSON data.");
+        throw std::runtime_error("Couldn't read version id from JSON data.");
     }
 
     QJsonObject jsonObject = jsonDocument.object();
 
     if (!jsonObject.contains("id"))
     {
-        throw Exception("Couldn't read version id from JSON data.");
+        throw std::runtime_error("Couldn't read version id from JSON data.");
     }
 
     int idValue = jsonObject.value("id").toInt(-1);
 
     if (idValue == -1)
     {
-        throw Exception(QString("Couldn't read version id from JSON data."));
+        throw std::runtime_error("Couldn't read version id from JSON data.");
     }
 
     return idValue;
@@ -127,14 +127,14 @@ QString RemotePatcherData::parsePatcherSecret(const QString& t_json)
 
     if (!jsonDocument.isObject())
     {
-        throw Exception("Couldn't read patcher secret from JSON data.");
+        throw std::runtime_error("Couldn't read patcher secret from JSON data.");
     }
 
     QJsonObject jsonObject = jsonDocument.object();
 
     if (!jsonObject.contains("patcher_secret"))
     {
-        throw Exception("Couldn't read patcher secret from JSON data.");
+        throw std::runtime_error("Couldn't read patcher secret from JSON data.");
     }
 
     return jsonObject.value("patcher_secret").toString();
@@ -149,14 +149,14 @@ QStringList RemotePatcherData::parseContentUrlsJson(const QString& t_json)
 
     if (!jsonDocument.isArray())
     {
-        throw Exception("Couldn't read content urls from JSON data.");
+        throw std::runtime_error("Couldn't read content urls from JSON data.");
     }
 
     QJsonArray jsonArray = jsonDocument.array();
 
     if (jsonArray.size() == 0)
     {
-        throw Exception("Empty content urls.");
+        throw std::runtime_error("Empty content urls.");
     }
 
     QStringList result;
@@ -165,21 +165,21 @@ QStringList RemotePatcherData::parseContentUrlsJson(const QString& t_json)
     {
         if (!jsonArray[i].isObject())
         {
-            throw Exception("Couldn't read content urls from JSON data.");
+            throw std::runtime_error("Couldn't read content urls from JSON data.");
         }
 
         QJsonObject jsonObject = jsonArray[i].toObject();
 
         if (!jsonObject.contains("url"))
         {
-            throw Exception("Couldn't read content urls from JSON data.");
+            throw std::runtime_error("Couldn't read content urls from JSON data.");
         }
 
         QJsonValue jsonValue = jsonObject.value("url");
 
         if (!jsonValue.isString())
         {
-            throw Exception("Couldn't read content urls from JSON data.");
+            throw std::runtime_error("Couldn't read content urls from JSON data.");
         }
 
         result.append(jsonValue.toString());

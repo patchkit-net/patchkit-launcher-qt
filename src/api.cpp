@@ -25,7 +25,7 @@ QString Api::downloadString(const QString& t_resourceUrl, QStringList t_cacheApi
     {
         if(!isVaild(statusCode))
         {
-            throw Exception(QString("API response error. Status code - %1").arg(QString::number(statusCode)));
+            throw std::runtime_error("API response error. Status code - " + std::to_string(statusCode));
         }
 
         return result;

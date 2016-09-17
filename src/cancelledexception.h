@@ -5,12 +5,12 @@
 
 #pragma once
 
-#include "exception.h"
+#include <exception>
 
-class CancelledException : public Exception
+class CancelledException : public std::exception
 {
 public:
-    CancelledException() : Exception("Operation has been cancelled.")
+    CancelledException() : exception("Operation has been cancelled.")
     {
     }
 };

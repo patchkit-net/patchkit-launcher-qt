@@ -13,7 +13,6 @@
 
 #include "logger.h"
 #include "locations.h"
-#include "exception.h"
 
 bool LocalPatcherData::isInstalled()
 {
@@ -148,7 +147,7 @@ void LocalPatcherData::writeFileContents(const QString& t_filePath, const QStrin
 
     if (!file.open(QFile::WriteOnly))
     {
-        throw Exception(QString("Couldn't open file %1 for writing").arg(t_filePath));
+        throw std::runtime_error("Couldn't open file for writing - " + t_filePath.toStdString());
     }
 
     QTextStream fileTextStream(&file);
@@ -163,7 +162,7 @@ QString LocalPatcherData::readFileContents(const QString& t_filePath)
 
     if (!file.open(QFile::ReadOnly))
     {
-        throw Exception(QString("Couldn't open file %1 for reading").arg(t_filePath));
+        throw std::runtime_error("Couldn't open file for reading - " + t_filePath.toStdString());
     }
 
     return file.readAll();
@@ -197,7 +196,7 @@ void LocalPatcherData::createDirIfNotExists(const QString& t_dirPath)
     {
         if (!dir.mkpath("."))
         {
-            throw Exception(QString("Couldn't create directory - %1").arg(t_dirPath));
+            throw std::runtime_error("Couldn't create directory - " + t_dirPath.toStdString());
         }
     }
 }
@@ -210,7 +209,7 @@ void LocalPatcherData::extractZip(const QString& t_zipFilePath, const QString& t
 
     if (!zipFile.open(QuaZip::mdUnzip))
     {
-        throw Exception("Couldn't open zip file.");
+        throw std::runtime_error("Couldn't open zip file.");
     }
 
     zipFile.goToFirstFile();
@@ -247,7 +246,7 @@ void LocalPatcherData::extractFileZipEntry(QuaZipFile& t_zipEntry, const QString
 {
     if (!t_zipEntry.open(QIODevice::ReadOnly) || t_zipEntry.getZipError() != UNZ_OK)
     {
-        throw Exception("Couldn't read zip entry.");
+        throw std::runtime_error("Couldn't read zip entry.");
     }
 
     QFileInfo zipEntryFileInfo(t_zipEntryPath);
@@ -258,7 +257,7 @@ void LocalPatcherData::extractFileZipEntry(QuaZipFile& t_zipEntry, const QString
 
     if (!zipEntryFile.open(QIODevice::WriteOnly))
     {
-        throw Exception("Couldn't open file for extracting.");
+        throw std::runtime_error("Couldn't open file for extracting.");
     }
 
     copyDeviceData(reinterpret_cast<QIODevice&>(t_zipEntry), zipEntryFile);
@@ -314,7 +313,7 @@ int LocalPatcherData::parseVersionInfoToNumber(const QString& t_versionInfoFileC
 
     if (!intParseResult)
     {
-        throw Exception("Couldn't parse version info to number.");
+        throw std::runtime_error("Couldn't parse version info to number.");
     }
 
     return version;
@@ -328,14 +327,14 @@ void LocalPatcherData::readPatcherManifset(QString& t_exeFileName, QString& t_ex
 
     if (!jsonDocument.isObject())
     {
-        throw Exception("Invaild format of patcher manifest file.");
+        throw std::runtime_error("Invaild format of patcher manifest file.");
     }
 
     QJsonObject jsonObject = jsonDocument.object();
 
     if (!jsonObject.contains("exe_fileName") || !jsonObject.contains("exe_arguments"))
     {
-        throw Exception("Invaild format of patcher manifest file.");
+        throw std::runtime_error("Invaild format of patcher manifest file.");
     }
 
     QJsonValue exeFileNameJsonValue = jsonObject.value("exe_fileName");
@@ -343,7 +342,7 @@ void LocalPatcherData::readPatcherManifset(QString& t_exeFileName, QString& t_ex
 
     if (!exeFileNameJsonValue.isString() || !exeArgumentsJsonValue.isString())
     {
-        throw Exception("Invaild format of patcher manifest file.");
+        throw std::runtime_error("Invaild format of patcher manifest file.");
     }
 
     t_exeFileName = exeFileNameJsonValue.toString();

@@ -84,7 +84,7 @@ void Downloader::validateReply(std::shared_ptr<QNetworkReply>& t_reply) const
 
     if (t_reply->error() != QNetworkReply::NoError)
     {
-        throw Exception(t_reply->errorString());
+        throw std::runtime_error(t_reply->errorString().toStdString());
     }
 }
 
@@ -94,7 +94,7 @@ int Downloader::getReplyStatusCode(std::shared_ptr<QNetworkReply> &t_reply) cons
 
     if (!statusCode.isValid())
     {
-        throw Exception("Couldn't read HTTP status code from reply.");
+        throw std::runtime_error("Couldn't read HTTP status code from reply.");
     }
 
     int statusCodeValue = statusCode.toInt();
@@ -126,7 +126,7 @@ void Downloader::writeDownloadedFile(std::shared_ptr<QNetworkReply>& t_reply, co
 
     if (!file.open(QFile::WriteOnly))
     {
-        throw Exception("Couldn't open file for download.");
+        throw std::runtime_error("Couldn't open file for download.");
     }
 
     qint64 bufferSize = 4096;

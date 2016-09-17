@@ -5,12 +5,12 @@
 
 #pragma once
 
-#include "exception.h"
+#include <exception>
 
-class TimeoutException : public Exception
+class TimeoutException : public std::exception
 {
 public:
-    TimeoutException() : Exception("Timeout.")
+    TimeoutException() : std::exception("Timeout.")
     {
     }
 };

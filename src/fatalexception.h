@@ -5,18 +5,18 @@
 
 #pragma once
 
-#include "exception.h"
+#include <exception>
 
-class FatalException : public Exception
+class FatalException : public std::runtime_error
 {
 public:
     FatalException(const QString& t_message) :
-        Exception(t_message)
+        std::runtime_error(t_message.toStdString())
     {
     }
 
     FatalException(const char* t_message) :
-        Exception(t_message)
+        std::runtime_error(t_message)
     {
     }
 };
