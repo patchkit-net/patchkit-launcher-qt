@@ -9,7 +9,6 @@
 #include <memory>
 
 #include "logger.h"
-#include "exception.h"
 #include "executableresources.h"
 
 Data::Data()
@@ -24,7 +23,7 @@ Data Data::loadFromFile(const QString& t_filePath)
 
     if (!file.open(QFile::ReadOnly))
     {
-        throw Exception(QString("Couldn't open launcher data file from %1").arg(t_filePath));
+        throw std::runtime_error("Couldn't open launcher data file from - " + t_filePath.toStdString());
     }
 
     QDataStream fileStream(&file);
@@ -76,14 +75,14 @@ QByteArray Data::readStringBytes(QDataStream& t_dataStream)
 
     if (t_dataStream.readRawData(reinterpret_cast<char*>(&len), 4) != 4)
     {
-        throw Exception("Corrupted data file.");
+        throw std::runtime_error("Corrupted data file.");
     }
 
     QByteArray bytes(new char[len], len);
 
     if (t_dataStream.readRawData(bytes.data(), len) != len)
     {
-        throw Exception("Corrupted data file.");
+        throw std::runtime_error("Corrupted data file.");
     }
 
     return bytes;

@@ -5,8 +5,6 @@
 
 #include "executableresources.h"
 
-#include "exception.h"
-
 #ifdef Q_OS_WIN
 
 #include <tchar.h>
@@ -18,21 +16,21 @@ std::shared_ptr<QByteArray> ExecutableResources::extract(const QString& t_execut
 
     if (executableHandle == nullptr)
     {
-        throw Exception("Cannot extract resource.");
+        throw std::runtime_error("Cannot extract resource.");
     }
 
     HRSRC resource = FindResource(executableHandle, MAKEINTRESOURCE(t_resourceId), MAKEINTRESOURCE(t_resourceTypeId));
 
     if (resource == nullptr)
     {
-        throw Exception("Cannot extract resource.");
+        throw std::runtime_error("Cannot extract resource.");
     }
 
     HGLOBAL resourceMemory = LoadResource(executableHandle, resource);
 
     if (resourceMemory == nullptr)
     {
-        throw Exception("Cannot extract resource.");
+        throw std::runtime_error("Cannot extract resource.");
     }
 
     DWORD resourceBufferSize = SizeofResource(executableHandle, resource);
@@ -40,7 +38,7 @@ std::shared_ptr<QByteArray> ExecutableResources::extract(const QString& t_execut
 
     if (resourceMemoryBuffer == nullptr || resourceBufferSize < 1)
     {
-        throw Exception("Cannot extract resource.");
+        throw std::runtime_error("Cannot extract resource.");
     }
 
     std::shared_ptr<QByteArray> resourceBuffer(new QByteArray(new char[resourceBufferSize], resourceBufferSize));
