@@ -5,7 +5,6 @@
 
 #include "localpatcherdata.h"
 
-#include <memory>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QProcess>
@@ -13,6 +12,7 @@
 
 #include "logger.h"
 #include "locations.h"
+#include "ioutils.h"
 
 bool LocalPatcherData::isInstalled()
 {
@@ -24,11 +24,11 @@ bool LocalPatcherData::isInstalled()
     filesToCheck << Locations::patcherVersionInfoFilePath();
     filesToCheck << Locations::patcherIdInfoFilePath();
 
-    if (checkIfFilesExist(filesToCheck))
+    if (IOUtils::checkIfFilesExist(filesToCheck))
     {
-        QStringList installFiles = readFileContents(Locations::patcherInstallationInfoFilePath()).split(QChar('\n'));
+        QStringList installFiles = IOUtils::readTextFromFile(Locations::patcherInstallationInfoFilePath()).split(QChar('\n'));
 
-        return checkIfFilesExist(installFiles);
+        return IOUtils::checkIfFilesExist(installFiles);
     }
 
     return false;
@@ -39,7 +39,7 @@ bool LocalPatcherData::isInstalledSpecific(int t_version, const Data& t_data)
 {
     if(isInstalled())
     {
-        return readFileContents(Locations::patcherIdInfoFilePath()) == getPatcherId(t_data) &&
+        return IOUtils::readTextFromFile(Locations::patcherIdInfoFilePath()) == getPatcherId(t_data) &&
             readVersion() == t_version;
     }
     return false;
@@ -51,17 +51,17 @@ void LocalPatcherData::install(const QString& t_downloadedPath, const Data& t_da
 
     logInfo("Installing patcher (version %1) from downloaded zip - %2", .arg(QString::number(t_version), t_downloadedPath));
 
-    createDirIfNotExists(Locations::patcherDirectoryPath());
+    IOUtils::createDir(Locations::patcherDirectoryPath());
 
     QStringList installationInfoFileList;
 
-    extractZip(t_downloadedPath, Locations::patcherDirectoryPath(), installationInfoFileList);
+    IOUtils::extractZip(t_downloadedPath, Locations::patcherDirectoryPath(), installationInfoFileList);
 
     installationInfoFileList.append(Locations::patcherInstallationInfoFilePath());
     installationInfoFileList.append(Locations::patcherVersionInfoFilePath());
     installationInfoFileList.append(Locations::patcherIdInfoFilePath());
 
-    writeFileContents(Locations::patcherVersionInfoFilePath(), QString::number(t_version));
+    IOUtils::writeTextToFile(Locations::patcherVersionInfoFilePath(), QString::number(t_version));
 
     QString installationInfoFileContents = "";
 
@@ -83,8 +83,8 @@ void LocalPatcherData::install(const QString& t_downloadedPath, const Data& t_da
         }
     }
 
-    writeFileContents(Locations::patcherInstallationInfoFilePath(), installationInfoFileContents);
-    writeFileContents(Locations::patcherIdInfoFilePath(), getPatcherId(t_data));
+    IOUtils::writeTextToFile(Locations::patcherInstallationInfoFilePath(), installationInfoFileContents);
+    IOUtils::writeTextToFile(Locations::patcherIdInfoFilePath(), getPatcherId(t_data));
 }
 
 void LocalPatcherData::start(const Data& data)
@@ -116,7 +116,7 @@ void LocalPatcherData::uninstall()
     }
     else
     {
-        QStringList installFiles = readFileContents(Locations::patcherInstallationInfoFilePath()).split(QChar('\n'));
+        QStringList installFiles = IOUtils::readTextFromFile(Locations::patcherInstallationInfoFilePath()).split(QChar('\n'));
 
         for (int i = 0; i < installFiles.size(); i++)
         {
@@ -139,157 +139,11 @@ void LocalPatcherData::uninstall()
     }
 }
 
-void LocalPatcherData::writeFileContents(const QString& t_filePath, const QString& t_fileContents)
-{
-    logInfo("Writing file contents to %1", .arg(t_filePath));
-
-    QFile file(t_filePath);
-
-    if (!file.open(QFile::WriteOnly))
-    {
-        throw std::runtime_error("Couldn't open file for writing - " + t_filePath.toStdString());
-    }
-
-    QTextStream fileTextStream(&file);
-    fileTextStream << t_fileContents;
-}
-
-QString LocalPatcherData::readFileContents(const QString& t_filePath)
-{
-    logInfo("Reading file contents from %1", .arg(t_filePath));
-
-    QFile file(t_filePath);
-
-    if (!file.open(QFile::ReadOnly))
-    {
-        throw std::runtime_error("Couldn't open file for reading - " + t_filePath.toStdString());
-    }
-
-    return file.readAll();
-}
-
-bool LocalPatcherData::checkIfFilesExist(const QStringList& t_filesList)
-{
-    logInfo("Checking whether files from list exists.");
-
-    for (int i = 0; i < t_filesList.size(); i++)
-    {
-        if (!QFile::exists(t_filesList[i]))
-        {
-            logInfo("%1 doesn't exists.", .arg(t_filesList[i]));
-            return false;
-        }
-
-        logInfo("%1 exists.", .arg(t_filesList[i]));
-    }
-
-    return true;
-}
-
-void LocalPatcherData::createDirIfNotExists(const QString& t_dirPath)
-{
-    logInfo("Creating directory - %1", .arg(t_dirPath));
-
-    QDir dir = QDir(t_dirPath);
-
-    if (!dir.exists())
-    {
-        if (!dir.mkpath("."))
-        {
-            throw std::runtime_error("Couldn't create directory - " + t_dirPath.toStdString());
-        }
-    }
-}
-
-void LocalPatcherData::extractZip(const QString& t_zipFilePath, const QString& t_extractDirPath, QStringList& t_extractedFilesList)
-{
-    logInfo("Extracting zip file - %1", .arg(t_zipFilePath));
-
-    QuaZip zipFile(t_zipFilePath);
-
-    if (!zipFile.open(QuaZip::mdUnzip))
-    {
-        throw std::runtime_error("Couldn't open zip file.");
-    }
-
-    zipFile.goToFirstFile();
-
-    do
-    {
-        QString zipEntryName = zipFile.getCurrentFileName();
-
-        QString zipEntryPath = QDir::cleanPath(t_extractDirPath + "/" + zipEntryName);
-
-        if (isDirZipEntry(zipEntryName))
-        {
-            extractDirZipEntry(zipEntryPath);
-        }
-        else
-        {
-            QuaZipFile zipEntry(&zipFile);
-            extractFileZipEntry(zipEntry, zipEntryPath);
-        }
-
-        t_extractedFilesList.append(zipEntryPath);
-    }
-    while (zipFile.goToNextFile());
-
-    zipFile.close();
-}
-
-void LocalPatcherData::extractDirZipEntry(const QString& t_zipEntryPath)
-{
-    createDirIfNotExists(t_zipEntryPath);
-}
-
-void LocalPatcherData::extractFileZipEntry(QuaZipFile& t_zipEntry, const QString& t_zipEntryPath)
-{
-    if (!t_zipEntry.open(QIODevice::ReadOnly) || t_zipEntry.getZipError() != UNZ_OK)
-    {
-        throw std::runtime_error("Couldn't read zip entry.");
-    }
-
-    QFileInfo zipEntryFileInfo(t_zipEntryPath);
-
-    createDirIfNotExists(zipEntryFileInfo.absolutePath());
-
-    QFile zipEntryFile(zipEntryFileInfo.absoluteFilePath());
-
-    if (!zipEntryFile.open(QIODevice::WriteOnly))
-    {
-        throw std::runtime_error("Couldn't open file for extracting.");
-    }
-
-    copyDeviceData(reinterpret_cast<QIODevice&>(t_zipEntry), zipEntryFile);
-
-    zipEntryFile.close();
-}
-
-bool LocalPatcherData::isDirZipEntry(const QString& t_zipEntryName)
-{
-    return t_zipEntryName.endsWith('/') || t_zipEntryName.endsWith('\\');
-}
-
-void LocalPatcherData::copyDeviceData(QIODevice& readDevice, QIODevice& writeDevice)
-{
-    qint64 bufferSize = 4096;
-    std::unique_ptr<char> buffer(new char[bufferSize]);
-
-    while (!readDevice.atEnd())
-    {
-        qint64 readSize = readDevice.read(buffer.get(), bufferSize);
-        if (readSize > 0)
-        {
-            writeDevice.write(buffer.get(), readSize);
-        }
-    }
-}
-
 int LocalPatcherData::readVersion()
 {
     logInfo("Reading version info of installed patcher.");
 
-    QString versionInfoFileContents = readFileContents(Locations::patcherVersionInfoFilePath());
+    QString versionInfoFileContents = IOUtils::readTextFromFile(Locations::patcherVersionInfoFilePath());
 
     int version = parseVersionInfoToNumber(versionInfoFileContents);
 
@@ -323,7 +177,7 @@ void LocalPatcherData::readPatcherManifset(QString& t_exeFileName, QString& t_ex
 {
     logInfo("Reading patcher manifest.");
 
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(readFileContents(Locations::patcherManifestFilePath()).toUtf8());
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(IOUtils::readTextFromFile(Locations::patcherManifestFilePath()).toUtf8());
 
     if (!jsonDocument.isObject())
     {

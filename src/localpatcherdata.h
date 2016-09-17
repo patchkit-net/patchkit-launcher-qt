@@ -27,26 +27,6 @@ public:
 private:
     void uninstall();
 
-    static void writeFileContents(const QString& t_filePath, const QString& t_fileContents);
-
-    static QString readFileContents(const QString& t_filePath);
-
-    static bool checkIfFilesExist(const QStringList& t_filesList);
-
-    static void createDirIfNotExists(const QString& t_dirPath);
-
-    static void extractZip(const QString& t_zipFilePath,
-                           const QString& t_extractDirPath,
-                           QStringList& t_extractedEntriesList);
-
-    static void extractDirZipEntry(const QString& t_zipEntryPath);
-
-    static void extractFileZipEntry(QuaZipFile& t_zipEntry, const QString& t_zipEntryPath);
-
-    static bool isDirZipEntry(const QString& t_zipEntryName);
-
-    static void copyDeviceData(QIODevice& t_readDevice, QIODevice& t_writeDevice);
-
     int readVersion();
 
     static QString getPatcherId(const Data& t_data);
