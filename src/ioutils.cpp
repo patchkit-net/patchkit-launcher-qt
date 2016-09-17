@@ -17,7 +17,7 @@ void IOUtils::createDir(const QString& t_dirPath)
     dir.mkpath(".");
 }
 
-QString IOUtils::readFileContent(const QString& t_filePath)
+QString IOUtils::readTextFromFile(const QString& t_filePath)
 {
     QFile file(t_filePath);
 
@@ -29,7 +29,7 @@ QString IOUtils::readFileContent(const QString& t_filePath)
     return file.readAll();
 }
 
-void IOUtils::writeFileContent(const QString& t_filePath, const QString& t_fileContents)
+void IOUtils::writeTextToFile(const QString& t_filePath, const QString& t_fileContents)
 {
     QFile file(t_filePath);
 
