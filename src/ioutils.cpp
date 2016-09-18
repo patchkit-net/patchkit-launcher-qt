@@ -56,19 +56,6 @@ bool IOUtils::checkIfFileExists(const QString& t_filePath)
     return info.isFile();
 }
 
-bool IOUtils::checkIfAllFilesExist(const QStringList& t_filePaths)
-{
-    for (int i = 0; i < t_filePaths.size(); i++)
-    {
-        if (!checkIfFileExists(t_filePaths[i]))
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 void IOUtils::extractZip(const QString& t_zipPath, const QString& t_extractPath, QStringList& t_extractedEntries)
 {
     QuaZip zipFile(t_zipPath);
@@ -96,7 +83,7 @@ void IOUtils::extractZip(const QString& t_zipPath, const QString& t_extractPath,
             extractZipFileEntry(zipEntry, zipEntryPath);
         }
 
-        t_extractedEntries.append(zipEntryPath);
+        t_extractedEntries.append(zipEntryName);
     }
     while (zipFile.goToNextFile());
 
