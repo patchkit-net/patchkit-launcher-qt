@@ -88,7 +88,7 @@ void Downloader::validateReply(std::shared_ptr<QNetworkReply>& t_reply) const
     }
 }
 
-int Downloader::getReplyStatusCode(std::shared_ptr<QNetworkReply> &t_reply) const
+int Downloader::getReplyStatusCode(std::shared_ptr<QNetworkReply>& t_reply) const
 {
     QVariant statusCode = t_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
 

@@ -37,7 +37,7 @@ bool LocalPatcherData::isInstalled()
 
 bool LocalPatcherData::isInstalledSpecific(int t_version, const Data& t_data)
 {
-    if(isInstalled())
+    if (isInstalled())
     {
         return IOUtils::readTextFromFile(Locations::getInstance().patcherIdInfoFilePath()) == getPatcherId(t_data) &&
             readVersion() == t_version;

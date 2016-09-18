@@ -97,7 +97,8 @@ void IOUtils::extractZip(const QString& t_zipPath, const QString& t_extractPath,
         }
 
         t_extractedEntries.append(zipEntryPath);
-    } while (zipFile.goToNextFile());
+    }
+    while (zipFile.goToNextFile());
 
     zipFile.close();
 }

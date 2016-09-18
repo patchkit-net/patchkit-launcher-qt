@@ -49,7 +49,7 @@ void RemotePatcherData::download(const QString& t_downloadPath, const Data& t_da
                 downloader.downloadFile(contentUrls[i], t_downloadPath, Config::minConnectionTimeoutMsec, t_cancellationToken);
                 return;
             }
-            catch(TimeoutException&)
+            catch (TimeoutException&)
             {
                 downloader.downloadFile(contentUrls[i], t_downloadPath, Config::maxConnectionTimeoutMsec, t_cancellationToken);
                 return;

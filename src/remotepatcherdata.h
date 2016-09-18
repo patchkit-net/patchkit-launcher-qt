@@ -30,7 +30,7 @@ private:
 
     static int parseVersionJson(const QString& t_json);
 
-    static  QString parsePatcherSecret(const QString& t_json);
+    static QString parsePatcherSecret(const QString& t_json);
 
     static QStringList parseContentUrlsJson(const QString& t_json);
 };

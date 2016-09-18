@@ -3,7 +3,6 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-
 #include "tempdir.h"
 
 #include <QDir>

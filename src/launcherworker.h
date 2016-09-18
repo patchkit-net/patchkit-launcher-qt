@@ -59,6 +59,6 @@ private:
     LocalPatcherData m_localPatcher;
 
     std::shared_ptr<CancellationTokenSource> m_cancellationTokenSource;
-    
+
     Result m_result;
 };

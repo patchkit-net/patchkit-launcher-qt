@@ -39,8 +39,7 @@ void Launcher::finish()
     logInfo("Launcher worker has finished. Checking result.");
 
 
-
-    if (m_worker->result() == LauncherWorker::CANCELLED || 
+    if (m_worker->result() == LauncherWorker::CANCELLED ||
         m_worker->result() == LauncherWorker::SUCCESS)
     {
         logInfo("Launcher worker has no errors! Closing launcher application with status 0.");
