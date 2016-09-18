@@ -10,7 +10,16 @@
 class CancelledException : public std::exception
 {
 public:
-    CancelledException() : exception("Operation has been cancelled.")
+    CancelledException()
     {
+    }
+
+    virtual ~CancelledException() throw ()
+    {
+    }
+
+    virtual const char* what() const throw ()
+    {
+        return "Operation has been cancelled.";
     }
 };

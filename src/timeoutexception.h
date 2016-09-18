@@ -10,7 +10,16 @@
 class TimeoutException : public std::exception
 {
 public:
-    TimeoutException() : std::exception("Timeout.")
+    TimeoutException()
     {
+    }
+
+    virtual ~TimeoutException() throw ()
+    {
+    }
+
+    virtual const char* what() const throw ()
+    {
+        return "Timeout.";
     }
 };
