@@ -10,6 +10,8 @@ DEFINES += QUAZIP_STATIC
 INCLUDEPATH += $$PWD/include/zlib
 INCLUDEPATH += $$PWD/include/quazip
 
+CONFIG += c++14
+
 win32 {
     !contains(QMAKE_TARGET.arch, x86_64) {
         Debug:LIBS += $$PWD/lib/zlib/win_i386/zlibstaticd_md.lib
@@ -29,7 +31,6 @@ win32 {
 }
 
 unix:!macx {
-    CONFIG += c++14
     !contains(QMAKE_HOST.arch, x86_64) {
         debug:LIBS += $$PWD/lib/quazip/linux_i386/libquazipd.a -lz
         release:LIBS += $$PWD/lib/quazip/linux_i386/libquazip.a -lz
@@ -40,7 +41,6 @@ unix:!macx {
 }
 
 macx {
-    CONFIG += c++14
     debug:LIBS += $$PWD/lib/quazip/macosx_x86_64/libquazipd.a -lz
     release:LIBS += $$PWD/lib/quazip/macosx_x86_64/libquazip.a -lz
 }
