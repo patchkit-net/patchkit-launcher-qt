@@ -5,7 +5,8 @@
 
 #pragma once
 
-#include <QString>
+#include <QFile>
+#include <QTextStream>
 
 #define logStringFormat(message, ...) QString(message)__VA_ARGS__.toStdString().c_str()
 
@@ -16,9 +17,30 @@
 
 class Logger
 {
+    Logger();
 public:
-    static void setupLogFile(const QString& t_logFilePath);
+    Logger(Logger const&) = delete;
+    void operator=(Logger const&) = delete;
+
+    static Logger& getInstance()
+    {
+        static Logger instance;
+
+        return instance;
+    }
+
+    static void initialize()
+    {
+        getInstance();
+    }
 
     static QString adjustSecretForLog(const QString& t_secret);
     static QString adjustSecretForLog(const char* t_secret);
+private:
+    QFile m_logFile;
+    QTextStream m_logFileStream;
+    QTextStream m_stdoutStream;
+
+    static const char* resolveMessageType(QtMsgType t_type);
+    static void logHandler(QtMsgType t_type, const QMessageLogContext& t_context, const QString& t_msg);
 };

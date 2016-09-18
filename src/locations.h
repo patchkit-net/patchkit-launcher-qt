@@ -8,97 +8,82 @@
 #include <QDir>
 
 #include "config.h"
-#include "logger.h"
 
 class Locations
 {
+    Locations();
 public:
-    static void initialize();
+    Locations(Locations const&) = delete;
+    void operator=(Locations const&) = delete;
 
-    static QString applicationFilePath()
+    static Locations& getInstance()
+    {
+        static Locations instance;
+
+        return instance;
+    }
+
+    QString applicationFilePath()
     {
         return m_applicationFilePath;
     }
 
-    static QString applicationDirPath()
+    QString applicationDirPath()
     {
         return m_applicationDirPath;
     }
 
-    static QString currentDirPath()
+    QString currentDirPath()
     {
         return QDir::currentPath();
     }
 
-    static void setCurrentDirPath(QString t_currentDirPath)
+    bool isCurrentDirWritable();
+
+    QString logFilePath()
     {
-        QDir currentDir(t_currentDirPath);
-
-        if (!currentDir.exists())
-        {
-            currentDir.mkpath(".");
-        }
-
-        QDir::setCurrent(currentDir.path());
-
-        Logger::setupLogFile(logFilePath());
+        return m_logFilePath;
     }
 
-    static bool isCurrentDirWritable()
-    {
-        QFile permissionsCheckFile(QDir::cleanPath(currentDirPath() + "/.writable_check"));
-
-        if (permissionsCheckFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
-        {
-            permissionsCheckFile.remove();
-
-            return true;
-        }
-
-        return false;
-    }
-
-    static QString dataFilePath()
+    QString dataFilePath()
     {
         return QDir::cleanPath(applicationDirPath() + "/" + Config::dataFileName);
     }
 
-    static QString patcherDirectoryPath()
+    QString patcherDirectoryPath()
     {
         return QDir::cleanPath(currentDirPath() + "/" + Config::patcherDirectoryName);
     }
 
-    static QString patcherInstallationInfoFilePath()
+    QString patcherInstallationInfoFilePath()
     {
         return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherDirectoryName);
     }
 
-    static QString patcherVersionInfoFilePath()
+    QString patcherVersionInfoFilePath()
     {
         return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherVersionInfoFileName);
     }
 
-    static QString patcherIdInfoFilePath()
+    QString patcherIdInfoFilePath()
     {
         return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherIdInfoFileName);
     }
 
-    static QString patcherManifestFilePath()
+    QString patcherManifestFilePath()
     {
         return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherManifestFileName);
     }
 
-    static QString applicationInstallationDirPath()
+    QString applicationInstallationDirPath()
     {
         return QDir::cleanPath(currentDirPath() + "/" + Config::applicationDirectoryName);
     }
 
 private:
-    static QString m_applicationFilePath;
-    static QString m_applicationDirPath;
+    QString m_applicationFilePath;
+    QString m_applicationDirPath;
+    QString m_logFilePath;
 
-    static QString logFilePath()
-    {
-        return QDir::cleanPath(currentDirPath() + "/" + Config::logFileName);
-    }
+    void initializeCurrentDirPath();
 };

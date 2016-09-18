@@ -12,7 +12,6 @@
 
 Launcher::Launcher(const QApplication& t_application)
 {
-    Locations::initialize();
     connect(&t_application, &QApplication::aboutToQuit, this, &Launcher::cleanup);
 }
 

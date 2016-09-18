@@ -46,9 +46,9 @@ private:
 
     void runWithData(Data& t_data);
 
-    bool tryToFetchPatcherSecret(Data& t_data);
+    void setupPatcherSecret(Data& t_data);
 
-    void setupCurrentDirectory(const Data& t_data) const;
+    bool tryToFetchPatcherSecret(Data& t_data);
 
     void updatePatcher(const Data& t_data);
     void startPatcher(const Data& t_data);

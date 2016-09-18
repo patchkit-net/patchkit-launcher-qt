@@ -70,7 +70,7 @@ LauncherWorker::LauncherWorker() :
 
 void LauncherWorker::cancel()
 {
-    logInfo("Cancelling launcher thread");
+    logInfo("Cancelling launcher thread.");
 
     m_cancellationTokenSource->cancel();
 }
@@ -95,7 +95,7 @@ void LauncherWorker::runWithDataFromResource()
 {
     logInfo("Starting launcher with data from resource.");
 
-    Data data = Data::loadFromResources(Locations::applicationFilePath(),
+    Data data = Data::loadFromResources(Locations::getInstance().applicationFilePath(),
                                         Config::dataResourceId,
                                         Config::dataResourceTypeId);
 
@@ -108,7 +108,7 @@ void LauncherWorker::runWithDataFromFile()
 {
     logInfo("Starting launcher with data from file.");
 
-    Data data = Data::loadFromFile(Locations::dataFilePath());
+    Data data = Data::loadFromFile(Locations::getInstance().dataFilePath());
 
     runWithData(data);
 }
@@ -119,20 +119,9 @@ void LauncherWorker::runWithData(Data& t_data)
     {
         logInfo("Starting launcher.");
 
-        QSettings settings("UpSoft", t_data.applicationSecret().remove(0, 2).append("launcher-"));
+        setupPatcherSecret(t_data);
 
-        if (tryToFetchPatcherSecret(t_data))
-        {
-            settings.setValue("patcher_sercet", t_data.overwritePatcherSecret);
-        }
-        else if (settings.contains("patcher_secret"))
-        {
-            t_data.overwritePatcherSecret = settings.value("patcher_secret").toString();
-        }
-
-        setupCurrentDirectory(t_data);
-
-        logInfo("Current directory set to - %1", .arg(Locations::currentDirPath()));
+        logInfo("Current directory set to - %1", .arg(Locations::getInstance().currentDirPath()));
 
         updatePatcher(t_data);
     }
@@ -172,6 +161,20 @@ void LauncherWorker::runWithData(Data& t_data)
     startPatcher(t_data);
 }
 
+void LauncherWorker::setupPatcherSecret(Data& t_data)
+{
+    QSettings settings("UpSoft", t_data.applicationSecret().append("launcher-"));
+
+    if (tryToFetchPatcherSecret(t_data))
+    {
+        settings.setValue("patcher_secret", t_data.overwritePatcherSecret);
+    }
+    else if (settings.contains("patcher_secret"))
+    {
+        t_data.overwritePatcherSecret = settings.value("patcher_secret").toString();
+    }
+}
+
 bool LauncherWorker::tryToFetchPatcherSecret(Data& t_data)
 {
     try
@@ -199,28 +202,6 @@ bool LauncherWorker::tryToFetchPatcherSecret(Data& t_data)
     }
 }
 
-void LauncherWorker::setupCurrentDirectory(const Data& t_data) const
-{
-    logInfo("Setting current directory.");
-
-#if defined(Q_OS_OSX)
-    QDir resourcesDir(Locations::applicationDirPath());
-    resourcesDir.cdUp();
-
-	if(!resourcesDir.exists("Resources"))
-	{
-		resourcesDir.mkdir("Resources");
-	}
-    resourcesDir.cd("Resources");
-
-    Locations::setCurrentDirPath(resourcesDir.absolutePath());
-#elif defined(Q_OS_WIN)
-    Locations::setCurrentDirPath(Locations::applicationDirPath());
-#else
-    Locations::setCurrentDirPath(Locations::applicationDirPath());
-#endif
-}
-
 void LauncherWorker::updatePatcher(const Data& t_data)
 {
     logInfo("Updating patcher.");
@@ -229,7 +210,7 @@ void LauncherWorker::updatePatcher(const Data& t_data)
     logDebug("Current remote patcher version - %1", .arg(QString::number(version)));
 
     emit progressChanged(0);
-    emit statusChanged(QString("Waiting..."));
+    emit statusChanged("Waiting...");
 
     if (!m_localPatcher.isInstalledSpecific(version, t_data))
     {
@@ -239,12 +220,12 @@ void LauncherWorker::updatePatcher(const Data& t_data)
 
         logInfo("The newest patcher is not installed. Downloading the newest version of patcher.");
 
-        emit statusChanged(QString("Downloading..."));
+        emit statusChanged("Downloading...");
 
         logDebug("Connecting downloadProgressChanged signal from remote patcher to slot from launcher thread.");
         connect(&m_remotePatcher, &RemotePatcherData::downloadProgressChanged, this, &LauncherWorker::setDownloadProgress);
 
-        QString downloadPath = QDir::cleanPath(Locations::applicationDirPath() + "/patcher.zip");
+        QString downloadPath = QDir::cleanPath(Locations::getInstance().applicationDirPath() + "/patcher.zip");
 
         m_remotePatcher.download(downloadPath, t_data, version, m_cancellationTokenSource);
         logInfo("Patcher has been downloaded to %1", .arg(downloadPath));
@@ -253,7 +234,7 @@ void LauncherWorker::updatePatcher(const Data& t_data)
         disconnect(&m_remotePatcher, &RemotePatcherData::downloadProgressChanged, this, &LauncherWorker::setDownloadProgress);
 
         emit progressChanged(100);
-        emit statusChanged(QString("Installing..."));
+        emit statusChanged("Installing...");
 
         m_localPatcher.install(downloadPath, t_data, version);
 
@@ -266,17 +247,17 @@ void LauncherWorker::startPatcher(const Data& t_data)
 {
     logInfo("Starting patcher.");
 
-    emit statusChanged(QString("Starting..."));
+    emit statusChanged("Starting...");
 
     m_localPatcher.start(t_data);
 }
 
 void LauncherWorker::checkIfCurrentDirectoryIsWritable()
 {
-    if (!Locations::isCurrentDirWritable())
+    if (!Locations::getInstance().isCurrentDirWritable())
     {
 #if defined(Q_OS_WIN)
-        ShellExecuteA(nullptr, "runas", Locations::applicationFilePath().toStdString().c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+        ShellExecuteA(nullptr, "runas", Locations::getInstance().applicationFilePath().toStdString().c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 
         throw CancelledException();
 #else

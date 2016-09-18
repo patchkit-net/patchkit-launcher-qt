@@ -20,7 +20,7 @@ public:
 
     static bool checkIfFileExists(const QString& t_filePath);
 
-    static bool checkIfFilesExist(const QStringList& t_filePaths);
+    static bool checkIfAllFilesExist(const QStringList& t_filePaths);
 
     static void extractZip(const QString& t_zipPath, const QString& t_extractPath, QStringList& t_extractedEntries);
 

@@ -56,11 +56,11 @@ bool IOUtils::checkIfFileExists(const QString& t_filePath)
     return info.isFile();
 }
 
-bool IOUtils::checkIfFilesExist(const QStringList& t_filePaths)
+bool IOUtils::checkIfAllFilesExist(const QStringList& t_filePaths)
 {
     for (int i = 0; i < t_filePaths.size(); i++)
     {
-        if (checkIfFileExists(t_filePaths[i]))
+        if (!checkIfFileExists(t_filePaths[i]))
         {
             return false;
         }
@@ -86,7 +86,7 @@ void IOUtils::extractZip(const QString& t_zipPath, const QString& t_extractPath,
 
         QString zipEntryPath = QDir::cleanPath(t_extractPath + "/" + zipEntryName);
 
-        if (zipEntryPath.endsWith('/') || zipEntryPath.endsWith('\\'))
+        if (zipEntryName.endsWith('/') || zipEntryName.endsWith('\\'))
         {
             createDir(zipEntryPath);
         }

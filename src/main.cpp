@@ -9,9 +9,10 @@
 
 int main(int argc, char* argv[])
 {
-    logInfo("Starting application.");
-
     QApplication application(argc, argv);
+    
+    Logger::initialize();
+
     application.setQuitOnLastWindowClosed(false);
 
     Launcher launcher(application);
