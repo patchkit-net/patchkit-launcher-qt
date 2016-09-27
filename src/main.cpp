@@ -7,6 +7,8 @@
 
 #include "logger.h"
 
+#include <QNetworkProxyFactory>
+
 int main(int argc, char* argv[])
 {
     QApplication application(argc, argv);
@@ -14,6 +16,8 @@ int main(int argc, char* argv[])
     Logger::initialize();
 
     application.setQuitOnLastWindowClosed(false);
+
+    QNetworkProxyFactory::setUseSystemConfiguration(true);
 
     Launcher launcher(application);
     launcher.start();
