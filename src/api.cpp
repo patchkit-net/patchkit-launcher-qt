@@ -52,7 +52,7 @@ QString Api::downloadString(const QString& t_resourceUrl, QStringList& t_cacheAp
 
     if (t_extendedTimeout)
     {
-        throw TimeoutException();
+        throw std::runtime_error("API connection error.");
     }
 
     return downloadString(t_resourceUrl, t_cacheApiUrls, true, t_cancellationToken);
