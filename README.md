@@ -1,13 +1,188 @@
 # patchkit-launcher-qt
 PatchKit launcher made in Qt.
 
-## Building
-
-### Requirements
-* Installed [Qt Framework](https://www.qt.io/download/)
+## Requirements
+* [Qt Framework](https://www.qt.io/download/)
 * Microsoft Visual Studio (only for Windows)
 
-### Windows building
+### Building statically linked Qt
+
+Following guide shows how to build statically linked Qt (version 5.7).
+
+#### Windows (using Visual Studio envirnonment)
+
+* Download [Qt Installer](https://www.qt.io/download-open-source/) and install Qt Creator
+* Download [Qt Source](http://download.qt.io/official_releases/qt/5.7/5.7.0/single/) and unzip the package
+* Modify and save envinonment preparation scripts (listed in next paragraph)
+* Open `cmd.exe`
+* `env_x86` for 32 bit
+* `env_x64` for 64 bit
+* `jom`
+* `jom install`
+
+**env_x86.bat**
+
+``` batch
+REM Configuration
+SET _VS_ROOT="C:\Program Files (x86)\Microsoft Visual Studio 14.0"
+SET _QT_SRC_ROOT=C:\Qt\5.7\msvc2015_static_32_src
+SET _QT_OUTPUT_INSTALL_ROOT=C:\Qt\5.7\msvc2015_static_32
+SET _QT_CREATOR_ROOT=C:\Qt\Tools\QtCreator
+
+CALL %_VS_ROOT%\VC\vcvarsall.bat
+
+SET PATH=%_QT_SRC_ROOT%\qtbase\bin;%_QT_SRC_ROOT%\gnuwin32\bin;%_QT_CREATOR_ROOT%\bin;%PATH%
+SET QMAKESPEC=win32-msvc2015
+
+configure -prefix %_QT_OUTPUT_INSTALL_ROOT% -release -opensource -static -static-runtime -nomake tests -nomake examples
+
+SET _VS_ROOT=
+SET _QT_SRC_ROOT=
+SET _QT_OUTPUT_INSTALL_ROOT=
+SET _QT_CREATOR_ROOT=
+```
+
+**env_x64.bat**
+
+``` batch
+REM Configuration
+SET _VS_ROOT="C:\Program Files (x86)\Microsoft Visual Studio 14.0"
+SET _QT_SRC_ROOT=C:\Qt\5.7\msvc2015_static_64_src
+SET _QT_OUTPUT_INSTALL_ROOT=C:\Qt\5.7\msvc2015_static_64
+SET _QT_CREATOR_ROOT=C:\Qt\Tools\QtCreator
+
+CALL %_VS_ROOT%\VC\vcvarsall.bat x64
+
+SET PATH=%_QT_SRC_ROOT%\qtbase\bin;%_QT_SRC_ROOT%\gnuwin32\bin;%_QT_CREATOR_ROOT%\bin;%PATH%
+SET QMAKESPEC=win32-msvc2015
+
+configure -prefix %_QT_OUTPUT_INSTALL_ROOT% -release -opensource -static -static-runtime -nomake tests -nomake examples
+
+SET _VS_ROOT=
+SET _QT_SRC_ROOT=
+SET _QT_OUTPUT_INSTALL_ROOT=
+SET _QT_CREATOR_ROOT=
+```
+
+#### Linux (Ubuntu)
+
+Download following script and save it in `~/Qt` as `get_qt.sh`
+
+``` sh
+#!/bin/bash
+
+sudo apt-get install build-essential perl python git "^libxcb.*" libx11-xcb-dev libglu1-mesa-dev libxrender-dev  libasound2-dev libgstreamer0.10-dev libgstreamer-plugins-base0.10-dev libfontconfig1-dev
+
+VER="5.7.0"
+
+
+VER2="${VER%.*}"
+WSRC="http://download.qt-project.org/official_releases/qt/$VER2/$VER/single/qt-everywhere-opensource-src-$VER.tar.xz"
+
+
+B=$(pwd)
+Q="$B/qt"
+SRC="$Q/src/$VER"
+O="$Q/build/$VER"
+XZ="$Q/xz/qt-$VER.tar.xz"
+J=$(grep -c ^processor /proc/cpuinfo)
+LOG="$O/log.txt"
+
+OPTS=""
+OPTS+=" -debug-and-release"
+OPTS+=" -opensource"
+OPTS+=" -static" 
+OPTS+=" -confirm-license"
+OPTS+=" -largefile" 
+OPTS+=" -silent"
+OPTS+=" -qpa xcb"
+OPTS+=" -opengl"
+OPTS+=" -fontconfig"
+OPTS+=" -qt-zlib"
+OPTS+=" -qt-libpng"
+OPTS+=" -qt-libjpeg"
+OPTS+=" -qt-freetype"
+OPTS+=" -qt-harfbuzz"
+OPTS+=" -qt-pcre"
+OPTS+=" -qt-xcb"
+OPTS+=" -qt-xkbcommon"
+OPTS+=" -no-sql-db2" 
+OPTS+=" -no-sql-ibase" 
+OPTS+=" -no-sql-mysql" 
+OPTS+=" -no-sql-oci" 
+OPTS+=" -no-sql-odbc" 
+OPTS+=" -no-sql-psql" 
+OPTS+=" -no-sql-sqlite" 
+OPTS+=" -no-sql-sqlite2" 
+OPTS+=" -no-sql-tds"
+OPTS+=" -no-gif"
+OPTS+=" -no-nis"
+OPTS+=" -no-cups" 
+OPTS+=" -no-iconv"
+OPTS+=" -no-dbus"
+OPTS+=" -no-eglfs"
+OPTS+=" -no-directfb" 
+OPTS+=" -no-linuxfb"
+OPTS+=" -no-glib"
+OPTS+=" -no-kms"
+OPTS+=" -nomake examples" 
+OPTS+=" -nomake tests"
+
+MODS="qtx11extras qtimageformats qtscript qtquick1 qtdeclarative qtquickcontrols qtsvg qtwebengine qtmultimedia"
+
+mkdir -p "$Q"
+mkdir -p "$Q/xz"
+mkdir -p "$SRC"
+mkdir -p "$O"
+
+date > $LOG
+[ ! -f $XZ ] && wget "$WSRC" -c -O "$XZ"
+[ ! -x $SRC/configure ] && tar pxf "$XZ" --strip=1 -C "$SRC" "qt-everywhere-opensource-src-$VER" 
+cd "$O"
+MAKEFLAGS=-j$J "$SRC/configure" $OPTS
+
+make -j$J >> $LOG
+
+for M in $MODS
+do
+    echo "----------------------------------------- MODULE: $M" >> $LOG
+    D=$O/$M
+    mkdir -p $D
+    cd $D
+    $O/qtbase/bin/qmake $SRC/$M/
+    make -j$J >> $LOG
+done
+
+echo "DONE"
+```
+
+Open Terminal and write following instructions
+
+``` sh
+cd ~/Qt
+sudo bash get_qt.sh
+```
+
+#### Mac OSX
+
+* Download [Qt Source](http://download.qt.io/official_releases/qt/5.7/5.7.0/single/) and unzip the package
+* Open Terminal and write following instructions
+
+``` sh
+./configure -nomake examples -nomake tests -debug-and-release -static
+make
+make install
+```
+
+## Building
+
+### Building from Qt Creator (recommended)
+
+Open launcher-qt.pro project in Qt Creator and compile.
+
+### Building from command line
+
+#### Windows
 
 First of all you need to setup the envirnonment.
 
