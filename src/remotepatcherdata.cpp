@@ -32,7 +32,13 @@ void RemotePatcherData::download(const QString& t_downloadPath, const Data& t_da
     logInfo("Downloading patcher %1 version", .arg(QString::number(t_version)));
 
     QStringList contentUrls = getContentUrls(t_data.patcherSecret(), t_version, t_cancellationToken);
-
+    
+    QString contentSummaryPath = QString("1/apps/%1/versions/%2/content_summary").arg(t_data.patcherSecret(), QString::number(t_version));
+    
+    logInfo("Downloading content summary from %1", .arg(contentSummaryPath));
+    
+    ContentSummary summary = m_api.downloadContentSummary(contentSummaryPath, t_cancellationToken);
+        
     Downloader downloader;
     connect(&downloader, &Downloader::downloadProgressChanged, this, &RemotePatcherData::downloadProgressChanged);
 

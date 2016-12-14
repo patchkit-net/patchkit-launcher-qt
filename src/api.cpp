@@ -9,6 +9,8 @@
 #include "timeoutexception.h"
 #include "config.h"
 
+#include "contentsummary.h"
+
 Api::Api(QObject* parent) : QObject(parent)
 {
 }
@@ -17,6 +19,22 @@ QString Api::downloadString(const QString& t_resourceUrl, CancellationToken t_ca
 {
     QStringList cacheApiUrls = Config::cacheApiUrls;
     return downloadString(t_resourceUrl, cacheApiUrls, false, t_cancellationToken);
+}
+
+QJsonDocument Api::downloadContentSummary(const QString& t_resourceUrl, CancellationToken t_cancellationToken) const
+{
+	QJsonDocument document;
+	do
+	{
+		t_cancellationToken.throwIfCancelled();
+
+		QString raw = downloadString(t_resourceUrl, t_cancellationToken);
+
+		document = QJsonDocument::fromJson(raw.toUtf8());
+	} 
+	while (document.isNull() || document.isEmpty());
+
+    return document;
 }
 
 QString Api::downloadString(const QString& t_resourceUrl, QStringList& t_cacheApiUrls, bool t_extendedTimeout, CancellationToken t_cancellationToken) const
