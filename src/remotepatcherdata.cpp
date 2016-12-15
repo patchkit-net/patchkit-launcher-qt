@@ -8,6 +8,7 @@
 #include "logger.h"
 #include "config.h"
 #include "timeoutexception.h"
+#include "chunkeddownloader.h"
 
 int RemotePatcherData::getVersion(const Data& t_data, CancellationToken t_cancellationToken)
 {
@@ -38,9 +39,10 @@ void RemotePatcherData::download(const QString& t_downloadPath, const Data& t_da
     logInfo("Downloading content summary from %1", .arg(contentSummaryPath));
     
     ContentSummary summary = m_api.downloadContentSummary(contentSummaryPath, t_cancellationToken);
-        
-    Downloader downloader;
-    connect(&downloader, &Downloader::downloadProgressChanged, this, &RemotePatcherData::downloadProgressChanged);
+           
+	ChunkedDownloader chunkedDownloader(summary);
+
+	connect(&chunkedDownloader, &ChunkedDownloader::downloadProgressChanged, this, &RemotePatcherData::downloadProgressChanged);
 
     for (int i = 0; i < contentUrls.size(); i++)
     {
@@ -52,12 +54,12 @@ void RemotePatcherData::download(const QString& t_downloadPath, const Data& t_da
         {
             try
             {
-                downloader.downloadFile(contentUrls[i], t_downloadPath, Config::minConnectionTimeoutMsec, t_cancellationToken);
+				chunkedDownloader.downloadFile(contentUrls[i], t_downloadPath, Config::minConnectionTimeoutMsec, t_cancellationToken);
                 return;
             }
             catch (TimeoutException&)
             {
-                downloader.downloadFile(contentUrls[i], t_downloadPath, Config::maxConnectionTimeoutMsec, t_cancellationToken);
+				chunkedDownloader.downloadFile(contentUrls[i], t_downloadPath, Config::maxConnectionTimeoutMsec, t_cancellationToken);
                 return;
             }
         }
