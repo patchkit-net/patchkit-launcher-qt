@@ -10,6 +10,7 @@
 #include <QStringList>
 
 class QJsonDocument;
+class QJsonObject;
 
 /**
  * @brief The ContentSummary class
@@ -17,7 +18,7 @@ class QJsonDocument;
  * Reflects the JSON contatining crucial information about file.
  * 
  * Refer to:
- * redmine.patchkit.net/projects/patchkit-documentation/wiki/Content_Summary
+ * http://redmine.patchkit.net/projects/patchkit-documentation/wiki/Content_Summary
  * for more detailed info.
  */
 class ContentSummary
@@ -25,10 +26,23 @@ class ContentSummary
 public:
     ContentSummary(const QJsonDocument& document);
     
-    int GetChunksSize() const;
-    QString GetChunk(int at) const;
+    const int& getChunksSize() const;
+    const QString& getChunkHash(int at) const;
+	const QString& getEncryptionMethod() const;
+	const QString& getCompressionMethod() const;
+	const QString& getHashingMethod() const;
+	const QString& getHashCode() const;
     
 private:
+
+	bool parseFiles(QJsonObject& doc);
+	bool parseChunks(QJsonObject& doc);
+
+	QString m_encryptionMethod;
+	QString m_compressionMethod;
+	QString m_hashingMethod;
+	QString m_hashCode;
+
     int m_chunksSize;
     QStringList m_chunkHashes;
 };
