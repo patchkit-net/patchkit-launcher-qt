@@ -33,16 +33,16 @@ void RemotePatcherData::download(const QString& t_downloadPath, const Data& t_da
     logInfo("Downloading patcher %1 version", .arg(QString::number(t_version)));
 
     QStringList contentUrls = getContentUrls(t_data.patcherSecret(), t_version, t_cancellationToken);
-    
-    QString contentSummaryPath = QString("1/apps/%1/versions/%2/content_summary").arg(t_data.patcherSecret(), QString::number(t_version));
-    
-    logInfo("Downloading content summary from %1", .arg(contentSummaryPath));
-    
-    ContentSummary summary = m_api.downloadContentSummary(contentSummaryPath, t_cancellationToken);
-           
-	ChunkedDownloader chunkedDownloader(summary);
 
-	connect(&chunkedDownloader, &ChunkedDownloader::downloadProgressChanged, this, &RemotePatcherData::downloadProgressChanged);
+    QString contentSummaryPath = QString("1/apps/%1/versions/%2/content_summary").arg(t_data.patcherSecret(), QString::number(t_version));
+
+    logInfo("Downloading content summary from %1", .arg(contentSummaryPath));
+
+    ContentSummary summary = m_api.downloadContentSummary(contentSummaryPath, t_cancellationToken);
+
+    ChunkedDownloader chunkedDownloader(summary, t_cancellationToken);
+
+    connect(&chunkedDownloader, &ChunkedDownloader::downloadProgressChanged, this, &RemotePatcherData::downloadProgressChanged);
 
     for (int i = 0; i < contentUrls.size(); i++)
     {
@@ -54,12 +54,12 @@ void RemotePatcherData::download(const QString& t_downloadPath, const Data& t_da
         {
             try
             {
-				chunkedDownloader.downloadFile(contentUrls[i], t_downloadPath, Config::minConnectionTimeoutMsec, t_cancellationToken);
+                chunkedDownloader.downloadFile(contentUrls[i], t_downloadPath, Config::minConnectionTimeoutMsec);
                 return;
             }
             catch (TimeoutException&)
             {
-				chunkedDownloader.downloadFile(contentUrls[i], t_downloadPath, Config::maxConnectionTimeoutMsec, t_cancellationToken);
+                chunkedDownloader.downloadFile(contentUrls[i], t_downloadPath, Config::maxConnectionTimeoutMsec);
                 return;
             }
         }
@@ -74,6 +74,14 @@ void RemotePatcherData::download(const QString& t_downloadPath, const Data& t_da
                 QFile::remove(t_downloadPath);
             }
             logWarning(exception.what());
+        }
+        catch (std::runtime_error& err)
+        {
+            if (QFile::exists(t_downloadPath))
+            {
+                QFile::remove(t_downloadPath);
+            }
+            logWarning(QString("STD runtime error: %1").arg(err.what()));
         }
         catch (...)
         {
@@ -91,7 +99,7 @@ void RemotePatcherData::download(const QString& t_downloadPath, const Data& t_da
 QStringList RemotePatcherData::getContentUrls(const QString& t_patcherSecret, int t_version, CancellationToken t_cancellationToken)
 {
     logInfo("Fetching patcher content urls from 1/apps/%1/versions/%2/content_urls",.arg(Logger::adjustSecretForLog(t_patcherSecret),
-        QString::number(t_version)));
+                                                                                         QString::number(t_version)));
 
     QString result = m_api.downloadString(QString("1/apps/%1/versions/%2/content_urls").arg(t_patcherSecret, QString::number(t_version)), t_cancellationToken);
 

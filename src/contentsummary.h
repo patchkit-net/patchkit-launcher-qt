@@ -26,24 +26,25 @@ class ContentSummary
 public:
     ContentSummary(const QJsonDocument& document);
     
-    const int& getChunksSize() const;
-    const QString& getChunkHash(int at) const;
-	const QString& getEncryptionMethod() const;
-	const QString& getCompressionMethod() const;
-	const QString& getHashingMethod() const;
-	const QString& getHashCode() const;
+    const int&      getChunkSize()           const;
+    const QString&  getChunkHash(int at)     const;
+    const QString&  getEncryptionMethod()    const;
+    const QString&  getCompressionMethod()   const;
+    const QString&  getHashingMethod()       const;
+    const QString&  getHashCode()            const;
+    const int&      getChunksCount()         const;
     
 private:
-
-	bool parseFiles(QJsonObject& doc);
-	bool parseChunks(QJsonObject& doc);
-
-	QString m_encryptionMethod;
-	QString m_compressionMethod;
-	QString m_hashingMethod;
-	QString m_hashCode;
-
-    int m_chunksSize;
+    
+    bool parseFiles(QJsonObject& doc);
+    bool parseChunks(QJsonObject& doc);
+    
+    QString m_encryptionMethod;
+    QString m_compressionMethod;
+    QString m_hashingMethod;
+    QString m_hashCode;
+    
+    int m_chunkSize;
     QStringList m_chunkHashes;
 };
 

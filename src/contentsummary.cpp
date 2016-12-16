@@ -15,121 +15,154 @@
 #include <QVariantList>
 
 ContentSummary::ContentSummary(const QJsonDocument& document)
-{       
-	const std::string PARSING_ERROR_MSG = "Couldn't parse content summary from provided JSON document";
+{
+    const std::string PARSING_ERROR_MSG = "Couldn't parse content summary from provided JSON document";
 
     if (document.isEmpty() || document.isNull())
+    {
         throw std::runtime_error("Provided JSON document is invalid.");
-    
+    }
+
     if (!document.isObject())
+    {
         throw std::runtime_error(PARSING_ERROR_MSG);
+    }
 
-	QJsonObject& doc_object = document.object();
+    QJsonObject& doc_object = document.object();
 
-	if (!doc_object.contains("encryption_method"))
-		throw std::runtime_error(PARSING_ERROR_MSG);
+    if (!doc_object.contains("encryption_method"))
+    {
+        throw std::runtime_error(PARSING_ERROR_MSG);
+    }
 
-	m_encryptionMethod = doc_object["encryption_method"].toString();
+    m_encryptionMethod = doc_object["encryption_method"].toString();
 
-	if (!doc_object.contains("compression_method"))
-		throw std::runtime_error(PARSING_ERROR_MSG);
+    if (!doc_object.contains("compression_method"))
+    {
+        throw std::runtime_error(PARSING_ERROR_MSG);
+    }
 
-	m_compressionMethod = doc_object["compression_method"].toString();
+    m_compressionMethod = doc_object["compression_method"].toString();
 
-	if (!doc_object.contains("hashing_method"))
-		throw std::runtime_error(PARSING_ERROR_MSG);
+    if (!doc_object.contains("hashing_method"))
+    {
+        throw std::runtime_error(PARSING_ERROR_MSG);
+    }
 
-	m_hashingMethod = doc_object["hashing_method"].toString();
+    m_hashingMethod = doc_object["hashing_method"].toString();
 
-	if (!doc_object.contains("hash_code"))
-		throw std::runtime_error(PARSING_ERROR_MSG);
+    if (!doc_object.contains("hash_code"))
+    {
+        throw std::runtime_error(PARSING_ERROR_MSG);
+    }
 
-	m_hashCode = doc_object["hash_code"].toString();
+    m_hashCode = doc_object["hash_code"].toString();
 
-	if (!parseFiles(doc_object))
-		throw std::runtime_error(PARSING_ERROR_MSG);
+    if (!parseFiles(doc_object))
+    {
+        throw std::runtime_error(PARSING_ERROR_MSG);
+    }
 
-	if (!parseChunks(doc_object))
-		throw std::runtime_error(PARSING_ERROR_MSG);
+    if (!parseChunks(doc_object))
+    {
+        throw std::runtime_error(PARSING_ERROR_MSG);
+    }
 }
 
-const int& ContentSummary::getChunksSize() const
+const int& ContentSummary::getChunkSize() const
 {
-    return m_chunksSize;
+    return m_chunkSize;
 }
 
-const QString & ContentSummary::getChunkHash(int at) const
+const QString& ContentSummary::getChunkHash(int at) const
 {
-	return m_chunkHashes.at(at);
+    return m_chunkHashes.at(at);
 }
 
-const QString & ContentSummary::getEncryptionMethod() const
+const QString& ContentSummary::getEncryptionMethod() const
 {
-	return m_encryptionMethod;
+    return m_encryptionMethod;
 }
 
-const QString & ContentSummary::getCompressionMethod() const
+const QString& ContentSummary::getCompressionMethod() const
 {
-	return m_compressionMethod;
+    return m_compressionMethod;
 }
 
-const QString & ContentSummary::getHashingMethod() const
+const QString& ContentSummary::getHashingMethod() const
 {
-	return m_hashingMethod;
+    return m_hashingMethod;
 }
 
-const QString & ContentSummary::getHashCode() const
+const QString& ContentSummary::getHashCode() const
 {
-	return m_hashCode;
+    return m_hashCode;
 }
 
-bool ContentSummary::parseFiles(QJsonObject & doc)
+const int& ContentSummary::getChunksCount() const
+{
+    return m_chunkHashes.size();
+}
+
+bool ContentSummary::parseFiles(QJsonObject& doc)
 {
     if (!doc.contains("files"))
+    {
         return false;
-    
+    }
+
     QJsonArray files = doc["files"].toArray();
-    
+
     for (QJsonValueRef f : files)
     {
         /* TODO implement parsing files. */
     }
-    
+
     return true;
 }
 
-bool ContentSummary::parseChunks(QJsonObject & doc)
+bool ContentSummary::parseChunks(QJsonObject& doc)
 {
-	if (!doc.contains("chunks"))
-		return false;
+    if (!doc.contains("chunks"))
+    {
+        return false;
+    }
 
-	QJsonObject chunks = doc["chunks"].toObject();
-    
+    QJsonObject chunks = doc["chunks"].toObject();
+
     if (chunks == QJsonObject())
+    {
         return false;
+    }
 
-	int chunks_size = chunks["size"].toInt(-1);
-    
+    int chunks_size = chunks["size"].toInt(-1);
+
     if (chunks_size == -1)
+    {
         return false;
+    }
 
     if (!chunks.contains("hashes"))
+    {
         return false;
-    
-	QJsonArray hashes = chunks["hashes"].toArray();
+    }
+
+    QJsonArray hashes = chunks["hashes"].toArray();
 
     if (hashes == QJsonArray())
+    {
         return false;
-    
+    }
+
     QStringList hash_list;
-    
-	for (QJsonValueRef item : hashes)
+
+    for (QJsonValueRef item : hashes)
     {
         hash_list.push_back(item.toString());
     }
-    
-    m_chunksSize = chunks_size;
+
+    m_chunkSize = chunks_size;
     m_chunkHashes = hash_list;
-    
+
     return true;
 }
