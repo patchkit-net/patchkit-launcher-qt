@@ -18,13 +18,15 @@ class QNetworkReply;
 class QNetworkRequest;
 class QNetworkAccessManager;
 
+typedef unsigned int THash;
+
 class ChunkedDownloader : public Downloader
 {
     Q_OBJECT
 
     const int MAX_DOWNLOAD_QUEUE_SIZE = 15;
 
-    typedef QString (*HashingStrategy)(QByteArray bytes);
+    typedef THash (*HashingStrategy)(const QByteArray& bytes, const ContentSummary& cs);
 
 public:
     ChunkedDownloader(const ContentSummary& t_contentSummary, HashingStrategy t_hashingStrategy);

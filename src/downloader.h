@@ -15,11 +15,11 @@ class Downloader : public QObject
     Q_OBJECT
 
 public:
-    typedef QSharedPointer<QNetworkReply> TSharedNetworkReply;
-    typedef TSharedNetworkReply& TSharedNetworkReplyRef;
+    typedef QSharedPointer<QNetworkReply>           TSharedNetworkReply;
+    typedef TSharedNetworkReply&                    TSharedNetworkReplyRef;
 
-    typedef QSharedPointer<QNetworkAccessManager> TSharedNetworkAccessManager;
-    typedef TSharedNetworkAccessManager& TSharedNetworkAccessManagerRef;
+    typedef QSharedPointer<QNetworkAccessManager>   TSharedNetworkAccessManager;
+    typedef TSharedNetworkAccessManager&            TSharedNetworkAccessManagerRef;
 
     typedef long long TByteCount;
 

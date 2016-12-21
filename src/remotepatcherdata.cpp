@@ -10,6 +10,9 @@
 #include "timeoutexception.h"
 #include "chunkeddownloader.h"
 
+#define XXH_PRIVATE_API
+#include "xxhash.h"
+
 int RemotePatcherData::getVersion(const Data& t_data, CancellationToken t_cancellationToken)
 {
     logInfo("Fetching newest patcher version from 1/apps/%1/versions/latest/id", .arg(Logger::adjustSecretForLog(t_data.patcherSecret())));
@@ -40,7 +43,9 @@ void RemotePatcherData::download(const QString& t_downloadPath, const Data& t_da
 
     ContentSummary summary = m_api.downloadContentSummary(contentSummaryPath, t_cancellationToken);
 
-    ChunkedDownloader chunkedDownloader(summary, nullptr);
+    ChunkedDownloader chunkedDownloader(summary, [](const QByteArray& chunk, const ContentSummary& cs) -> THash {
+        return XXH32(chunk.data(), chunk.size(), 42);
+    });
 
     connect(&chunkedDownloader, &ChunkedDownloader::downloadProgressChanged, this, &RemotePatcherData::downloadProgressChanged);
 

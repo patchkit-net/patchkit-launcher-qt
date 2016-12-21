@@ -100,7 +100,7 @@ bool ChunkedDownloader::validateReceivedData(TSharedNetworkReplyRef t_reply)
     for (int i = 0; i < m_chunks.size(); i++)
     {
         // Get the content summary hash
-        QString valid_hash = m_contentSummary.getChunkHash(i);
+        THash valid_hash = m_contentSummary.getChunkHash(i);
 
         // Hash
         if (!m_hashingStrategy)
@@ -109,7 +109,7 @@ bool ChunkedDownloader::validateReceivedData(TSharedNetworkReplyRef t_reply)
             return m_chunks.size() == m_contentSummary.getChunksCount();
         }
 
-        QString hash = m_hashingStrategy(m_chunks.at(i));
+        THash hash = m_hashingStrategy(m_chunks.at(i), m_contentSummary);
 
         if (valid_hash != hash)
         {
@@ -117,7 +117,7 @@ bool ChunkedDownloader::validateReceivedData(TSharedNetworkReplyRef t_reply)
             m_lastValidChunkIndex = i - 1;
 
             // Rend the remaining chunks
-            m_chunks.remove(i, m_chunks.size());
+            m_chunks.remove(i, m_chunks.size() - i);
 
             // Signal to restart download
             return false;

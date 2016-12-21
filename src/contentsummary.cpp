@@ -74,9 +74,11 @@ const int& ContentSummary::getChunkSize() const
     return m_chunkSize;
 }
 
-const QString& ContentSummary::getChunkHash(int at) const
+const THash ContentSummary::getChunkHash(int at) const
 {
-    return m_chunkHashes.at(at);
+    bool ok;
+    THash hash = m_chunkHashes.at(at).toUInt(&ok, 16);
+    return hash;
 }
 
 const QString& ContentSummary::getEncryptionMethod() const
@@ -94,9 +96,11 @@ const QString& ContentSummary::getHashingMethod() const
     return m_hashingMethod;
 }
 
-const QString& ContentSummary::getHashCode() const
+const THash ContentSummary::getHashCode() const
 {
-    return m_hashCode;
+    bool ok;
+    THash hash = m_hashCode.toUInt(&ok, 16);
+    return hash;
 }
 
 const int& ContentSummary::getChunksCount() const
