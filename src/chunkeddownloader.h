@@ -10,10 +10,7 @@
 #include <QVector>
 #include <QStack>
 
-#include <QNetworkAccessManager>
-#include <QNetworkConfigurationManager>
-
-#include "cancellationtoken.h"
+#include "downloader.h"
 
 class ContentSummary;
 
@@ -21,7 +18,7 @@ class QNetworkReply;
 class QNetworkRequest;
 class QNetworkAccessManager;
 
-class ChunkedDownloader : public QObject
+class ChunkedDownloader : public Downloader
 {
     Q_OBJECT
 
@@ -29,61 +26,43 @@ class ChunkedDownloader : public QObject
 
     typedef long long TByteCount;
 
-public:
-    ChunkedDownloader(const ContentSummary& t_contentSummary, CancellationToken t_cancellationToken);
-    ~ChunkedDownloader();
+    typedef QString (*HashingStrategy)(QByteArray bytes);
 
-    void downloadFile(const QString& t_urlPath, const QString& t_filePath, int t_requestTimeoutMsec);
+public:
+    ChunkedDownloader(const ContentSummary& t_contentSummary, HashingStrategy t_hashingStrategy);
+
+    //virtual void downloadFile(const QString& t_urlPath, const QString& t_filePath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) const override;
+    void downloadFile(const QString& t_urlPath, const QString& t_filePath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken);
 
 signals:
     void downloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes);
 
-private slots:
-    void watchDownloadProgress(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes);
-
-    void onNetworkStatusChanged(QNetworkAccessManager::NetworkAccessibility t_accessible);
-    void watchNetworkState(bool isOnline);
-
 private:
 
-    QStack<TByteCount> m_lastRecordedDownloadCounts;
+    // Private variables
 
-    void startDownload();
-    QVector<QByteArray> processChunks();
-    void restartDownload();
-
-    void waitForDownload();
-
-    bool validateReceivedData();
-    bool shouldStop();
-    bool isConnectionStalled();
-
-    void writeDownloadedFile(const QString& t_filePath) const;
-
-    // PARAMS
+    HashingStrategy m_hashingStrategy;
 
     int m_lastValidChunkIndex;
 
-    // PARAMS
-
     const ContentSummary& m_contentSummary;
 
-    const int& getChunkSize() const;
-
     int m_maxNumberOfAttepmts;
-    int m_requestTimeoutMsec;
-
-    QNetworkRequest* m_currentRequest;
-    QNetworkAccessManager* m_networkManager;
-    QNetworkReply* m_currentReply;
-
-    long long m_bytesDownloadedSoFar;
-
-    void waitForReply() const;
-
-    CancellationToken m_cancellationToken;
 
     QVector<QByteArray> m_chunks;
+
+    // Private methods
+
+    void restartDownload(TSharedNetworkReplyRef t_reply, TSharedNetworkAccessManagerRef t_networkManager, const QUrl& t_url);
+
+    QVector<QByteArray> processChunks(TSharedNetworkReplyRef t_reply);
+    bool validateReceivedData(TSharedNetworkReplyRef t_reply);
+
+    bool shouldStop() const;
+
+    void writeDownloadedFile(const QString& t_filePath) const;
+
+    const int& getChunkSize() const;
 };
 
 #endif // CHUNKEDDOWNLOADER_H

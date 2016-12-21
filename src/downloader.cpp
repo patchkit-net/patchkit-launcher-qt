@@ -49,6 +49,14 @@ void Downloader::fetchReply(const QString& t_urlPath, std::shared_ptr<QNetworkAc
     t_reply = std::shared_ptr<QNetworkReply>(t_accessManager->get(QNetworkRequest(url)));
 }
 
+void Downloader::fetchReply(const QNetworkRequest &t_urlRequest, TSharedNetworkAccessManagerRef t_accessManager, TSharedNetworkReplyRef t_reply) const
+{
+    logInfo("Fetching network reply from request.");
+
+    t_accessManager = std::make_shared<QNetworkAccessManager>();
+    t_reply = std::shared_ptr<QNetworkReply>(t_accessManager->get(t_urlRequest));
+}
+
 void Downloader::waitForReply(std::shared_ptr<QNetworkReply>& t_reply, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) const
 {
     logInfo("Waiting for network reply to be ready.");
@@ -145,3 +153,23 @@ void Downloader::writeDownloadedFile(std::shared_ptr<QNetworkReply>& t_reply, co
 
     file.close();
 }
+
+void Downloader::writeDownloadedData(const QByteArray& t_data, const QString& t_filePath, CancellationToken t_cancellationToken) const
+{
+    logInfo("Writing downloaded data to file - %1", .arg(t_filePath));
+
+    QFile file(t_filePath);
+
+    if (!file.open(QFile::WriteOnly))
+    {
+        throw std::runtime_error("Couldn't open file for download.");
+    }
+
+    qint64 bufferSize = 4096;
+    std::unique_ptr<char> buffer(new char[bufferSize]);
+
+    file.write(t_data);
+
+    file.close();
+}
+

@@ -40,7 +40,7 @@ void RemotePatcherData::download(const QString& t_downloadPath, const Data& t_da
 
     ContentSummary summary = m_api.downloadContentSummary(contentSummaryPath, t_cancellationToken);
 
-    ChunkedDownloader chunkedDownloader(summary, t_cancellationToken);
+    ChunkedDownloader chunkedDownloader(summary, nullptr);
 
     connect(&chunkedDownloader, &ChunkedDownloader::downloadProgressChanged, this, &RemotePatcherData::downloadProgressChanged);
 
@@ -54,12 +54,12 @@ void RemotePatcherData::download(const QString& t_downloadPath, const Data& t_da
         {
             try
             {
-                chunkedDownloader.downloadFile(contentUrls[i], t_downloadPath, Config::minConnectionTimeoutMsec);
+                chunkedDownloader.downloadFile(contentUrls[i], t_downloadPath, Config::minConnectionTimeoutMsec, t_cancellationToken);
                 return;
             }
             catch (TimeoutException&)
             {
-                chunkedDownloader.downloadFile(contentUrls[i], t_downloadPath, Config::maxConnectionTimeoutMsec);
+                chunkedDownloader.downloadFile(contentUrls[i], t_downloadPath, Config::maxConnectionTimeoutMsec, t_cancellationToken);
                 return;
             }
         }
