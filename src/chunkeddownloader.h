@@ -24,14 +24,11 @@ class ChunkedDownloader : public Downloader
 
     const int MAX_DOWNLOAD_QUEUE_SIZE = 15;
 
-    typedef long long TByteCount;
-
     typedef QString (*HashingStrategy)(QByteArray bytes);
 
 public:
     ChunkedDownloader(const ContentSummary& t_contentSummary, HashingStrategy t_hashingStrategy);
 
-    //virtual void downloadFile(const QString& t_urlPath, const QString& t_filePath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) const override;
     void downloadFile(const QString& t_urlPath, const QString& t_filePath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken);
 
 signals:
@@ -53,9 +50,10 @@ private:
 
     // Private methods
 
+    QVector<QByteArray> processChunks(TSharedNetworkReplyRef t_reply);
+
     void restartDownload(TSharedNetworkReplyRef t_reply, TSharedNetworkAccessManagerRef t_networkManager, const QUrl& t_url);
 
-    QVector<QByteArray> processChunks(TSharedNetworkReplyRef t_reply);
     bool validateReceivedData(TSharedNetworkReplyRef t_reply);
 
     bool shouldStop() const;

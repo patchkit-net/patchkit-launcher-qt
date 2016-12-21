@@ -26,8 +26,8 @@ ChunkedDownloader::ChunkedDownloader(const ContentSummary& t_contentSummary, Has
 
 void ChunkedDownloader::downloadFile(const QString & t_urlPath, const QString & t_filePath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken)
 {
-    std::shared_ptr<QNetworkAccessManager> accessManager;
-    std::shared_ptr<QNetworkReply> reply;
+    TSharedNetworkAccessManager accessManager;
+    TSharedNetworkReply reply;
     QUrl url(t_urlPath);
 
     // Formulate the request
@@ -35,7 +35,7 @@ void ChunkedDownloader::downloadFile(const QString & t_urlPath, const QString & 
 
     Downloader::fetchReply(networkRequest, accessManager, reply);
 
-    connect(reply.get(), &QNetworkReply::downloadProgress, this, &ChunkedDownloader::downloadProgressChanged);
+    connect(reply.data(), &QNetworkReply::downloadProgress, this, &ChunkedDownloader::downloadProgressChanged);
 
     while (!shouldStop())
     {
@@ -156,8 +156,7 @@ void ChunkedDownloader::writeDownloadedFile(const QString& t_filePath) const
 
 void ChunkedDownloader::restartDownload(TSharedNetworkReplyRef t_reply, TSharedNetworkAccessManagerRef t_networkManager, const QUrl& t_url)
 {
-    t_reply->abort();
-    disconnect(t_reply.get(), &QNetworkReply::downloadProgress, this, &ChunkedDownloader::downloadProgressChanged);
+    disconnect(t_reply.data(), &QNetworkReply::downloadProgress, this, &ChunkedDownloader::downloadProgressChanged);
 
     // Reformulate the request
 
@@ -168,5 +167,5 @@ void ChunkedDownloader::restartDownload(TSharedNetworkReplyRef t_reply, TSharedN
 
     Downloader::fetchReply(request, t_networkManager, t_reply);
 
-    connect(t_reply.get(), &QNetworkReply::downloadProgress, this, &ChunkedDownloader::downloadProgressChanged);
+    connect(t_reply.data(), &QNetworkReply::downloadProgress, this, &ChunkedDownloader::downloadProgressChanged);
 }

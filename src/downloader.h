@@ -15,15 +15,20 @@ class Downloader : public QObject
     Q_OBJECT
 
 public:
-    typedef std::shared_ptr<QNetworkReply>& TSharedNetworkReplyRef;
-    typedef std::shared_ptr<QNetworkAccessManager>& TSharedNetworkAccessManagerRef;
+    typedef QSharedPointer<QNetworkReply> TSharedNetworkReply;
+    typedef TSharedNetworkReply& TSharedNetworkReplyRef;
+
+    typedef QSharedPointer<QNetworkAccessManager> TSharedNetworkAccessManager;
+    typedef TSharedNetworkAccessManager& TSharedNetworkAccessManagerRef;
+
+    typedef long long TByteCount;
 
     virtual void downloadFile(const QString& t_urlPath, const QString& t_filePath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) const;
 
     QString downloadString(const QString& t_urlPath, int t_requestTimeoutMsec, int& t_replyStatusCode, CancellationToken t_cancellationToken) const;
 
 signals:
-    void downloadProgressChanged(const long long& t_bytesDownloaded, const long long& t_totalBytes);
+    void downloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes);
 
 protected:
     void fetchReply(const QString& t_urlPath, TSharedNetworkAccessManagerRef t_accessManager, TSharedNetworkReplyRef t_reply) const;

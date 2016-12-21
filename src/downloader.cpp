@@ -10,12 +10,12 @@
 
 void Downloader::downloadFile(const QString& t_urlPath, const QString& t_filePath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) const
 {
-    std::shared_ptr<QNetworkAccessManager> accessManager;
-    std::shared_ptr<QNetworkReply> reply;
+    TSharedNetworkAccessManager accessManager;
+    TSharedNetworkReply reply;
 
     fetchReply(t_urlPath, accessManager, reply);
 
-    connect(reply.get(), &QNetworkReply::downloadProgress, this, &Downloader::downloadProgressChanged);
+    connect(reply.data(), &QNetworkReply::downloadProgress, this, &Downloader::downloadProgressChanged);
 
     waitForReply(reply, t_requestTimeoutMsec, t_cancellationToken);
     validateReply(reply);
@@ -23,13 +23,13 @@ void Downloader::downloadFile(const QString& t_urlPath, const QString& t_filePat
     waitForFileDownload(reply, t_cancellationToken);
     writeDownloadedFile(reply, t_filePath, t_cancellationToken);
 
-    disconnect(reply.get(), &QNetworkReply::downloadProgress, this, &Downloader::downloadProgressChanged);
+    disconnect(reply.data(), &QNetworkReply::downloadProgress, this, &Downloader::downloadProgressChanged);
 }
 
 QString Downloader::downloadString(const QString& t_urlPath, int t_requestTimeoutMsec, int& t_replyStatusCode, CancellationToken t_cancellationToken) const
 {
-    std::shared_ptr<QNetworkAccessManager> accessManager;
-    std::shared_ptr<QNetworkReply> reply;
+    TSharedNetworkAccessManager accessManager;
+    TSharedNetworkReply reply;
 
     fetchReply(t_urlPath, accessManager, reply);
     waitForReply(reply, t_requestTimeoutMsec, t_cancellationToken);
@@ -40,24 +40,31 @@ QString Downloader::downloadString(const QString& t_urlPath, int t_requestTimeou
     return reply->readAll();
 }
 
-void Downloader::fetchReply(const QString& t_urlPath, std::shared_ptr<QNetworkAccessManager>& t_accessManager, std::shared_ptr<QNetworkReply>& t_reply) const
+void Downloader::fetchReply(const QString& t_urlPath, TSharedNetworkAccessManagerRef t_accessManager, TSharedNetworkReplyRef t_reply) const
 {
     logInfo("Fetching network reply.");
 
     QUrl url(t_urlPath);
-    t_accessManager = std::make_shared<QNetworkAccessManager>();
-    t_reply = std::shared_ptr<QNetworkReply>(t_accessManager->get(QNetworkRequest(url)));
+
+    fetchReply(QNetworkRequest(url), t_accessManager, t_reply);
 }
 
 void Downloader::fetchReply(const QNetworkRequest &t_urlRequest, TSharedNetworkAccessManagerRef t_accessManager, TSharedNetworkReplyRef t_reply) const
 {
     logInfo("Fetching network reply from request.");
 
-    t_accessManager = std::make_shared<QNetworkAccessManager>();
-    t_reply = std::shared_ptr<QNetworkReply>(t_accessManager->get(t_urlRequest));
+    if (!t_reply.isNull())
+    {
+        t_reply->deleteLater();
+        t_reply.reset(nullptr);
+    }
+
+    t_accessManager = TSharedNetworkAccessManager(new QNetworkAccessManager());
+
+    t_reply = TSharedNetworkReply(t_accessManager->get(t_urlRequest));
 }
 
-void Downloader::waitForReply(std::shared_ptr<QNetworkReply>& t_reply, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) const
+void Downloader::waitForReply(TSharedNetworkReplyRef t_reply, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) const
 {
     logInfo("Waiting for network reply to be ready.");
 
@@ -67,7 +74,7 @@ void Downloader::waitForReply(std::shared_ptr<QNetworkReply>& t_reply, int t_req
 
         QTimer timeoutTimer;
 
-        connect(t_reply.get(), &QNetworkReply::readyRead, &readyReadLoop, &QEventLoop::quit);
+        connect(t_reply.data(), &QNetworkReply::readyRead, &readyReadLoop, &QEventLoop::quit);
         connect(&t_cancellationToken, &CancellationToken::cancelled, &readyReadLoop, &QEventLoop::quit);
         connect(&timeoutTimer, &QTimer::timeout, &readyReadLoop, &QEventLoop::quit);
 
@@ -86,7 +93,7 @@ void Downloader::waitForReply(std::shared_ptr<QNetworkReply>& t_reply, int t_req
     }
 }
 
-void Downloader::validateReply(std::shared_ptr<QNetworkReply>& t_reply) const
+void Downloader::validateReply(TSharedNetworkReplyRef t_reply) const
 {
     logInfo("Validating network reply.");
 
@@ -96,7 +103,7 @@ void Downloader::validateReply(std::shared_ptr<QNetworkReply>& t_reply) const
     }
 }
 
-int Downloader::getReplyStatusCode(std::shared_ptr<QNetworkReply>& t_reply) const
+int Downloader::getReplyStatusCode(TSharedNetworkReplyRef t_reply) const
 {
     QVariant statusCode = t_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
 
@@ -112,13 +119,13 @@ int Downloader::getReplyStatusCode(std::shared_ptr<QNetworkReply>& t_reply) cons
     return statusCodeValue;
 }
 
-void Downloader::waitForFileDownload(std::shared_ptr<QNetworkReply>& t_reply, CancellationToken t_cancellationToken) const
+void Downloader::waitForFileDownload(TSharedNetworkReplyRef t_reply, CancellationToken t_cancellationToken) const
 {
     logInfo("Waiting for file download.");
 
     QEventLoop finishedLoop;
 
-    connect(t_reply.get(), &QNetworkReply::finished, &finishedLoop, &QEventLoop::quit);
+    connect(t_reply.data(), &QNetworkReply::finished, &finishedLoop, &QEventLoop::quit);
     connect(&t_cancellationToken, &CancellationToken::cancelled, &finishedLoop, &QEventLoop::quit);
 
     finishedLoop.exec();
@@ -126,7 +133,7 @@ void Downloader::waitForFileDownload(std::shared_ptr<QNetworkReply>& t_reply, Ca
     t_cancellationToken.throwIfCancelled();
 }
 
-void Downloader::writeDownloadedFile(std::shared_ptr<QNetworkReply>& t_reply, const QString& t_filePath, CancellationToken t_cancellationToken) const
+void Downloader::writeDownloadedFile(TSharedNetworkReplyRef t_reply, const QString& t_filePath, CancellationToken t_cancellationToken) const
 {
     logInfo("Writing downloaded data to file - %1", .arg(t_filePath));
 
