@@ -38,22 +38,31 @@ void RemotePatcherData::download(const QString& t_downloadPath, const Data& t_da
 
     logInfo("Downloading content summary from %1", .arg(contentSummaryPath));
 
-    std::shared_ptr<ContentSummary> summary;
+    ContentSummary summary;
+
+    std::shared_ptr<Downloader> downloader;
 
     try
     {
-        summary = std::make_shared<ContentSummary>(ContentSummary(m_api.downloadContentSummary(contentSummaryPath, t_cancellationToken)));
+        summary = m_api.downloadContentSummary(contentSummaryPath, t_cancellationToken);
     }
-    catch (std::runtime_error& err)
+    catch(std::runtime_error& err)
     {
-        logWarning("Failed to resolve the content summary.");
+        logWarning(QString("Exception while downloading content summary: %1").arg(err.what()));
     }
 
-    ChunkedDownloader chunkedDownloader(*summary, &HashingStrategy::xxHash);
+    if (summary.isValid())
+    {
+        logInfo("Beginning chunked download.");
+        downloader = std::shared_ptr<Downloader>(new ChunkedDownloader(summary, &HashingStrategy::xxHash));
+    }
+    else
+    {
+        logInfo("Chunked download not available, resolving to simple HTTP.");
+        downloader = std::shared_ptr<Downloader>(new Downloader());
+    }
 
-    connect(&chunkedDownloader, &ChunkedDownloader::downloadProgressChanged, this, &RemotePatcherData::downloadProgressChanged);
-
-    Downloader* downloader = &chunkedDownloader;
+    connect(downloader.get(), &Downloader::downloadProgressChanged, this, &RemotePatcherData::downloadProgressChanged);
 
     for (int i = 0; i < contentUrls.size(); i++)
     {

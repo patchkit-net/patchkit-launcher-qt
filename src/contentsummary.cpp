@@ -14,59 +14,72 @@
 #include <QStringList>
 #include <QVariantList>
 
+ContentSummary::ContentSummary()
+    : m_isValid(false)
+{
+}
+
 ContentSummary::ContentSummary(const QJsonDocument& document)
+    : m_isValid(false)
 {
     const std::string PARSING_ERROR_MSG = "Couldn't parse content summary from provided JSON document";
 
     if (document.isEmpty() || document.isNull())
     {
-        throw std::runtime_error("Provided JSON document is invalid.");
+        return;
     }
 
     if (!document.isObject())
     {
-        throw std::runtime_error(PARSING_ERROR_MSG);
+        return;
     }
 
     QJsonObject& doc_object = document.object();
 
     if (!doc_object.contains("encryption_method"))
     {
-        throw std::runtime_error(PARSING_ERROR_MSG);
+        return;
     }
 
     m_encryptionMethod = doc_object["encryption_method"].toString();
 
     if (!doc_object.contains("compression_method"))
     {
-        throw std::runtime_error(PARSING_ERROR_MSG);
+        return;
     }
 
     m_compressionMethod = doc_object["compression_method"].toString();
 
     if (!doc_object.contains("hashing_method"))
     {
-        throw std::runtime_error(PARSING_ERROR_MSG);
+        return;
     }
 
     m_hashingMethod = doc_object["hashing_method"].toString();
 
     if (!doc_object.contains("hash_code"))
     {
-        throw std::runtime_error(PARSING_ERROR_MSG);
+        return;
     }
 
     m_hashCode = doc_object["hash_code"].toString().toUInt(nullptr, 16);
 
     if (!parseFiles(doc_object))
     {
-        throw std::runtime_error(PARSING_ERROR_MSG);
+        return;
     }
 
     if (!parseChunks(doc_object))
     {
-        throw std::runtime_error(PARSING_ERROR_MSG);
+        return;
     }
+
+    m_isValid = true;
+}
+
+const bool ContentSummary::isValid() const
+{
+    return m_isValid;
 }
 
 const int ContentSummary::getChunkSize() const

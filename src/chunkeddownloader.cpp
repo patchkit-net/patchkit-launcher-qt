@@ -17,6 +17,7 @@ ChunkedDownloader::ChunkedDownloader(const ContentSummary& t_contentSummary, Has
     , m_lastValidChunkIndex(0)
     , m_hashingStrategy(t_hashingStrategy)
 {
+    connect(this, &ChunkedDownloader::downloadProgressChanged, this, &Downloader::downloadProgressChanged);
 }
 
 void ChunkedDownloader::downloadFile(const QString & t_urlPath, const QString & t_filePath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken)
@@ -160,7 +161,7 @@ bool ChunkedDownloader::validateReceivedData(TSharedNetworkReplyRef t_reply)
     return m_chunks.size() == m_contentSummary.getChunksCount();
 }
 
-const int& ChunkedDownloader::getChunkSize() const
+const int ChunkedDownloader::getChunkSize() const
 {
     return m_contentSummary.getChunkSize();
 }

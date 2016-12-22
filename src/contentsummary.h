@@ -33,7 +33,9 @@ public:
      * After being constructed the ContentSummary object is immutable.
      */
     ContentSummary(const QJsonDocument& document);
+    ContentSummary();
 
+    const bool      isValid()                const;
     const int       getChunkSize()           const;
     const THash     getChunkHash(int at)     const;
     const QString&  getEncryptionMethod()    const;
@@ -46,6 +48,9 @@ private:
     bool parseFiles(QJsonObject& doc);
     bool parseChunks(QJsonObject& doc);
 
+    void invalidate();
+
+    bool    m_isValid;
     QString m_encryptionMethod;
     QString m_compressionMethod;
     QString m_hashingMethod;

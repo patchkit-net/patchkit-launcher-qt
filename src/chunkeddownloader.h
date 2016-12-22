@@ -66,7 +66,7 @@ private:
     bool        validateReceivedData(TSharedNetworkReplyRef t_reply);
     void        restartDownload(TSharedNetworkReplyRef t_reply, TSharedNetworkAccessManagerRef t_networkManager, const QUrl& t_url) const;
     bool        shouldStop() const;
-    const int&  getChunkSize() const;
+    const int  getChunkSize() const;
 };
 
 #endif // CHUNKEDDOWNLOADER_H

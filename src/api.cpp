@@ -23,21 +23,24 @@ QString Api::downloadString(const QString& t_resourceUrl, CancellationToken t_ca
 
 QJsonDocument Api::downloadContentSummary(const QString& t_resourceUrl, CancellationToken t_cancellationToken) const
 {
-	QJsonDocument document;
-	do
-	{
-		t_cancellationToken.throwIfCancelled();
+    const auto validator = [](const QString& data) -> bool
+    {
+        QJsonDocument doc = QJsonDocument::fromJson(data.toUtf8());
+        return !doc.isNull() && !doc.isEmpty();
+    };
 
-		QString raw = downloadString(t_resourceUrl, t_cancellationToken);
+    QStringList cacheApiUrls = Config::cacheApiUrls;
 
-		document = QJsonDocument::fromJson(raw.toUtf8());
-	} 
-	while (document.isNull() || document.isEmpty());
-
-    return document;
+    QString raw = downloadString(t_resourceUrl, cacheApiUrls, validator, false, t_cancellationToken);
+    return QJsonDocument::fromJson(raw.toUtf8());
 }
 
 QString Api::downloadString(const QString& t_resourceUrl, QStringList& t_cacheApiUrls, bool t_extendedTimeout, CancellationToken t_cancellationToken) const
+{
+    return downloadString(t_resourceUrl, t_cacheApiUrls, nullptr, t_extendedTimeout, t_cancellationToken);
+}
+
+QString Api::downloadString(const QString& t_resourceUrl, QStringList& t_cacheApiUrls, TValidator t_validator, bool t_extendedTimeout, CancellationToken t_cancellationToken) const
 {
     QString result;
     int statusCode;
@@ -51,7 +54,8 @@ QString Api::downloadString(const QString& t_resourceUrl, QStringList& t_cacheAp
             throw std::runtime_error("API response error. Status code - " + std::to_string(statusCode));
         }
 
-        return result;
+        if (!t_validator || (t_validator && t_validator(result)))
+            return result;
     }
 
     for (int i = 0; i < t_cacheApiUrls.length(); i++)
@@ -60,7 +64,8 @@ QString Api::downloadString(const QString& t_resourceUrl, QStringList& t_cacheAp
         {
             if (isVaild(statusCode))
             {
-                return result;
+                if (!t_validator || (t_validator && t_validator(result)))
+                    return result;
             }
 
             t_cacheApiUrls.removeAt(i);
@@ -73,7 +78,7 @@ QString Api::downloadString(const QString& t_resourceUrl, QStringList& t_cacheAp
         throw std::runtime_error("API connection error.");
     }
 
-    return downloadString(t_resourceUrl, t_cacheApiUrls, true, t_cancellationToken);
+    return downloadString(t_resourceUrl, t_cacheApiUrls, t_validator, true, t_cancellationToken);
 }
 
 bool Api::isVaild(int t_statusCode) const
