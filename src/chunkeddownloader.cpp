@@ -20,7 +20,7 @@ ChunkedDownloader::ChunkedDownloader(const ContentSummary& t_contentSummary, Has
     connect(this, &ChunkedDownloader::downloadProgressChanged, this, &Downloader::downloadProgressChanged);
 }
 
-void ChunkedDownloader::downloadFile(const QString & t_urlPath, const QString & t_filePath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken)
+void ChunkedDownloader::downloadFile(const QString& t_urlPath, const QString& t_filePath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken)
 {
     if (!m_hashingStrategy)
     {
@@ -37,11 +37,6 @@ void ChunkedDownloader::downloadFile(const QString & t_urlPath, const QString & 
 
     connect(accessManager.data(), &QNetworkAccessManager::networkAccessibleChanged, this, &ChunkedDownloader::watchNetorkAccessibility);
 
-    QTimer timer;
-    timer.setInterval(1000);
-    timer.setSingleShot(true);
-    timer.start();
-
     connect(reply.data(), &QNetworkReply::downloadProgress, this, &ChunkedDownloader::downloadProgressChangedRelay);
     connect(this, &ChunkedDownloader::terminate, reply.data(), &QNetworkReply::abort);
 
@@ -49,7 +44,7 @@ void ChunkedDownloader::downloadFile(const QString & t_urlPath, const QString & 
     {
         try
         {
-            waitForReply(reply, t_requestTimeoutMsec, t_cancellationToken);
+            Downloader::waitForReply(reply, t_requestTimeoutMsec, t_cancellationToken);
 
             Downloader::waitForFileDownload(reply, t_cancellationToken);
 
@@ -104,6 +99,10 @@ void ChunkedDownloader::downloadProgressChangedRelay(const Downloader::TByteCoun
 
 bool ChunkedDownloader::shouldStop() const
 {
+    /* TODO Implement this method
+     * - the program works without it, but will basically run forever
+     */
+
     // Return true if the maximum time is reached (2 min?)
 
     // Otherwise return false

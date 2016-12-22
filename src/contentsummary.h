@@ -19,6 +19,7 @@ typedef unsigned int THash;
  *
  * Reflects the JSON contatining crucial information about file.
  *
+ * @note
  * Refer to:
  * http://redmine.patchkit.net/projects/patchkit-documentation/wiki/Content_Summary
  * for more detailed info.
@@ -37,11 +38,11 @@ public:
 
     const bool      isValid()                const;
     const int       getChunkSize()           const;
-    const THash     getChunkHash(int at)     const;
+    const THash&    getChunkHash(int at)     const;
     const QString&  getEncryptionMethod()    const;
     const QString&  getCompressionMethod()   const;
     const QString&  getHashingMethod()       const;
-    const THash     getHashCode()            const;
+    const THash&    getHashCode()            const;
     const int       getChunksCount()         const;
 
 private:

@@ -22,8 +22,6 @@ ContentSummary::ContentSummary()
 ContentSummary::ContentSummary(const QJsonDocument& document)
     : m_isValid(false)
 {
-    const std::string PARSING_ERROR_MSG = "Couldn't parse content summary from provided JSON document";
-
     if (document.isEmpty() || document.isNull())
     {
         return;
@@ -62,7 +60,13 @@ ContentSummary::ContentSummary(const QJsonDocument& document)
         return;
     }
 
-    m_hashCode = doc_object["hash_code"].toString().toUInt(nullptr, 16);
+    bool ok;
+    m_hashCode = doc_object["hash_code"].toString().toUInt(&ok, 16);
+
+    if (!ok)
+    {
+        return;
+    }
 
     if (!parseFiles(doc_object))
     {
@@ -87,7 +91,7 @@ const int ContentSummary::getChunkSize() const
     return m_chunkSize;
 }
 
-const THash ContentSummary::getChunkHash(int at) const
+const THash& ContentSummary::getChunkHash(int at) const
 {
     return m_chunkHashes.at(at);
 }
@@ -107,7 +111,7 @@ const QString& ContentSummary::getHashingMethod() const
     return m_hashingMethod;
 }
 
-const THash ContentSummary::getHashCode() const
+const THash& ContentSummary::getHashCode() const
 {
     return m_hashCode;
 }
@@ -169,9 +173,14 @@ bool ContentSummary::parseChunks(QJsonObject& doc)
 
     QVector<THash> hash_list;
 
+    bool ok;
     for (QJsonValueRef item : hashes)
     {
-        hash_list.push_back(item.toString().toUInt(nullptr, 16));
+        hash_list.push_back(item.toString().toUInt(&ok, 16));
+        if (!ok)
+        {
+            return false;
+        }
     }
 
     m_chunkSize = chunks_size;

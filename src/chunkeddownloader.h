@@ -56,7 +56,6 @@ private:
 
     QVector<QByteArray>     m_chunks;
     int                     m_lastValidChunkIndex;
-    int                     m_maxNumberOfAttepmts;
     HashFunc                m_hashingStrategy;
     const ContentSummary&   m_contentSummary;
 
