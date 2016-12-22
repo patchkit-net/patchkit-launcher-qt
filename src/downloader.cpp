@@ -8,7 +8,7 @@
 #include "logger.h"
 #include "timeoutexception.h"
 
-void Downloader::downloadFile(const QString& t_urlPath, const QString& t_filePath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) const
+void Downloader::downloadFile(const QString& t_urlPath, const QString& t_filePath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken)
 {
     TSharedNetworkAccessManager accessManager;
     TSharedNetworkReply reply;
@@ -42,16 +42,14 @@ QString Downloader::downloadString(const QString& t_urlPath, int t_requestTimeou
 
 void Downloader::fetchReply(const QString& t_urlPath, TSharedNetworkAccessManagerRef t_accessManager, TSharedNetworkReplyRef t_reply) const
 {
-    logInfo("Fetching network reply.");
-
     QUrl url(t_urlPath);
 
     fetchReply(QNetworkRequest(url), t_accessManager, t_reply);
 }
 
-void Downloader::fetchReply(const QNetworkRequest &t_urlRequest, TSharedNetworkAccessManagerRef t_accessManager, TSharedNetworkReplyRef t_reply) const
+void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TSharedNetworkAccessManagerRef t_accessManager, TSharedNetworkReplyRef t_reply) const
 {
-    logInfo("Fetching network reply from request.");
+    logInfo("Fetching network reply.");
 
     if (!t_reply.isNull())
     {
@@ -59,7 +57,10 @@ void Downloader::fetchReply(const QNetworkRequest &t_urlRequest, TSharedNetworkA
         t_reply.reset(nullptr);
     }
 
-    t_accessManager = TSharedNetworkAccessManager(new QNetworkAccessManager());
+    if (t_accessManager.isNull())
+    {
+        t_accessManager = TSharedNetworkAccessManager(new QNetworkAccessManager());
+    }
 
     t_reply = TSharedNetworkReply(t_accessManager->get(t_urlRequest));
 }

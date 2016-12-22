@@ -7,7 +7,7 @@
 #define CONTENTSUMMARY_H
 
 #include <QString>
-#include <QStringList>
+#include <QVector>
 
 class QJsonDocument;
 class QJsonObject;
@@ -26,28 +26,32 @@ typedef unsigned int THash;
 class ContentSummary
 {
 public:
+    /**
+     * @brief ContentSummary
+     * @param document - A valid json document containing necessary data.
+     *
+     * After being constructed the ContentSummary object is immutable.
+     */
     ContentSummary(const QJsonDocument& document);
 
-    const int&      getChunkSize()           const;
+    const int       getChunkSize()           const;
     const THash     getChunkHash(int at)     const;
     const QString&  getEncryptionMethod()    const;
     const QString&  getCompressionMethod()   const;
     const QString&  getHashingMethod()       const;
     const THash     getHashCode()            const;
-    const int&      getChunksCount()         const;
+    const int       getChunksCount()         const;
 
 private:
-
     bool parseFiles(QJsonObject& doc);
     bool parseChunks(QJsonObject& doc);
 
     QString m_encryptionMethod;
     QString m_compressionMethod;
     QString m_hashingMethod;
-    QString m_hashCode;
-
-    int m_chunkSize;
-    QStringList m_chunkHashes;
+    THash   m_hashCode;
+    int     m_chunkSize;
+    QVector<THash> m_chunkHashes;
 };
 
 #endif // CONTENTSUMMARY_H

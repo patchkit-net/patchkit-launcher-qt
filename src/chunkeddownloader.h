@@ -12,57 +12,61 @@
 
 #include "downloader.h"
 
+#include "hashingstrategy.h"
+
 class ContentSummary;
 
 class QNetworkReply;
 class QNetworkRequest;
 class QNetworkAccessManager;
 
-typedef unsigned int THash;
-
+/**
+ * @brief
+ * Downloads files in chunks which are specified by the Content Summary.
+ *
+ * @details
+ * As it is implemented now, the Chunked Downloader downloads the data through the QNetworkReply.
+ * When the connection is broken or for any other reason the download has stopped, it validates all the downloaded data.
+ * Once the data is validated the ChunkedDownloader proceeds to restart the download from the first invalid chunk (or from the start if no chunks were received)
+ *
+ * @note
+ * This means that if in a set of 20 chunks the chunk #5 happened to be invalid but all the other ones were valid
+ * the download will resume from the 5th chunk.
+ */
 class ChunkedDownloader : public Downloader
 {
     Q_OBJECT
 
     const int MAX_DOWNLOAD_QUEUE_SIZE = 15;
 
-    typedef THash (*HashingStrategy)(const QByteArray& bytes, const ContentSummary& cs);
-
 public:
-    ChunkedDownloader(const ContentSummary& t_contentSummary, HashingStrategy t_hashingStrategy);
+    ChunkedDownloader(const ContentSummary& t_contentSummary, HashFunc t_hashingStrategy);
 
-    void downloadFile(const QString& t_urlPath, const QString& t_filePath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken);
+    void downloadFile(const QString& t_urlPath, const QString& t_filePath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) override;
 
 signals:
     void downloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes);
+    void terminate();
+
+private slots:
+    void watchNetorkAccessibility(QNetworkAccessManager::NetworkAccessibility accessible);
+    void downloadProgressChangedRelay(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes);
 
 private:
 
-    // Private variables
+    QVector<QByteArray>     m_chunks;
+    int                     m_lastValidChunkIndex;
+    int                     m_maxNumberOfAttepmts;
+    HashFunc                m_hashingStrategy;
+    const ContentSummary&   m_contentSummary;
 
-    HashingStrategy m_hashingStrategy;
 
-    int m_lastValidChunkIndex;
+    QVector<QByteArray> processChunks(TSharedNetworkReplyRef t_reply) const;
 
-    const ContentSummary& m_contentSummary;
-
-    int m_maxNumberOfAttepmts;
-
-    QVector<QByteArray> m_chunks;
-
-    // Private methods
-
-    QVector<QByteArray> processChunks(TSharedNetworkReplyRef t_reply);
-
-    void restartDownload(TSharedNetworkReplyRef t_reply, TSharedNetworkAccessManagerRef t_networkManager, const QUrl& t_url);
-
-    bool validateReceivedData(TSharedNetworkReplyRef t_reply);
-
-    bool shouldStop() const;
-
-    void writeDownloadedFile(const QString& t_filePath) const;
-
-    const int& getChunkSize() const;
+    bool        validateReceivedData(TSharedNetworkReplyRef t_reply);
+    void        restartDownload(TSharedNetworkReplyRef t_reply, TSharedNetworkAccessManagerRef t_networkManager, const QUrl& t_url) const;
+    bool        shouldStop() const;
+    const int&  getChunkSize() const;
 };
 
 #endif // CHUNKEDDOWNLOADER_H

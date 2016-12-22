@@ -10,9 +10,6 @@
 #include "timeoutexception.h"
 #include "chunkeddownloader.h"
 
-#define XXH_PRIVATE_API
-#include "xxhash.h"
-
 int RemotePatcherData::getVersion(const Data& t_data, CancellationToken t_cancellationToken)
 {
     logInfo("Fetching newest patcher version from 1/apps/%1/versions/latest/id", .arg(Logger::adjustSecretForLog(t_data.patcherSecret())));
@@ -41,13 +38,22 @@ void RemotePatcherData::download(const QString& t_downloadPath, const Data& t_da
 
     logInfo("Downloading content summary from %1", .arg(contentSummaryPath));
 
-    ContentSummary summary = m_api.downloadContentSummary(contentSummaryPath, t_cancellationToken);
+    std::shared_ptr<ContentSummary> summary;
 
-    ChunkedDownloader chunkedDownloader(summary, [](const QByteArray& chunk, const ContentSummary& cs) -> THash {
-        return XXH32(chunk.data(), chunk.size(), 42);
-    });
+    try
+    {
+        summary = std::make_shared<ContentSummary>(ContentSummary(m_api.downloadContentSummary(contentSummaryPath, t_cancellationToken)));
+    }
+    catch (std::runtime_error& err)
+    {
+        logWarning("Failed to resolve the content summary.");
+    }
+
+    ChunkedDownloader chunkedDownloader(*summary, &HashingStrategy::xxHash);
 
     connect(&chunkedDownloader, &ChunkedDownloader::downloadProgressChanged, this, &RemotePatcherData::downloadProgressChanged);
+
+    Downloader* downloader = &chunkedDownloader;
 
     for (int i = 0; i < contentUrls.size(); i++)
     {
@@ -59,12 +65,12 @@ void RemotePatcherData::download(const QString& t_downloadPath, const Data& t_da
         {
             try
             {
-                chunkedDownloader.downloadFile(contentUrls[i], t_downloadPath, Config::minConnectionTimeoutMsec, t_cancellationToken);
+                downloader->downloadFile(contentUrls[i], t_downloadPath, Config::minConnectionTimeoutMsec, t_cancellationToken);
                 return;
             }
             catch (TimeoutException&)
             {
-                chunkedDownloader.downloadFile(contentUrls[i], t_downloadPath, Config::maxConnectionTimeoutMsec, t_cancellationToken);
+                downloader->downloadFile(contentUrls[i], t_downloadPath, Config::maxConnectionTimeoutMsec, t_cancellationToken);
                 return;
             }
         }

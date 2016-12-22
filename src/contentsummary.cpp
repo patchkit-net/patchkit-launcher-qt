@@ -56,7 +56,7 @@ ContentSummary::ContentSummary(const QJsonDocument& document)
         throw std::runtime_error(PARSING_ERROR_MSG);
     }
 
-    m_hashCode = doc_object["hash_code"].toString();
+    m_hashCode = doc_object["hash_code"].toString().toUInt(nullptr, 16);
 
     if (!parseFiles(doc_object))
     {
@@ -69,16 +69,14 @@ ContentSummary::ContentSummary(const QJsonDocument& document)
     }
 }
 
-const int& ContentSummary::getChunkSize() const
+const int ContentSummary::getChunkSize() const
 {
     return m_chunkSize;
 }
 
 const THash ContentSummary::getChunkHash(int at) const
 {
-    bool ok;
-    THash hash = m_chunkHashes.at(at).toUInt(&ok, 16);
-    return hash;
+    return m_chunkHashes.at(at);
 }
 
 const QString& ContentSummary::getEncryptionMethod() const
@@ -98,12 +96,10 @@ const QString& ContentSummary::getHashingMethod() const
 
 const THash ContentSummary::getHashCode() const
 {
-    bool ok;
-    THash hash = m_hashCode.toUInt(&ok, 16);
-    return hash;
+    return m_hashCode;
 }
 
-const int& ContentSummary::getChunksCount() const
+const int ContentSummary::getChunksCount() const
 {
     return m_chunkHashes.size();
 }
@@ -158,11 +154,11 @@ bool ContentSummary::parseChunks(QJsonObject& doc)
         return false;
     }
 
-    QStringList hash_list;
+    QVector<THash> hash_list;
 
     for (QJsonValueRef item : hashes)
     {
-        hash_list.push_back(item.toString());
+        hash_list.push_back(item.toString().toUInt(nullptr, 16));
     }
 
     m_chunkSize = chunks_size;
