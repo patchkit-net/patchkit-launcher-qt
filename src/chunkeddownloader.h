@@ -49,7 +49,7 @@ signals:
     void terminate();
 
 private slots:
-    void watchNetorkAccessibility(QNetworkAccessManager::NetworkAccessibility accessible);
+    void watchNetorkAccessibility(QNetworkAccessManager::NetworkAccessibility t_accessible);
     void downloadProgressChangedRelay(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes);
 
 private:

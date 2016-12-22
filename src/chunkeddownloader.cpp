@@ -74,14 +74,14 @@ void ChunkedDownloader::downloadFile(const QString& t_urlPath, const QString& t_
     Downloader::writeDownloadedData(data, t_filePath, t_cancellationToken);
 }
 
-void ChunkedDownloader::watchNetorkAccessibility(QNetworkAccessManager::NetworkAccessibility accessible)
+void ChunkedDownloader::watchNetorkAccessibility(QNetworkAccessManager::NetworkAccessibility t_accessible)
 {
-    if (accessible == QNetworkAccessManager::NetworkAccessibility::NotAccessible)
+    if (t_accessible == QNetworkAccessManager::NetworkAccessibility::NotAccessible)
     {
         logDebug("Network not accessible");
         emit terminate();
     }
-    else if (accessible == QNetworkAccessManager::NetworkAccessibility::Accessible)
+    else if (t_accessible == QNetworkAccessManager::NetworkAccessibility::Accessible)
     {
         logDebug("Network accessible.");
     }

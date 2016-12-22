@@ -19,20 +19,20 @@ ContentSummary::ContentSummary()
 {
 }
 
-ContentSummary::ContentSummary(const QJsonDocument& document)
+ContentSummary::ContentSummary(const QJsonDocument& t_document)
     : m_isValid(false)
 {
-    if (document.isEmpty() || document.isNull())
+    if (t_document.isEmpty() || t_document.isNull())
     {
         return;
     }
 
-    if (!document.isObject())
+    if (!t_document.isObject())
     {
         return;
     }
 
-    QJsonObject& doc_object = document.object();
+    QJsonObject& doc_object = t_document.object();
 
     if (!doc_object.contains("encryption_method"))
     {
@@ -91,9 +91,14 @@ const int ContentSummary::getChunkSize() const
     return m_chunkSize;
 }
 
-const THash& ContentSummary::getChunkHash(int at) const
+const THash ContentSummary::getChunkHash(int t_at) const
 {
-    return m_chunkHashes.at(at);
+    return m_chunkHashes.at(t_at);
+}
+
+const FileData& ContentSummary::getFileData(int t_at) const
+{
+    return m_filesSummary.at(t_at);
 }
 
 const QString& ContentSummary::getEncryptionMethod() const
@@ -111,7 +116,7 @@ const QString& ContentSummary::getHashingMethod() const
     return m_hashingMethod;
 }
 
-const THash& ContentSummary::getHashCode() const
+const THash ContentSummary::getHashCode() const
 {
     return m_hashCode;
 }
@@ -121,31 +126,51 @@ const int ContentSummary::getChunksCount() const
     return m_chunkHashes.size();
 }
 
-bool ContentSummary::parseFiles(QJsonObject& doc)
+bool ContentSummary::parseFiles(QJsonObject& t_document)
 {
-    if (!doc.contains("files"))
+    if (!t_document.contains("files"))
     {
         return false;
     }
 
-    QJsonArray files = doc["files"].toArray();
+    QJsonArray files = t_document["files"].toArray();
 
+    bool ok;
     for (QJsonValueRef f : files)
     {
-        /* TODO implement parsing files. */
+        if (!f.isObject())
+        {
+            return false;
+        }
+
+        if (!(f.toObject().contains("hash") && f.toObject().contains("path")))
+        {
+            return false;
+        }
+
+        QString path = f.toObject()["path"].toString();
+        THash hash = f.toObject()["hash"].toString().toUInt(&ok, 16);
+
+        if (!ok)
+        {
+            return false;
+        }
+
+        m_filesSummary.push_back(FileData(path, hash));
+
     }
 
     return true;
 }
 
-bool ContentSummary::parseChunks(QJsonObject& doc)
+bool ContentSummary::parseChunks(QJsonObject& t_document)
 {
-    if (!doc.contains("chunks"))
+    if (!t_document.contains("chunks"))
     {
         return false;
     }
 
-    QJsonObject chunks = doc["chunks"].toObject();
+    QJsonObject chunks = t_document["chunks"].toObject();
 
     if (chunks == QJsonObject())
     {

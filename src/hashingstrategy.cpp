@@ -5,7 +5,7 @@
 
 #include "hashingstrategy.h"
 
-THash HashingStrategy::xxHash(const QByteArray& data)
+THash HashingStrategy::xxHash(const QByteArray& t_data)
 {
-    return XXH32(data.data(), data.size(), 42);
+    return XXH32(t_data.data(), t_data.size(), 42);
 }

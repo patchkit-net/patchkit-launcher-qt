@@ -13,11 +13,11 @@
 
 typedef unsigned int THash;
 
-typedef THash (*HashFunc)(const QByteArray& bytes);
+typedef THash (*HashFunc)(const QByteArray&);
 
 namespace HashingStrategy
 {
-    THash xxHash(const QByteArray& data);
+    THash xxHash(const QByteArray& t_data);
 }
 
 #endif // HASHINGSTRATEGY_H
