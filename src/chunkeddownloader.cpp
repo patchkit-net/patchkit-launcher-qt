@@ -114,10 +114,11 @@ QVector<QByteArray> ChunkedDownloader::processChunks(TSharedNetworkReplyRef t_re
     QByteArray data = t_reply->readAll();
     QVector<QByteArray> chunks;
 
-    for (int i = 0; i < data.size(); i += getChunkSize())
+    const int chunkSize = getChunkSize();
+    for (int i = 0; i < data.size(); i += chunkSize)
     {
         // Get the chunk
-        QByteArray chunk = data.mid(i, getChunkSize());
+        QByteArray chunk = data.mid(i, chunkSize);
 
         chunks.push_back(chunk);
     }
@@ -131,9 +132,9 @@ bool ChunkedDownloader::validateReceivedData(TSharedNetworkReplyRef t_reply)
 
     m_chunks += chunks;
 
-    m_lastValidChunkIndex = m_chunks.size() - 1;
+    //m_lastValidChunkIndex = m_chunks.size() - 1;
 
-    for (int i = 0; i < m_chunks.size(); i++)
+    for (int i = m_lastValidChunkIndex; i < m_chunks.size(); i++)
     {
         // Get the content summary hash
         THash valid_hash = m_contentSummary.getChunkHash(i);
@@ -154,6 +155,10 @@ bool ChunkedDownloader::validateReceivedData(TSharedNetworkReplyRef t_reply)
 
             // Signal to restart download
             return false;
+        }
+        else
+        {
+            m_lastValidChunkIndex = i;
         }
     }
 

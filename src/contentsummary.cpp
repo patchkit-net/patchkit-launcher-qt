@@ -14,6 +14,19 @@
 #include <QStringList>
 #include <QVariantList>
 
+const QString   ContentSummary::encryptionMethodToken   = QString("encryption_method");
+const QString   ContentSummary::compressionMethodToken  = QString("compression_method");
+const QString   ContentSummary::hashingMethodToken      = QString("hashing_method");
+const QString   ContentSummary::hashCodeToken           = QString("hash_code");
+const QString   ContentSummary::filesToken              = QString("files");
+const QString   ContentSummary::hashesToken             = QString("hashes");
+const QString   ContentSummary::hashToken               = QString("hash");
+const QString   ContentSummary::pathToken               = QString("path");
+const QString   ContentSummary::chunksToken             = QString("chunks");
+const QString   ContentSummary::sizeToken               = QString("size");
+
+const FileData& FileData::dummy = FileData("dummy", 0);
+
 ContentSummary::ContentSummary()
     : m_isValid(false)
 {
@@ -34,34 +47,34 @@ ContentSummary::ContentSummary(const QJsonDocument& t_document)
 
     QJsonObject& doc_object = t_document.object();
 
-    if (!doc_object.contains("encryption_method"))
+    if (!doc_object.contains(encryptionMethodToken))
     {
         return;
     }
 
-    m_encryptionMethod = doc_object["encryption_method"].toString();
+    m_encryptionMethod = doc_object[encryptionMethodToken].toString();
 
-    if (!doc_object.contains("compression_method"))
+    if (!doc_object.contains(compressionMethodToken))
     {
         return;
     }
 
-    m_compressionMethod = doc_object["compression_method"].toString();
+    m_compressionMethod = doc_object[compressionMethodToken].toString();
 
-    if (!doc_object.contains("hashing_method"))
+    if (!doc_object.contains(hashingMethodToken))
     {
         return;
     }
 
-    m_hashingMethod = doc_object["hashing_method"].toString();
+    m_hashingMethod = doc_object[hashingMethodToken].toString();
 
-    if (!doc_object.contains("hash_code"))
+    if (!doc_object.contains(hashCodeToken))
     {
         return;
     }
 
     bool ok;
-    m_hashCode = doc_object["hash_code"].toString().toUInt(&ok, 16);
+    m_hashCode = doc_object[hashCodeToken].toString().toUInt(&ok, 16);
 
     if (!ok)
     {
@@ -91,14 +104,44 @@ const int ContentSummary::getChunkSize() const
     return m_chunkSize;
 }
 
-const THash ContentSummary::getChunkHash(int t_at) const
+const THash ContentSummary::getChunkHash(int t_index, bool& t_outOfBounds) const
 {
-    return m_chunkHashes.at(t_at);
+    t_outOfBounds = t_index < 0 || t_index >= m_chunkHashes.size();
+
+    if (t_outOfBounds)
+    {
+        return 0;
+    }
+    else
+    {
+        return m_chunkHashes.at(t_index);
+    }
 }
 
-const FileData& ContentSummary::getFileData(int t_at) const
+const THash ContentSummary::getChunkHash(int t_index) const
 {
-    return m_filesSummary.at(t_at);
+    bool check;
+    return getChunkHash(t_index, check);
+}
+
+const FileData& ContentSummary::getFileData(int t_index, bool& t_outOfBounds) const
+{
+    t_outOfBounds = t_index < 0 || t_index >= m_filesSummary.size();
+
+    if (t_outOfBounds)
+    {
+        return FileData::dummy;
+    }
+    else
+    {
+        return m_filesSummary.at(t_index);
+    }
+}
+
+const FileData& ContentSummary::getFileData(int t_index) const
+{
+    bool check;
+    return getFileData(t_index, check);
 }
 
 const QString& ContentSummary::getEncryptionMethod() const
@@ -128,12 +171,12 @@ const int ContentSummary::getChunksCount() const
 
 bool ContentSummary::parseFiles(QJsonObject& t_document)
 {
-    if (!t_document.contains("files"))
+    if (!t_document.contains(filesToken))
     {
         return false;
     }
 
-    QJsonArray files = t_document["files"].toArray();
+    QJsonArray files = t_document[filesToken].toArray();
 
     bool ok;
     for (QJsonValueRef f : files)
@@ -143,13 +186,13 @@ bool ContentSummary::parseFiles(QJsonObject& t_document)
             return false;
         }
 
-        if (!(f.toObject().contains("hash") && f.toObject().contains("path")))
+        if (!(f.toObject().contains(hashToken) && f.toObject().contains(pathToken)))
         {
             return false;
         }
 
-        QString path = f.toObject()["path"].toString();
-        THash hash = f.toObject()["hash"].toString().toUInt(&ok, 16);
+        QString path = f.toObject()[pathToken].toString();
+        THash hash = f.toObject()[hashToken].toString().toUInt(&ok, 16);
 
         if (!ok)
         {
@@ -165,31 +208,31 @@ bool ContentSummary::parseFiles(QJsonObject& t_document)
 
 bool ContentSummary::parseChunks(QJsonObject& t_document)
 {
-    if (!t_document.contains("chunks"))
+    if (!t_document.contains(chunksToken))
     {
         return false;
     }
 
-    QJsonObject chunks = t_document["chunks"].toObject();
+    QJsonObject chunks = t_document[chunksToken].toObject();
 
     if (chunks == QJsonObject())
     {
         return false;
     }
 
-    int chunks_size = chunks["size"].toInt(-1);
+    int chunks_size = chunks[sizeToken].toInt(-1);
 
     if (chunks_size == -1)
     {
         return false;
     }
 
-    if (!chunks.contains("hashes"))
+    if (!chunks.contains(hashesToken))
     {
         return false;
     }
 
-    QJsonArray hashes = chunks["hashes"].toArray();
+    QJsonArray hashes = chunks[hashesToken].toArray();
 
     if (hashes == QJsonArray())
     {

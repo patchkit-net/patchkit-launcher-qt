@@ -17,6 +17,8 @@ typedef THash (*HashFunc)(const QByteArray&);
 
 namespace HashingStrategy
 {
+    const int xxHashSeed = 42;
+
     THash xxHash(const QByteArray& t_data);
 }
 
