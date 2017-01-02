@@ -37,8 +37,6 @@ class ChunkedDownloader : public Downloader
 {
     Q_OBJECT
 
-    const int MAX_DOWNLOAD_QUEUE_SIZE = 15;
-
 public:
     ChunkedDownloader(const ContentSummary& t_contentSummary, HashFunc t_hashingStrategy);
 
@@ -51,8 +49,16 @@ signals:
 private slots:
     void watchNetorkAccessibility(QNetworkAccessManager::NetworkAccessibility t_accessible);
     void downloadProgressChangedRelay(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes);
+    void staleTimerTimeout();
+
+public slots:
+    void abort();
 
 private:
+
+    QTimer                  m_staleTimer;
+
+    bool                    m_running;
 
     QVector<QByteArray>     m_chunks;
     int                     m_lastValidChunkIndex;
@@ -64,8 +70,9 @@ private:
 
     bool        validateReceivedData(TSharedNetworkReplyRef t_reply);
     void        restartDownload(TSharedNetworkReplyRef t_reply, TSharedNetworkAccessManagerRef t_networkManager, const QUrl& t_url) const;
+    const int   getChunkSize() const;
+
     bool        shouldStop() const;
-    const int  getChunkSize() const;
 };
 
 #endif // CHUNKEDDOWNLOADER_H

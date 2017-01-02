@@ -27,6 +27,8 @@ public:
     const static int minConnectionTimeoutMsec;
     const static int maxConnectionTimeoutMsec;
 
+    const static int chunkedDownloadStaleTimeoutMsec;
+
     const static QString mainApiUrl;
     const static QStringList cacheApiUrls;
 };

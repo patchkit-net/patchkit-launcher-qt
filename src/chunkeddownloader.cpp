@@ -11,13 +11,21 @@
 #include "contentsummary.h"
 #include "downloader.h"
 #include "logger.h"
+#include "staledownloadexception.h"
+
+#include "config.h"
 
 ChunkedDownloader::ChunkedDownloader(const ContentSummary& t_contentSummary, HashFunc t_hashingStrategy)
     : m_contentSummary(t_contentSummary)
     , m_lastValidChunkIndex(0)
     , m_hashingStrategy(t_hashingStrategy)
+    , m_running(true)
 {
     connect(this, &ChunkedDownloader::downloadProgressChanged, this, &Downloader::downloadProgressChanged);
+
+    m_staleTimer.setInterval(Config::chunkedDownloadStaleTimeoutMsec);
+    connect(&m_staleTimer, &QTimer::timeout, this, &ChunkedDownloader::staleTimerTimeout);
+    m_staleTimer.start();
 }
 
 void ChunkedDownloader::downloadFile(const QString& t_urlPath, const QString& t_filePath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken)
@@ -26,6 +34,8 @@ void ChunkedDownloader::downloadFile(const QString& t_urlPath, const QString& t_
     {
         throw std::runtime_error("No hashing strategy specified.");
     }
+
+    m_running = true;
 
     TSharedNetworkAccessManager accessManager;
     TSharedNetworkReply reply;
@@ -52,6 +62,11 @@ void ChunkedDownloader::downloadFile(const QString& t_urlPath, const QString& t_
 
             if (!validateReceivedData(reply))
             {
+                if (shouldStop())
+                {
+                    throw StaleDownloadException();
+                }
+
                 restartDownload(reply, accessManager, url);
             }
             else
@@ -64,6 +79,9 @@ void ChunkedDownloader::downloadFile(const QString& t_urlPath, const QString& t_
             throw;
         }
     }
+
+    if (!validateReceivedData(reply))
+        throw StaleDownloadException();
 
     QByteArray data;
     for (QByteArray chunk : m_chunks)
@@ -93,20 +111,26 @@ void ChunkedDownloader::watchNetorkAccessibility(QNetworkAccessManager::NetworkA
 
 void ChunkedDownloader::downloadProgressChangedRelay(const Downloader::TByteCount& t_bytesDownloaded, const Downloader::TByteCount& t_totalBytes)
 {
+    m_staleTimer.start();
     TByteCount bytesInValidChunksDownloadedSoFar = m_lastValidChunkIndex * getChunkSize();
     emit downloadProgressChanged(bytesInValidChunksDownloadedSoFar + t_bytesDownloaded, bytesInValidChunksDownloadedSoFar+ t_totalBytes);
 }
 
+void ChunkedDownloader::staleTimerTimeout()
+{
+    abort();
+}
+
 bool ChunkedDownloader::shouldStop() const
 {
-    /* TODO Implement this method
-     * - the program works without it, but will basically run forever
-     */
+    return !m_running;
+}
 
-    // Return true if the maximum time is reached (2 min?)
+void ChunkedDownloader::abort()
+{
+    emit terminate();
 
-    // Otherwise return false
-    return false;
+    m_running = false;
 }
 
 QVector<QByteArray> ChunkedDownloader::processChunks(TSharedNetworkReplyRef t_reply) const
@@ -131,8 +155,6 @@ bool ChunkedDownloader::validateReceivedData(TSharedNetworkReplyRef t_reply)
     QVector<QByteArray> chunks = processChunks(t_reply);
 
     m_chunks += chunks;
-
-    //m_lastValidChunkIndex = m_chunks.size() - 1;
 
     for (int i = m_lastValidChunkIndex; i < m_chunks.size(); i++)
     {
@@ -185,5 +207,4 @@ void ChunkedDownloader::restartDownload(TSharedNetworkReplyRef t_reply, TSharedN
 
     connect(t_reply.data(), &QNetworkReply::downloadProgress, this, &ChunkedDownloader::downloadProgressChangedRelay);
     connect(this, &ChunkedDownloader::terminate, t_reply.data(), &QNetworkReply::abort);
-
 }
