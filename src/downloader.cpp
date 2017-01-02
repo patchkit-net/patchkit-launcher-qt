@@ -35,6 +35,8 @@ QString Downloader::downloadString(const QString& t_urlPath, int t_requestTimeou
     waitForReply(reply, t_requestTimeoutMsec, t_cancellationToken);
     validateReply(reply);
 
+    waitForFileDownload(reply, t_cancellationToken);
+
     t_replyStatusCode = getReplyStatusCode(reply);
 
     return reply->readAll();
@@ -123,6 +125,11 @@ int Downloader::getReplyStatusCode(TSharedNetworkReplyRef t_reply) const
 void Downloader::waitForFileDownload(TSharedNetworkReplyRef t_reply, CancellationToken t_cancellationToken) const
 {
     logInfo("Waiting for file download.");
+
+    if (t_reply->isFinished())
+    {
+        return;
+    }
 
     QEventLoop finishedLoop;
 
