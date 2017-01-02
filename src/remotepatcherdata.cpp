@@ -42,6 +42,14 @@ void RemotePatcherData::download(const QString& t_downloadPath, const Data& t_da
 
     std::shared_ptr<Downloader> downloader;
 
+    const auto cleanup = [t_downloadPath]()
+    {
+        if (QFile::exists(t_downloadPath))
+        {
+            QFile::remove(t_downloadPath);
+        }
+    };
+
     try
     {
         summary = m_api.downloadContentSummary(contentSummaryPath, t_cancellationToken);
@@ -89,26 +97,17 @@ void RemotePatcherData::download(const QString& t_downloadPath, const Data& t_da
         }
         catch (QException& exception)
         {
-            if (QFile::exists(t_downloadPath))
-            {
-                QFile::remove(t_downloadPath);
-            }
+            cleanup();
             logWarning(exception.what());
         }
         catch (std::runtime_error& err)
         {
-            if (QFile::exists(t_downloadPath))
-            {
-                QFile::remove(t_downloadPath);
-            }
+            cleanup();
             logWarning(QString("STD runtime error: %1").arg(err.what()));
         }
         catch (...)
         {
-            if (QFile::exists(t_downloadPath))
-            {
-                QFile::remove(t_downloadPath);
-            }
+            cleanup();
             logWarning("Unknown exception while downloading patcher.");
         }
     }
