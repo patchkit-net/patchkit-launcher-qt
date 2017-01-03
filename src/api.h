@@ -9,16 +9,23 @@
 
 #include "cancellationtoken.h"
 
+#include "contentsummary.h"
+
 class Api : public QObject
 {
+    typedef bool (*TValidator)(const QString&);
+
     Q_OBJECT
 public:
     explicit Api(QObject* parent = nullptr);
 
     QString downloadString(const QString& t_resourceUrl, CancellationToken t_cancellationToken) const;
 
+    QJsonDocument downloadContentSummary(const QString& t_resourceUrl, CancellationToken t_cancellationToken) const;
+
 private:
     QString downloadString(const QString& t_resourceUrl, QStringList& t_cacheApiUrls, bool t_extendedTimeout, CancellationToken t_cancellationToken) const;
+    QString downloadString(const QString& t_resourceUrl, QStringList& t_cacheApiUrls, TValidator t_validator, bool t_extendedTimeout, CancellationToken t_cancellationToken) const;
 
     bool isVaild(int t_statusCode) const;
 

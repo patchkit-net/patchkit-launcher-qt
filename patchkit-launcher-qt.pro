@@ -46,6 +46,7 @@ macx {
 }
 
 SOURCES     += $$PWD/src/*.cpp
+SOURCES     += $$PWD/src/*.c
 
 HEADERS     += $$PWD/src/*.h
 

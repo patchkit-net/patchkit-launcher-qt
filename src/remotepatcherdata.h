@@ -28,6 +28,11 @@ private:
 
     QStringList getContentUrls(const QString& t_patcherSecret, int t_version, CancellationToken t_cancellationToken);
 
+    bool downloadChunked(const QString& t_downloadPath, const QStringList& t_contentUrls, ContentSummary& t_contentSummary, CancellationToken t_cancellationToken);
+    bool downloadDirect(const QString& t_downloadPath, const QStringList& t_contentUrls, CancellationToken t_cancellationToken);
+
+    bool downloadWith(Downloader& downloader, const QString& t_downloadPath, const QStringList& t_contentUrls, CancellationToken t_cancellationToken);
+
     static int parseVersionJson(const QString& t_json);
 
     static QString parsePatcherSecret(const QString& t_json);
