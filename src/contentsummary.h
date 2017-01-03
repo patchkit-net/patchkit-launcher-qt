@@ -63,7 +63,7 @@ public:
      *
      * The method returns the hash of a chunk with a specified index.
      * Will return 0 if the index is out of bounds.
-     * Use the overloaded version which provides a mechanism for error detection.
+     * For error checking use the overloaded version.
      *
      * @return
      */
@@ -76,7 +76,7 @@ public:
      *
      * Returns information about a file (path and hash) with a specified index.
      * Will return FileData::dummy if the index is out of bounds.
-     * Use the overloaded version which provides a mechanism for error detection.
+     * For error checking use the overloaded version.
      *
      * @return
      */

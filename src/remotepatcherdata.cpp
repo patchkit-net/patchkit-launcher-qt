@@ -70,8 +70,8 @@ void RemotePatcherData::download(const QString& t_downloadPath, const Data& t_da
 
 QStringList RemotePatcherData::getContentUrls(const QString& t_patcherSecret, int t_version, CancellationToken t_cancellationToken)
 {
-    logInfo("Fetching patcher content urls from 1/apps/%1/versions/%2/content_urls",.arg(Logger::adjustSecretForLog(t_patcherSecret),
-                                                                                         QString::number(t_version)));
+    logInfo("Fetching patcher content urls from 1/apps/%1/versions/%2/content_urls",
+            .arg(Logger::adjustSecretForLog(t_patcherSecret),QString::number(t_version)));
 
     QString result = m_api.downloadString(QString("1/apps/%1/versions/%2/content_urls").arg(t_patcherSecret, QString::number(t_version)), t_cancellationToken);
 
@@ -113,7 +113,7 @@ bool RemotePatcherData::downloadWith(Downloader& downloader, const QString& t_do
         {
             throw;
         }
-        catch (StaleDownloadException& e)
+        catch (StaleDownloadException&)
         {
             logWarning("Download gone stale.");
         }

@@ -66,10 +66,10 @@ private:
     const ContentSummary&   m_contentSummary;
 
 
-    QVector<QByteArray> processChunks(TSharedNetworkReplyRef t_reply) const;
+    QVector<QByteArray> processChunks(TSharedNetworkReply& t_reply) const;
 
-    bool        validateReceivedData(TSharedNetworkReplyRef t_reply);
-    void        restartDownload(TSharedNetworkReplyRef t_reply, TSharedNetworkAccessManagerRef t_networkManager, const QUrl& t_url) const;
+    bool        validateReceivedData(TSharedNetworkReply& t_reply);
+    void        restartDownload(TSharedNetworkReply& t_reply, TSharedNetworkAccessManager& t_networkManager, const QUrl& t_url) const;
     const int   getChunkSize() const;
 
     bool        shouldStop() const;

@@ -22,10 +22,6 @@ ChunkedDownloader::ChunkedDownloader(const ContentSummary& t_contentSummary, Has
     , m_running(true)
 {
     connect(this, &ChunkedDownloader::downloadProgressChanged, this, &Downloader::downloadProgressChanged);
-
-    m_staleTimer.setInterval(Config::chunkedDownloadStaleTimeoutMsec);
-    connect(&m_staleTimer, &QTimer::timeout, this, &ChunkedDownloader::staleTimerTimeout);
-    m_staleTimer.start();
 }
 
 void ChunkedDownloader::downloadFile(const QString& t_urlPath, const QString& t_filePath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken)
@@ -34,6 +30,10 @@ void ChunkedDownloader::downloadFile(const QString& t_urlPath, const QString& t_
     {
         throw std::runtime_error("No hashing strategy specified.");
     }
+
+    m_staleTimer.setInterval(Config::chunkedDownloadStaleTimeoutMsec);
+    connect(&m_staleTimer, &QTimer::timeout, this, &ChunkedDownloader::staleTimerTimeout);
+    m_staleTimer.start();
 
     m_running = true;
 
@@ -46,7 +46,6 @@ void ChunkedDownloader::downloadFile(const QString& t_urlPath, const QString& t_
     Downloader::fetchReply(networkRequest, accessManager, reply);
 
     connect(accessManager.data(), &QNetworkAccessManager::networkAccessibleChanged, this, &ChunkedDownloader::watchNetorkAccessibility);
-
     connect(reply.data(), &QNetworkReply::downloadProgress, this, &ChunkedDownloader::downloadProgressChangedRelay);
     connect(this, &ChunkedDownloader::terminate, reply.data(), &QNetworkReply::abort);
 
@@ -133,7 +132,7 @@ void ChunkedDownloader::abort()
     m_running = false;
 }
 
-QVector<QByteArray> ChunkedDownloader::processChunks(TSharedNetworkReplyRef t_reply) const
+QVector<QByteArray> ChunkedDownloader::processChunks(TSharedNetworkReply& t_reply) const
 {
     QByteArray data = t_reply->readAll();
     QVector<QByteArray> chunks;
@@ -150,7 +149,7 @@ QVector<QByteArray> ChunkedDownloader::processChunks(TSharedNetworkReplyRef t_re
     return chunks;
 }
 
-bool ChunkedDownloader::validateReceivedData(TSharedNetworkReplyRef t_reply)
+bool ChunkedDownloader::validateReceivedData(TSharedNetworkReply& t_reply)
 {
     QVector<QByteArray> chunks = processChunks(t_reply);
 
@@ -192,7 +191,7 @@ const int ChunkedDownloader::getChunkSize() const
     return m_contentSummary.getChunkSize();
 }
 
-void ChunkedDownloader::restartDownload(TSharedNetworkReplyRef t_reply, TSharedNetworkAccessManagerRef t_networkManager, const QUrl& t_url) const
+void ChunkedDownloader::restartDownload(TSharedNetworkReply& t_reply, TSharedNetworkAccessManager& t_networkManager, const QUrl& t_url) const
 {
     disconnect(t_reply.data(), &QNetworkReply::downloadProgress, this, &ChunkedDownloader::downloadProgressChangedRelay);
     disconnect(this, &ChunkedDownloader::terminate, t_reply.data(), &QNetworkReply::abort);

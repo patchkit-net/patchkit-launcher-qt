@@ -42,14 +42,14 @@ QString Downloader::downloadString(const QString& t_urlPath, int t_requestTimeou
     return reply->readAll();
 }
 
-void Downloader::fetchReply(const QString& t_urlPath, TSharedNetworkAccessManagerRef t_accessManager, TSharedNetworkReplyRef t_reply) const
+void Downloader::fetchReply(const QString& t_urlPath, TSharedNetworkAccessManager& t_accessManager, TSharedNetworkReply& t_reply) const
 {
     QUrl url(t_urlPath);
 
     fetchReply(QNetworkRequest(url), t_accessManager, t_reply);
 }
 
-void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TSharedNetworkAccessManagerRef t_accessManager, TSharedNetworkReplyRef t_reply) const
+void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TSharedNetworkAccessManager& t_accessManager, TSharedNetworkReply& t_reply) const
 {
     logInfo("Fetching network reply.");
 
@@ -67,7 +67,7 @@ void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TSharedNetworkA
     t_reply = TSharedNetworkReply(t_accessManager->get(t_urlRequest));
 }
 
-void Downloader::waitForReply(TSharedNetworkReplyRef t_reply, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) const
+void Downloader::waitForReply(TSharedNetworkReply& t_reply, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) const
 {
     logInfo("Waiting for network reply to be ready.");
 
@@ -96,7 +96,7 @@ void Downloader::waitForReply(TSharedNetworkReplyRef t_reply, int t_requestTimeo
     }
 }
 
-void Downloader::validateReply(TSharedNetworkReplyRef t_reply) const
+void Downloader::validateReply(TSharedNetworkReply& t_reply) const
 {
     logInfo("Validating network reply.");
 
@@ -106,7 +106,7 @@ void Downloader::validateReply(TSharedNetworkReplyRef t_reply) const
     }
 }
 
-int Downloader::getReplyStatusCode(TSharedNetworkReplyRef t_reply) const
+int Downloader::getReplyStatusCode(TSharedNetworkReply& t_reply) const
 {
     QVariant statusCode = t_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
 
@@ -122,7 +122,7 @@ int Downloader::getReplyStatusCode(TSharedNetworkReplyRef t_reply) const
     return statusCodeValue;
 }
 
-void Downloader::waitForFileDownload(TSharedNetworkReplyRef t_reply, CancellationToken t_cancellationToken) const
+void Downloader::waitForFileDownload(TSharedNetworkReply& t_reply, CancellationToken t_cancellationToken) const
 {
     logInfo("Waiting for file download.");
 
@@ -141,7 +141,7 @@ void Downloader::waitForFileDownload(TSharedNetworkReplyRef t_reply, Cancellatio
     t_cancellationToken.throwIfCancelled();
 }
 
-void Downloader::writeDownloadedFile(TSharedNetworkReplyRef t_reply, const QString& t_filePath, CancellationToken t_cancellationToken) const
+void Downloader::writeDownloadedFile(TSharedNetworkReply& t_reply, const QString& t_filePath, CancellationToken t_cancellationToken) const
 {
     logInfo("Writing downloaded data to file - %1", .arg(t_filePath));
 

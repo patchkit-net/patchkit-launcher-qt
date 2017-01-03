@@ -16,10 +16,7 @@ class Downloader : public QObject
 
 public:
     typedef QSharedPointer<QNetworkReply>           TSharedNetworkReply;
-    typedef TSharedNetworkReply&                    TSharedNetworkReplyRef;
-
     typedef QSharedPointer<QNetworkAccessManager>   TSharedNetworkAccessManager;
-    typedef TSharedNetworkAccessManager&            TSharedNetworkAccessManagerRef;
 
     typedef long long TByteCount;
 
@@ -31,17 +28,17 @@ signals:
     void downloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes);
 
 protected:
-    void fetchReply(const QString& t_urlPath, TSharedNetworkAccessManagerRef t_accessManager, TSharedNetworkReplyRef t_reply) const;
-    void fetchReply(const QNetworkRequest& t_urlRequest, TSharedNetworkAccessManagerRef t_accessManager, TSharedNetworkReplyRef t_reply) const;
+    void fetchReply(const QString& t_urlPath, TSharedNetworkAccessManager& t_accessManager, TSharedNetworkReply& t_reply) const;
+    void fetchReply(const QNetworkRequest& t_urlRequest, TSharedNetworkAccessManager& t_accessManager, TSharedNetworkReply& t_reply) const;
 
-    void waitForReply(TSharedNetworkReplyRef t_reply, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) const;
+    void waitForReply(TSharedNetworkReply& t_reply, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) const;
 
-    void validateReply(TSharedNetworkReplyRef t_reply) const;
+    void validateReply(TSharedNetworkReply& t_reply) const;
 
-    int getReplyStatusCode(TSharedNetworkReplyRef t_reply) const;
+    int getReplyStatusCode(TSharedNetworkReply& t_reply) const;
 
-    void waitForFileDownload(TSharedNetworkReplyRef t_reply, CancellationToken t_cancellationToken) const;
+    void waitForFileDownload(TSharedNetworkReply& t_reply, CancellationToken t_cancellationToken) const;
 
     void writeDownloadedData(const QByteArray& t_data, const QString& t_filePath, CancellationToken t_cancellationToken) const;
-    void writeDownloadedFile(TSharedNetworkReplyRef t_reply, const QString& t_filePath, CancellationToken t_cancellationToken) const;
+    void writeDownloadedFile(TSharedNetworkReply& t_reply, const QString& t_filePath, CancellationToken t_cancellationToken) const;
 };
