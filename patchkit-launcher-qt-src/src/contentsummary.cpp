@@ -32,6 +32,21 @@ ContentSummary::ContentSummary()
 {
 }
 
+ContentSummary::ContentSummary(int t_chunkSize, THash t_hashCode
+                               , QString t_encryptionMethod
+                               , QString t_compressionMethod
+                               , QString t_hashingMethod, QVector<THash> t_chunkHashes
+                               , QVector<FileData> t_filesSummary)
+    : m_chunkSize(t_chunkSize)
+    , m_hashCode(t_hashCode)
+    , m_encryptionMethod(t_encryptionMethod)
+    , m_compressionMethod(t_compressionMethod)
+    , m_hashingMethod(t_hashingMethod)
+    , m_chunkHashes(t_chunkHashes)
+    , m_filesSummary(t_filesSummary)
+{
+}
+
 ContentSummary::ContentSummary(const QJsonDocument& t_document)
     : m_isValid(false)
 {

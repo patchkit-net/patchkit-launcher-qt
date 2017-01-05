@@ -11,7 +11,9 @@
 
 #include "contentsummary.h"
 
-class Api : public QObject
+#include "iapi.h"
+
+class Api : public QObject, public IApi
 {
     typedef bool (*TValidator)(const QString&);
 
@@ -19,9 +21,9 @@ class Api : public QObject
 public:
     explicit Api(QObject* parent = nullptr);
 
-    QString downloadString(const QString& t_resourceUrl, CancellationToken t_cancellationToken) const;
+    QString downloadString(const QString& t_resourceUrl, CancellationToken t_cancellationToken) const override;
 
-    QJsonDocument downloadContentSummary(const QString& t_resourceUrl, CancellationToken t_cancellationToken) const;
+    QJsonDocument downloadContentSummary(const QString& t_resourceUrl, CancellationToken t_cancellationToken) const override;
 
 private:
     QString downloadString(const QString& t_resourceUrl, QStringList& t_cacheApiUrls, bool t_extendedTimeout, CancellationToken t_cancellationToken) const;

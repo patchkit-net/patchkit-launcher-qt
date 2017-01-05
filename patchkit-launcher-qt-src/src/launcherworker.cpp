@@ -60,9 +60,10 @@ void LauncherWorker::run()
     }
 }
 
-LauncherWorker::LauncherWorker() :
-    m_cancellationTokenSource(new CancellationTokenSource()),
-    m_result(NONE)
+LauncherWorker::LauncherWorker()
+    : m_cancellationTokenSource(new CancellationTokenSource())
+    , m_result(NONE)
+    , m_remotePatcher(m_api)
 {
     m_remotePatcher.moveToThread(this);
     m_localPatcher.moveToThread(this);

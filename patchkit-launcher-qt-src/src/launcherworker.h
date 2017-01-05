@@ -9,6 +9,7 @@
 #include "remotepatcherdata.h"
 #include "localpatcherdata.h"
 #include "cancellationtokensource.h"
+#include "api.h"
 
 class LauncherWorker : public QThread
 {
@@ -55,6 +56,7 @@ private:
 
     void checkIfCurrentDirectoryIsWritable();
 
+    Api m_api;
     RemotePatcherData m_remotePatcher;
     LocalPatcherData m_localPatcher;
 

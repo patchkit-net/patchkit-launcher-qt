@@ -57,6 +57,10 @@ public:
     ContentSummary(const QJsonDocument& t_document);
     ContentSummary();
 
+    ContentSummary(int t_chunkSize, THash t_hashCode, QString t_encryptionMethod
+                   , QString t_compressionMethod, QString t_hashingMethod
+                   , QVector<THash> t_chunkHashes, QVector<FileData> t_filesSummary);
+
     /**
      * @brief getChunkHash
      * @param t_index

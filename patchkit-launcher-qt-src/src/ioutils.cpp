@@ -42,6 +42,18 @@ void IOUtils::writeTextToFile(const QString& t_filePath, const QString& t_fileCo
     fileTextStream << t_fileContents;
 }
 
+void IOUtils::writeDataToFile(const QString& t_filePath, const QByteArray& t_fileData)
+{
+    QFile file(t_filePath);
+
+    if (!file.open(QFile::WriteOnly))
+    {
+        throw std::runtime_error("Couldn't open file for writing - " + t_filePath.toStdString());
+    }
+
+    file.write(t_fileData);
+}
+
 bool IOUtils::checkIfDirExists(const QString& t_dirPath)
 {
     QFileInfo info(t_dirPath);

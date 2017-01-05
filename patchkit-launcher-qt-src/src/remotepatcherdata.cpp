@@ -10,6 +10,12 @@
 #include "timeoutexception.h"
 #include "staledownloadexception.h"
 #include "chunkeddownloader.h"
+#include "contentsummary.h"
+
+RemotePatcherData::RemotePatcherData(IApi& t_api)
+    : m_api(t_api)
+{
+}
 
 int RemotePatcherData::getVersion(const Data& t_data, CancellationToken t_cancellationToken)
 {

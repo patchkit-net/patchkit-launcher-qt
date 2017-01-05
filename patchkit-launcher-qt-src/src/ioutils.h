@@ -16,6 +16,8 @@ public:
 
     static void writeTextToFile(const QString& t_filePath, const QString& t_fileContents);
 
+    static void writeDataToFile(const QString& t_filePath, const QByteArray& t_fileData);
+
     static bool checkIfDirExists(const QString& t_dirPath);
 
     static bool checkIfFileExists(const QString& t_filePath);

@@ -7,13 +7,17 @@
 
 #include "data.h"
 #include "downloader.h"
-#include "api.h"
+#include "iapi.h"
+
+class ContentSummary;
 
 class RemotePatcherData : public QObject
 {
     Q_OBJECT
 
 public:
+    RemotePatcherData(IApi& t_api);
+
     int getVersion(const Data& t_data, CancellationToken t_cancellationToken);
 
     QString getPatcherSecret(const Data& t_data, CancellationToken t_cancellationToken);
@@ -24,7 +28,7 @@ signals:
     void downloadProgressChanged(const long long& t_bytesDownloaded, const long long& t_totalBytes);
 
 private:
-    Api m_api;
+    IApi& m_api;
 
     QStringList getContentUrls(const QString& t_patcherSecret, int t_version, CancellationToken t_cancellationToken);
 
