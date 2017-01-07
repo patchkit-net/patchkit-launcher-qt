@@ -38,9 +38,9 @@ class ChunkedDownloader : public Downloader
     Q_OBJECT
 
 public:
-    ChunkedDownloader(const ContentSummary& t_contentSummary, HashFunc t_hashingStrategy);
+    ChunkedDownloader(RemoteDataSource* t_dataSource, const ContentSummary& t_contentSummary, HashFunc t_hashingStrategy);
 
-    void downloadFile(const QString& t_urlPath, const QString& t_filePath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) override;
+    QByteArray downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) override;
 
 signals:
     void downloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes);
@@ -66,10 +66,9 @@ private:
     const ContentSummary&   m_contentSummary;
 
 
-    QVector<QByteArray> processChunks(TSharedNetworkReply& t_reply) const;
+    QVector<QByteArray> processChunks(QByteArray& t_data) const;
 
-    bool        validateReceivedData(TSharedNetworkReply& t_reply);
-    void        restartDownload(TSharedNetworkReply& t_reply, TSharedNetworkAccessManager& t_networkManager, const QUrl& t_url) const;
+    bool        validateReceivedData(QByteArray& t_data);
     const int   getChunkSize() const;
 
     bool        shouldStop() const;
