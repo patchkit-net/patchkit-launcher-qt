@@ -15,7 +15,7 @@
 
 #include "config.h"
 
-ChunkedDownloader::ChunkedDownloader(RemoteDataSource* t_dataSource, const ContentSummary& t_contentSummary, HashFunc t_hashingStrategy)
+ChunkedDownloader::ChunkedDownloader(QNetworkAccessManager* t_dataSource, const ContentSummary& t_contentSummary, HashFunc t_hashingStrategy)
     : Downloader(t_dataSource)
     , m_contentSummary(t_contentSummary)
     , m_lastValidChunkIndex(0)
@@ -45,6 +45,8 @@ QByteArray ChunkedDownloader::downloadFile(const QString& t_urlPath, int t_reque
 
     m_running = true;
 
+    bool downloadSuccesful = false;
+
     while (!shouldStop())
     {
         try
@@ -53,16 +55,25 @@ QByteArray ChunkedDownloader::downloadFile(const QString& t_urlPath, int t_reque
 
             if (validateReceivedData(data))
             {
+                downloadSuccesful = true;
                 break;
             }
         }
+        catch (CancelledException&)
+        {
+            throw;
+        }
+        catch (TimeoutException&)
+        {
+            throw;
+        }
         catch(...)
         {
-
+            throw std::runtime_error("Unexpected exception in ChunkedDownloader");
         }
     }
 
-    if (!validateReceivedData(data))
+    if (!downloadSuccesful)
         throw StaleDownloadException();
 
     for (QByteArray chunk : m_chunks)

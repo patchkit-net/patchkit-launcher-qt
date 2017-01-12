@@ -11,8 +11,6 @@
 
 #include "contentsummary.h"
 
-#include "remotedatasource.h"
-
 Api::Api(QObject* parent) : QObject(parent)
 {
 }
@@ -90,7 +88,7 @@ bool Api::isVaild(int t_statusCode) const
 
 bool Api::downloadStringFromServer(const QString& t_url, int t_timeout, QString& t_result, int& t_statusCode, CancellationToken t_cancellationToken) const
 {
-    RemoteDataSource remoteDataSource;
+    QNetworkAccessManager remoteDataSource;
 
     try
     {

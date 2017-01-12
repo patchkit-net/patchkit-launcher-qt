@@ -8,10 +8,7 @@
 #include "logger.h"
 #include "timeoutexception.h"
 
-#include "remotedatasource.h"
-#include "remotedatareply.h"
-
-Downloader::Downloader(RemoteDataSource* t_dataSource)
+Downloader::Downloader(QNetworkAccessManager* t_dataSource)
     : m_remoteDataSource(t_dataSource)
 {
 }
@@ -29,14 +26,14 @@ QByteArray Downloader::downloadFile(const QNetworkRequest& t_request, int t_requ
 
     fetchReply(t_request, reply);
 
-    connect(reply.data(), &RemoteDataReply::downloadProgress, this, &Downloader::downloadProgressChanged);
+    connect(reply.data(), &QNetworkReply::downloadProgress, this, &Downloader::downloadProgressChanged);
 
     waitForReply(reply, t_requestTimeoutMsec, t_cancellationToken);
     validateReply(reply);
 
     waitForFileDownload(reply, t_cancellationToken);
 
-    disconnect(reply.data(), &RemoteDataReply::downloadProgress, this, &Downloader::downloadProgressChanged);
+    disconnect(reply.data(), &QNetworkReply::downloadProgress, this, &Downloader::downloadProgressChanged);
 
     return reply->readAll();
 }
@@ -73,7 +70,7 @@ void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataRepl
         t_reply.reset(nullptr);
     }
 
-    if (m_remoteDataSource.isNull())
+    if (!m_remoteDataSource)
     {
         throw std::runtime_error("No remote data source provided.");
     }
@@ -85,13 +82,18 @@ void Downloader::waitForReply(TRemoteDataReply& t_reply, int t_requestTimeoutMse
 {
     logInfo("Waiting for network reply to be ready.");
 
+    if (t_reply->isFinished())
+    {
+        return;
+    }
+
     if (!t_reply->waitForReadyRead(10))
     {
         QEventLoop readyReadLoop;
 
         QTimer timeoutTimer;
 
-        connect(t_reply.data(), &RemoteDataReply::readyRead, &readyReadLoop, &QEventLoop::quit);
+        connect(t_reply.data(), &QNetworkReply::readyRead, &readyReadLoop, &QEventLoop::quit);
         connect(&t_cancellationToken, &CancellationToken::cancelled, &readyReadLoop, &QEventLoop::quit);
         connect(&timeoutTimer, &QTimer::timeout, &readyReadLoop, &QEventLoop::quit);
 
@@ -147,7 +149,7 @@ void Downloader::waitForFileDownload(TRemoteDataReply& t_reply, CancellationToke
 
     QEventLoop finishedLoop;
 
-    connect(t_reply.data(), &RemoteDataReply::finished, &finishedLoop, &QEventLoop::quit);
+    connect(t_reply.data(), &QNetworkReply::finished, &finishedLoop, &QEventLoop::quit);
     connect(&t_cancellationToken, &CancellationToken::cancelled, &finishedLoop, &QEventLoop::quit);
 
     finishedLoop.exec();
@@ -161,15 +163,15 @@ void Downloader::restartDownload(TRemoteDataReply& t_reply, const QUrl& t_url) c
     restartDownload(t_reply, request);
 }
 
-void Downloader::restartDownload(Downloader::TRemoteDataReply& t_reply, const QNetworkRequest& t_request) const
+void Downloader::restartDownload(TRemoteDataReply& t_reply, const QNetworkRequest& t_request) const
 {
-    disconnect(t_reply.data(), &RemoteDataReply::downloadProgress, this, &Downloader::downloadProgressChanged);
-    disconnect(this, &Downloader::terminate, t_reply.data(), &RemoteDataReply::abort);
+    disconnect(t_reply.data(), &QNetworkReply::downloadProgress, this, &Downloader::downloadProgressChanged);
+    disconnect(this, &Downloader::terminate, t_reply.data(), &QNetworkReply::abort);
 
     // Fetch a new reply
     fetchReply(t_request, t_reply);
 
-    connect(t_reply.data(), &RemoteDataReply::downloadProgress, this, &Downloader::downloadProgressChanged);
-    connect(this, &Downloader::terminate, t_reply.data(), &RemoteDataReply::abort);
+    connect(t_reply.data(), &QNetworkReply::downloadProgress, this, &Downloader::downloadProgressChanged);
+    connect(this, &Downloader::terminate, t_reply.data(), &QNetworkReply::abort);
 }
 

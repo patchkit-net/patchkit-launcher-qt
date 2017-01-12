@@ -38,7 +38,7 @@ class ChunkedDownloader : public Downloader
     Q_OBJECT
 
 public:
-    ChunkedDownloader(RemoteDataSource* t_dataSource, const ContentSummary& t_contentSummary, HashFunc t_hashingStrategy);
+    ChunkedDownloader(QNetworkAccessManager* t_dataSource, const ContentSummary& t_contentSummary, HashFunc t_hashingStrategy);
 
     QByteArray downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) override;
 

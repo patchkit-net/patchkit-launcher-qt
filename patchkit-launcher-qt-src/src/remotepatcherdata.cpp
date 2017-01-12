@@ -11,7 +11,6 @@
 #include "staledownloadexception.h"
 #include "chunkeddownloader.h"
 #include "contentsummary.h"
-#include "remotedatasource.h"
 
 RemotePatcherData::RemotePatcherData(IApi& t_api)
     : m_api(t_api)
@@ -157,7 +156,7 @@ bool RemotePatcherData::downloadWith(Downloader& downloader, const QString& t_do
 
 bool RemotePatcherData::downloadChunked(const QString& t_downloadPath, const QStringList& t_contentUrls, ContentSummary& t_contentSummary, CancellationToken t_cancellationToken)
 {
-    RemoteDataSource remoteDataSource;
+    QNetworkAccessManager remoteDataSource;
     ChunkedDownloader downloader(&remoteDataSource, t_contentSummary, HashingStrategy::xxHash);
 
     return downloadWith((Downloader&) downloader, t_downloadPath, t_contentUrls, t_cancellationToken);
@@ -165,7 +164,7 @@ bool RemotePatcherData::downloadChunked(const QString& t_downloadPath, const QSt
 
 bool RemotePatcherData::downloadDirect(const QString& t_downloadPath, const QStringList& t_contentUrls, CancellationToken t_cancellationToken)
 {
-    RemoteDataSource remoteDataSource;
+    QNetworkAccessManager remoteDataSource;
     Downloader downloader(&remoteDataSource);
 
     return downloadWith(downloader, t_downloadPath, t_contentUrls, t_cancellationToken);

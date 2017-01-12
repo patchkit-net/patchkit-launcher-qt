@@ -10,9 +10,6 @@
 
 #include "cancellationtoken.h"
 
-class RemoteDataSource;
-class RemoteDataReply;
-
 /**
  * @brief The Downloader class
  *
@@ -24,10 +21,10 @@ class Downloader : public QObject
     Q_OBJECT
 
 public:
-    Downloader(RemoteDataSource* t_dataSource);
+    Downloader(QNetworkAccessManager* t_dataSource);
 
-    typedef QSharedPointer<RemoteDataReply>         TRemoteDataReply;
-    typedef QSharedPointer<RemoteDataSource>        TRemoteDataSource;
+    typedef QSharedPointer<QNetworkReply>          TRemoteDataReply;
+    typedef QSharedPointer<QNetworkAccessManager>  TRemoteDataSource;
 
     typedef long long TByteCount;
 
@@ -56,5 +53,5 @@ protected:
     void restartDownload(TRemoteDataReply& t_reply, const QNetworkRequest& t_request) const;
 
 private:
-    TRemoteDataSource m_remoteDataSource;
+    QNetworkAccessManager* m_remoteDataSource;
 };
