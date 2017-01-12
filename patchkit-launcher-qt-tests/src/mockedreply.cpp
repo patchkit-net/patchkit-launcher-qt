@@ -8,9 +8,11 @@
 #include <QTimer>
 #include <QtGlobal>
 
-MockedNetworkReply::MockedNetworkReply(QObject* t_parent)
+MockedNetworkReply::MockedNetworkReply(int t_delayMsec, QByteArray t_data, QObject* t_parent)
     : QNetworkReply(t_parent)
+    , m_replyDelayMsec(t_delayMsec)
 {
+    setContent(t_data);
 }
 
 void MockedNetworkReply::setContent( const QString& t_conent )
@@ -23,13 +25,18 @@ void MockedNetworkReply::setContent( const QByteArray& t_conent )
     m_content = t_conent;
     m_contentOffset = 0;
 
-    open(ReadOnly | Unbuffered);
     setHeader(QNetworkRequest::ContentLengthHeader, QVariant(t_conent.size()));
+}
 
-    QTimer::singleShot( 500, this, &QNetworkReply::readyRead);
-    QTimer::singleShot( 500, this, &QNetworkReply::finished);
-    QTimer::singleShot( 500, this, [&]() {
+void MockedNetworkReply::launch()
+{
+    open(ReadOnly | Unbuffered);
+    QTimer::singleShot( m_replyDelayMsec, this, [&]() {
+
         this->setFinished(true);
+
+        emit readyRead();
+        emit finished();
 
     });
 }

@@ -3,13 +3,13 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
+#include "catch.h"
+
 #include <QApplication>
 
 #include <src/logger.h>
 
 #include <src/hashingstrategy.h>
-
-#include "catch.h"
 
 TEST_CASE("HashingStrategy xxHash")
 {

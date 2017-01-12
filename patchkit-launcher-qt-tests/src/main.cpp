@@ -3,23 +3,15 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#define CATCH_IMPL
-#include "catch.h"
-
 #include <QCoreApplication>
 
 #include <QThread>
 
-// TESTS
-#include "contentsummarytests.h"
-#include "remotepatcherdatatests.h"
-#include "downloadertests.h"
-#include "hashingstrategiestests.h"
+#define CATCH_IMPL
+#include "catch.h"
 
 class Tester : public QThread
 {
-public:
-
 private:
     void run() override
     {

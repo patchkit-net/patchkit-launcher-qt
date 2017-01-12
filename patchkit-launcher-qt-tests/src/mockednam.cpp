@@ -5,15 +5,30 @@
 
 #include "mockednam.h"
 
-MockedNAM::MockedNAM(QByteArray t_data)
+MockedNAM::MockedNAM()
     : QNetworkAccessManager()
-    , m_data(t_data)
 {
 }
 
-QNetworkReply* MockedNAM::createRequest(QNetworkAccessManager::Operation /*op*/, const QNetworkRequest& /*request*/, QIODevice* /*outgoingData*/)
+void MockedNAM::push(QString t_url, QByteArray t_data, int t_replyDelay)
 {
-    MockedNetworkReply* reply = new MockedNetworkReply();
-    reply->setContent(m_data);
+    MockedNetworkReply* reply = new MockedNetworkReply(t_replyDelay, t_data);
+
+    m_Replies.insert(t_url, reply);
+}
+
+QNetworkReply* MockedNAM::createRequest(QNetworkAccessManager::Operation /*op*/, const QNetworkRequest& request, QIODevice* /*outgoingData*/)
+{
+    QString url = request.url().toString();
+
+    if (!m_Replies.contains(url))
+    {
+        return nullptr;
+    }
+
+    MockedNetworkReply* reply = *m_Replies.find(url);
+
+    reply->launch();
+
     return reply;
 }

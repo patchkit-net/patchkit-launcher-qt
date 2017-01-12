@@ -76,12 +76,13 @@ QByteArray ChunkedDownloader::downloadFile(const QString& t_urlPath, int t_reque
     if (!downloadSuccesful)
         throw StaleDownloadException();
 
+    QByteArray reassembledData;
     for (QByteArray chunk : m_chunks)
     {
-        data += chunk;
+        reassembledData += chunk;
     }
 
-    return data;
+    return reassembledData;
 }
 
 void ChunkedDownloader::watchNetorkAccessibility(QNetworkAccessManager::NetworkAccessibility t_accessible)
