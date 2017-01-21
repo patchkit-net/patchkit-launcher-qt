@@ -15,6 +15,11 @@ MockedNetworkReply::MockedNetworkReply(int t_delayMsec, QByteArray t_data, QObje
     setContent(t_data);
 }
 
+MockedNetworkReply::~MockedNetworkReply()
+{
+    int a = 0;
+}
+
 void MockedNetworkReply::setContent( const QString& t_conent )
 {
     setContent(t_conent.toUtf8());
@@ -28,6 +33,11 @@ void MockedNetworkReply::setContent( const QByteArray& t_conent )
     setHeader(QNetworkRequest::ContentLengthHeader, QVariant(t_conent.size()));
 }
 
+void MockedNetworkReply::setOffset(qint64 t_offset)
+{
+    m_contentOffset = t_offset;
+}
+
 void MockedNetworkReply::launch()
 {
     open(ReadOnly | Unbuffered);
@@ -39,6 +49,11 @@ void MockedNetworkReply::launch()
         emit finished();
 
     });
+}
+
+void MockedNetworkReply::corrupt()
+{
+    m_content[rand() % m_content.size()] = rand();
 }
 
 void MockedNetworkReply::abort()

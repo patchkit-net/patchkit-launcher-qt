@@ -15,14 +15,15 @@
 
 #include "config.h"
 
-ChunkedDownloader::ChunkedDownloader(QNetworkAccessManager* t_dataSource, const ContentSummary& t_contentSummary, HashFunc t_hashingStrategy)
+ChunkedDownloader::ChunkedDownloader(QNetworkAccessManager* t_dataSource, const ContentSummary& t_contentSummary, HashFunc t_hashingStrategy, int t_staleTimeoutMsec)
     : Downloader(t_dataSource)
     , m_contentSummary(t_contentSummary)
     , m_lastValidChunkIndex(0)
     , m_hashingStrategy(t_hashingStrategy)
     , m_running(true)
+    , m_staleTimeoutMsec(t_staleTimeoutMsec)
 {
-    connect(this, &ChunkedDownloader::downloadProgressChanged, this, &Downloader::downloadProgressChanged);
+    //connect(this, &ChunkedDownloader::downloadProgressChanged, this, &Downloader::downloadProgressChanged);
 }
 
 QByteArray ChunkedDownloader::downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken)
@@ -57,6 +58,12 @@ QByteArray ChunkedDownloader::downloadFile(const QString& t_urlPath, int t_reque
             {
                 downloadSuccesful = true;
                 break;
+            }
+            else
+            {
+                QByteArray header = "bytes=" + QByteArray::number((m_lastValidChunkIndex + 1) * getChunkSize()) + "-";
+                request = QNetworkRequest(url);
+                request.setRawHeader("Range", header);
             }
         }
         catch (CancelledException&)
@@ -102,11 +109,11 @@ void ChunkedDownloader::watchNetorkAccessibility(QNetworkAccessManager::NetworkA
     }
 }
 
-void ChunkedDownloader::downloadProgressChangedRelay(const Downloader::TByteCount& t_bytesDownloaded, const Downloader::TByteCount& t_totalBytes)
+void ChunkedDownloader::onDownloadProgressChanged(const TByteCount &t_bytesDownloaded, const TByteCount &t_totalBytes)
 {
     m_staleTimer.start();
     TByteCount bytesInValidChunksDownloadedSoFar = m_lastValidChunkIndex * getChunkSize();
-    emit downloadProgressChanged(bytesInValidChunksDownloadedSoFar + t_bytesDownloaded, bytesInValidChunksDownloadedSoFar+ t_totalBytes);
+    emit Downloader::downloadProgressChanged(bytesInValidChunksDownloadedSoFar + t_bytesDownloaded, bytesInValidChunksDownloadedSoFar+ t_totalBytes);
 }
 
 void ChunkedDownloader::staleTimerTimeout()

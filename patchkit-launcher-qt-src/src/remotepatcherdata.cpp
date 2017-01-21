@@ -157,7 +157,7 @@ bool RemotePatcherData::downloadWith(Downloader& downloader, const QString& t_do
 bool RemotePatcherData::downloadChunked(const QString& t_downloadPath, const QStringList& t_contentUrls, ContentSummary& t_contentSummary, CancellationToken t_cancellationToken)
 {
     QNetworkAccessManager remoteDataSource;
-    ChunkedDownloader downloader(&remoteDataSource, t_contentSummary, HashingStrategy::xxHash);
+    ChunkedDownloader downloader(&remoteDataSource, t_contentSummary, HashingStrategy::xxHash, Config::chunkedDownloadStaleTimeoutMsec);
 
     return downloadWith((Downloader&) downloader, t_downloadPath, t_contentUrls, t_cancellationToken);
 }

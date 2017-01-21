@@ -37,6 +37,9 @@ signals:
     void downloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes);
     void terminate();
 
+protected slots:
+    virtual void onDownloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes);
+
 protected:
     void fetchReply(const QString& t_urlPath, TRemoteDataReply& t_reply) const;
     void fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataReply& t_reply) const;

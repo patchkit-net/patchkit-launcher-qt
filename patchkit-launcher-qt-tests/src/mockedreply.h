@@ -14,11 +14,15 @@ class MockedNetworkReply : public QNetworkReply
 
 public:
     MockedNetworkReply(int t_delayMsec, QByteArray t_data, QObject* parent = nullptr);
+    ~MockedNetworkReply();
 
     void setContent( const QString& m_content );
     void setContent( const QByteArray& m_content );
 
+    void setOffset(qint64 t_offset);
+
     void launch();
+    void corrupt();
 
     void abort();
     qint64 bytesAvailable() const;

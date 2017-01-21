@@ -26,14 +26,14 @@ QByteArray Downloader::downloadFile(const QNetworkRequest& t_request, int t_requ
 
     fetchReply(t_request, reply);
 
-    connect(reply.data(), &QNetworkReply::downloadProgress, this, &Downloader::downloadProgressChanged);
+    connect(reply.data(), &QNetworkReply::downloadProgress, this, &Downloader::onDownloadProgressChanged);
 
     waitForReply(reply, t_requestTimeoutMsec, t_cancellationToken);
     validateReply(reply);
 
     waitForFileDownload(reply, t_cancellationToken);
 
-    disconnect(reply.data(), &QNetworkReply::downloadProgress, this, &Downloader::downloadProgressChanged);
+    disconnect(reply.data(), &QNetworkReply::downloadProgress, this, &Downloader::onDownloadProgressChanged);
 
     return reply->readAll();
 }
@@ -51,6 +51,11 @@ QString Downloader::downloadString(const QString& t_urlPath, int t_requestTimeou
     t_replyStatusCode = getReplyStatusCode(reply);
 
     return reply->readAll();
+}
+
+void Downloader::onDownloadProgressChanged(const Downloader::TByteCount& t_bytesDownloaded, const Downloader::TByteCount& t_totalBytes)
+{
+    emit downloadProgressChanged(t_bytesDownloaded, t_totalBytes);
 }
 
 void Downloader::fetchReply(const QString& t_urlPath, TRemoteDataReply& t_reply) const
@@ -75,7 +80,14 @@ void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataRepl
         throw std::runtime_error("No remote data source provided.");
     }
 
-    t_reply = TRemoteDataReply(m_remoteDataSource->get(t_urlRequest));
+    QNetworkReply* reply = m_remoteDataSource->get(t_urlRequest);
+
+    if (!reply)
+    {
+        throw std::runtime_error("Reply was null.");
+    }
+
+    t_reply = TRemoteDataReply(reply);
 }
 
 void Downloader::waitForReply(TRemoteDataReply& t_reply, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) const
@@ -165,13 +177,13 @@ void Downloader::restartDownload(TRemoteDataReply& t_reply, const QUrl& t_url) c
 
 void Downloader::restartDownload(TRemoteDataReply& t_reply, const QNetworkRequest& t_request) const
 {
-    disconnect(t_reply.data(), &QNetworkReply::downloadProgress, this, &Downloader::downloadProgressChanged);
+    disconnect(t_reply.data(), &QNetworkReply::downloadProgress, this, &Downloader::onDownloadProgressChanged);
     disconnect(this, &Downloader::terminate, t_reply.data(), &QNetworkReply::abort);
 
     // Fetch a new reply
     fetchReply(t_request, t_reply);
 
-    connect(t_reply.data(), &QNetworkReply::downloadProgress, this, &Downloader::downloadProgressChanged);
+    connect(t_reply.data(), &QNetworkReply::downloadProgress, this, &Downloader::onDownloadProgressChanged);
     connect(this, &Downloader::terminate, t_reply.data(), &QNetworkReply::abort);
 }
 

@@ -38,18 +38,19 @@ class ChunkedDownloader : public Downloader
     Q_OBJECT
 
 public:
-    ChunkedDownloader(QNetworkAccessManager* t_dataSource, const ContentSummary& t_contentSummary, HashFunc t_hashingStrategy);
+    ChunkedDownloader(QNetworkAccessManager* t_dataSource, const ContentSummary& t_contentSummary, HashFunc t_hashingStrategy, int t_staleDownloadTimeoutMsec);
 
     QByteArray downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) override;
 
 signals:
-    void downloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes);
     void terminate();
 
 private slots:
     void watchNetorkAccessibility(QNetworkAccessManager::NetworkAccessibility t_accessible);
-    void downloadProgressChangedRelay(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes);
     void staleTimerTimeout();
+
+protected slots:
+    virtual void onDownloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes) override;
 
 public slots:
     void abort();
@@ -57,6 +58,7 @@ public slots:
 private:
 
     QTimer                  m_staleTimer;
+    int m_staleTimeoutMsec;
 
     bool                    m_running;
 
