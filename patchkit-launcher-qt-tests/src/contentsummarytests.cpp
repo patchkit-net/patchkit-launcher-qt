@@ -21,7 +21,7 @@ const std::string contentSummaryData =
 "  \"hash_code\" : \"123456\","
 "  \"files\": ["
 "    {"
-"      \"path\": \"path/to/added_file\","
+"      \"path\": \"path/to/some_file\","
 "      \"hash\": \"12345\","
 "      \"size\": \"12345\","
 "      \"flags\": \"ignore\""
@@ -33,38 +33,50 @@ const std::string contentSummaryData =
 "   }\n"
 "}";
 
-TEST_CASE("ContentSummary parsing")
+TEST_CASE("ContentSummary testing on a const data source.", "content_summary")
 {
     QString data = "";
 
     ContentSummary summary;
 
-    REQUIRE(summary.isValid() == false);
+    CHECK(summary.isValid() == false);
 
-    QJsonDocument doc = QJsonDocument::fromJson(data.toUtf8());
+    SECTION("Parsing from empty JSON doc, summary should be invalid")
+    {
+        QJsonDocument doc = QJsonDocument::fromJson(data.toUtf8());
 
-    summary = ContentSummary(doc);
+        summary = ContentSummary(doc);
 
-    REQUIRE(summary.isValid() == false);
+        REQUIRE(summary.isValid() == false);
+    }
 
-    doc = QJsonDocument::fromJson(QByteArray::fromStdString(contentSummaryData));
+    SECTION("Parsing from a valid JSON doc.")
+    {
+        QJsonDocument doc = QJsonDocument::fromJson(QByteArray::fromStdString(contentSummaryData));
 
-    summary = ContentSummary(doc);
+        summary = ContentSummary(doc);
 
-    REQUIRE(summary.isValid() == true);
+        REQUIRE(summary.isValid() == true);
 
-    REQUIRE(summary.getHashingMethod().toStdString() == "xxhash");
-    REQUIRE(summary.getCompressionMethod().toStdString() == "zip");
-    REQUIRE(summary.getEncryptionMethod().toStdString() == "none");
+        SECTION("Validating parsed data.")
+        {
+            REQUIRE(summary.getHashingMethod().toStdString() == "xxhash");
+            REQUIRE(summary.getCompressionMethod().toStdString() == "zip");
+            REQUIRE(summary.getEncryptionMethod().toStdString() == "none");
 
-    REQUIRE(summary.getChunksCount() == 3);
-    REQUIRE(summary.getChunkHash(0) == 3);
-    REQUIRE(summary.getChunkHash(1) == 1);
+            REQUIRE(summary.getChunksCount() == 3);
+            REQUIRE(summary.getChunkHash(0) == 3);
+            REQUIRE(summary.getChunkHash(1) == 1);
+        }
 
-    bool ok;
-    REQUIRE(summary.getChunkHash(-1, ok) == 0);
-    REQUIRE(ok == true);
+        SECTION("Testing error checking abilites.")
+        {
+            bool outOfBounds;
+            REQUIRE(summary.getChunkHash(-1, outOfBounds) == 0);
+            REQUIRE(outOfBounds == true);
 
-    REQUIRE(summary.getChunkHash(2, ok) == 5);
-    REQUIRE(ok == false);
+            REQUIRE(summary.getChunkHash(2, outOfBounds) == 5);
+            REQUIRE(outOfBounds == false);
+        }
+    }
 }

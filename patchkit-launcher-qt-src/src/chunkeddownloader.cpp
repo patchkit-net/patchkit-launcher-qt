@@ -13,8 +13,6 @@
 #include "logger.h"
 #include "staledownloadexception.h"
 
-#include "config.h"
-
 ChunkedDownloader::ChunkedDownloader(QNetworkAccessManager* t_dataSource, const ContentSummary& t_contentSummary, HashFunc t_hashingStrategy, int t_staleTimeoutMsec)
     : Downloader(t_dataSource)
     , m_contentSummary(t_contentSummary)
@@ -40,9 +38,8 @@ QByteArray ChunkedDownloader::downloadFile(const QString& t_urlPath, int t_reque
 
     request = QNetworkRequest(url);
 
-    m_staleTimer.setInterval(Config::chunkedDownloadStaleTimeoutMsec);
-    connect(&m_staleTimer, &QTimer::timeout, this, &ChunkedDownloader::staleTimerTimeout);
-    m_staleTimer.start();
+    QTime timeSinceLastGoodChunkDownloaded = QTime::currentTime();
+    int lastGoodChunksCount = 0;
 
     m_running = true;
 
@@ -61,7 +58,25 @@ QByteArray ChunkedDownloader::downloadFile(const QString& t_urlPath, int t_reque
             }
             else
             {
-                QByteArray header = "bytes=" + QByteArray::number((m_lastValidChunkIndex + 1) * getChunkSize()) + "-";
+                if (lastGoodChunksCount != m_chunks.size() && m_chunks.size() != 0)
+                {
+                    timeSinceLastGoodChunkDownloaded = QTime::currentTime();
+                }
+
+                if (timeSinceLastGoodChunkDownloaded.msecsTo(QTime::currentTime()) > m_staleTimeoutMsec)
+                {
+                    break;
+                }
+
+                int startIndex = m_lastValidChunkIndex + 1;
+                if (m_lastValidChunkIndex == 0)
+                {
+                    startIndex = 0;
+                }
+
+                lastGoodChunksCount = m_chunks.size();
+
+                QByteArray header = "bytes=" + QByteArray::number(startIndex * getChunkSize()) + "-";
                 request = QNetworkRequest(url);
                 request.setRawHeader("Range", header);
             }
@@ -114,11 +129,6 @@ void ChunkedDownloader::onDownloadProgressChanged(const TByteCount &t_bytesDownl
     m_staleTimer.start();
     TByteCount bytesInValidChunksDownloadedSoFar = m_lastValidChunkIndex * getChunkSize();
     emit Downloader::downloadProgressChanged(bytesInValidChunksDownloadedSoFar + t_bytesDownloaded, bytesInValidChunksDownloadedSoFar+ t_totalBytes);
-}
-
-void ChunkedDownloader::staleTimerTimeout()
-{
-    abort();
 }
 
 bool ChunkedDownloader::shouldStop() const

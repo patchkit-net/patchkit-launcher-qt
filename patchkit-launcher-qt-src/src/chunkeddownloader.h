@@ -42,12 +42,8 @@ public:
 
     QByteArray downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) override;
 
-signals:
-    void terminate();
-
 private slots:
     void watchNetorkAccessibility(QNetworkAccessManager::NetworkAccessibility t_accessible);
-    void staleTimerTimeout();
 
 protected slots:
     virtual void onDownloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes) override;
@@ -66,7 +62,6 @@ private:
     int                     m_lastValidChunkIndex;
     HashFunc                m_hashingStrategy;
     const ContentSummary&   m_contentSummary;
-
 
     QVector<QByteArray> processChunks(QByteArray& t_data) const;
 

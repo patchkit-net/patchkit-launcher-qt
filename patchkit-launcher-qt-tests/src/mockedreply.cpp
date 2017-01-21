@@ -15,11 +15,6 @@ MockedNetworkReply::MockedNetworkReply(int t_delayMsec, QByteArray t_data, QObje
     setContent(t_data);
 }
 
-MockedNetworkReply::~MockedNetworkReply()
-{
-    int a = 0;
-}
-
 void MockedNetworkReply::setContent( const QString& t_conent )
 {
     setContent(t_conent.toUtf8());
