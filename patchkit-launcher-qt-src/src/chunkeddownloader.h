@@ -29,6 +29,10 @@ class QNetworkAccessManager;
  * When the connection is broken or for any other reason the download has stopped, it validates all the downloaded data.
  * Once the data is validated the ChunkedDownloader proceeds to restart the download from the first invalid chunk (or from the start if no chunks were received)
  *
+ * The t_staleDownloadTimeoutMsec parameter (passed in constructor) controls the time needed to cause
+ * the stale download exception - if no good chunks have been downloaded in this time, the download will terminate
+ * and and exception will be thrown.
+ *
  * @note
  * This means that if in a set of 20 chunks the chunk #5 happened to be invalid but all the other ones were valid
  * the download will resume from the 5th chunk.
@@ -42,19 +46,18 @@ public:
 
     QByteArray downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) override;
 
-private slots:
-    void watchNetorkAccessibility(QNetworkAccessManager::NetworkAccessibility t_accessible);
+public slots:
+    virtual void abort() override;
 
 protected slots:
     virtual void onDownloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes) override;
 
-public slots:
-    void abort();
+private slots:
+    void watchNetorkAccessibility(QNetworkAccessManager::NetworkAccessibility t_accessible);
 
 private:
-
     QTimer                  m_staleTimer;
-    int m_staleTimeoutMsec;
+    int                     m_staleTimeoutMsec;
 
     bool                    m_running;
 

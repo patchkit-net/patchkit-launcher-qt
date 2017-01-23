@@ -53,6 +53,11 @@ QString Downloader::downloadString(const QString& t_urlPath, int t_requestTimeou
     return reply->readAll();
 }
 
+void Downloader::abort()
+{
+    emit terminate();
+}
+
 void Downloader::onDownloadProgressChanged(const Downloader::TByteCount& t_bytesDownloaded, const Downloader::TByteCount& t_totalBytes)
 {
     emit downloadProgressChanged(t_bytesDownloaded, t_totalBytes);

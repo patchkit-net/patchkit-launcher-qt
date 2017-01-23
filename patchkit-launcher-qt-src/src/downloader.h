@@ -10,12 +10,6 @@
 
 #include "cancellationtoken.h"
 
-/**
- * @brief The Downloader class
- *
- * Downloader shouldn't deal with QNetwork classes directly.
- * It should only deal with RemoteDataSource and RemoteDataReply
- */
 class Downloader : public QObject
 {
     Q_OBJECT
@@ -37,6 +31,9 @@ signals:
     void downloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes);
     void terminate();
 
+public slots:
+    virtual void abort();
+
 protected slots:
     virtual void onDownloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes);
 
@@ -48,7 +45,7 @@ protected:
 
     void validateReply(TRemoteDataReply& t_reply) const;
 
-    int getReplyStatusCode(TRemoteDataReply& t_reply) const;
+    int  getReplyStatusCode(TRemoteDataReply& t_reply) const;
 
     void waitForFileDownload(TRemoteDataReply& t_reply, CancellationToken t_cancellationToken) const;
 

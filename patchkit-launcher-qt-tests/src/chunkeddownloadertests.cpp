@@ -120,11 +120,11 @@ SCENARIO("Testing the chunked downloader's stale download functionality.", "[chu
 
             nam.push("link", "", 100);
 
-            GIVEN("A chunked downloader config permitting 300 ms stale download timeout.")
+            GIVEN("A chunked downloader config permitting 500 ms stale download timeout.")
             {
-                ChunkedDownloader downloader(&nam, summary, &HashingStrategy::xxHash, 300);
+                ChunkedDownloader downloader(&nam, summary, &HashingStrategy::xxHash, 500);
 
-                THEN("When downloading with 300 ms timeout an exception should occur.")
+                THEN("When downloading with 300 ms timeout a stale download exception should occur.")
                 {
                     bool check = false;
                     try

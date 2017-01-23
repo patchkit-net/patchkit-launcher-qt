@@ -138,7 +138,7 @@ bool ChunkedDownloader::shouldStop() const
 
 void ChunkedDownloader::abort()
 {
-    emit terminate();
+    Downloader::abort();
 
     m_running = false;
 }
