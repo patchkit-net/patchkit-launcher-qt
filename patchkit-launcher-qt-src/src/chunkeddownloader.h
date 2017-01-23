@@ -31,7 +31,7 @@ class QNetworkAccessManager;
  *
  * The t_staleDownloadTimeoutMsec parameter (passed in constructor) controls the time needed to cause
  * the stale download exception - if no good chunks have been downloaded in this time, the download will terminate
- * and and exception will be thrown.
+ * and an exception will be thrown.
  *
  * @note
  * This means that if in a set of 20 chunks the chunk #5 happened to be invalid but all the other ones were valid
