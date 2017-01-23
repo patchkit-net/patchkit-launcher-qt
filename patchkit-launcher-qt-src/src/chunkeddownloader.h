@@ -52,11 +52,7 @@ public slots:
 protected slots:
     virtual void onDownloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes) override;
 
-private slots:
-    void watchNetorkAccessibility(QNetworkAccessManager::NetworkAccessibility t_accessible);
-
 private:
-    QTimer                  m_staleTimer;
     int                     m_staleTimeoutMsec;
 
     bool                    m_running;

@@ -21,7 +21,6 @@ ChunkedDownloader::ChunkedDownloader(QNetworkAccessManager* t_dataSource, const 
     , m_running(true)
     , m_staleTimeoutMsec(t_staleTimeoutMsec)
 {
-    //connect(this, &ChunkedDownloader::downloadProgressChanged, this, &Downloader::downloadProgressChanged);
 }
 
 QByteArray ChunkedDownloader::downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken)
@@ -96,7 +95,9 @@ QByteArray ChunkedDownloader::downloadFile(const QString& t_urlPath, int t_reque
     }
 
     if (!downloadSuccesful)
+    {
         throw StaleDownloadException();
+    }
 
     QByteArray reassembledData;
     for (QByteArray chunk : m_chunks)
@@ -107,26 +108,8 @@ QByteArray ChunkedDownloader::downloadFile(const QString& t_urlPath, int t_reque
     return reassembledData;
 }
 
-void ChunkedDownloader::watchNetorkAccessibility(QNetworkAccessManager::NetworkAccessibility t_accessible)
-{
-    if (t_accessible == QNetworkAccessManager::NetworkAccessibility::NotAccessible)
-    {
-        logDebug("Network not accessible");
-        emit terminate();
-    }
-    else if (t_accessible == QNetworkAccessManager::NetworkAccessibility::Accessible)
-    {
-        logDebug("Network accessible.");
-    }
-    else
-    {
-        logDebug("Undetermined network status.");
-    }
-}
-
 void ChunkedDownloader::onDownloadProgressChanged(const TByteCount &t_bytesDownloaded, const TByteCount &t_totalBytes)
 {
-    m_staleTimer.start();
     TByteCount bytesInValidChunksDownloadedSoFar = m_lastValidChunkIndex * getChunkSize();
     emit Downloader::downloadProgressChanged(bytesInValidChunksDownloadedSoFar + t_bytesDownloaded, bytesInValidChunksDownloadedSoFar+ t_totalBytes);
 }

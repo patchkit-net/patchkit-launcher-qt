@@ -18,14 +18,12 @@ public:
     Downloader(QNetworkAccessManager* t_dataSource);
 
     typedef QSharedPointer<QNetworkReply>          TRemoteDataReply;
-    typedef QSharedPointer<QNetworkAccessManager>  TRemoteDataSource;
 
     typedef long long TByteCount;
 
-    virtual QByteArray downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken);
-    QByteArray downloadFile(const QNetworkRequest& t_request, int t_requestTimeoutMsec, CancellationToken t_cancellationToken);
-
-    QString downloadString(const QString& t_urlPath, int t_requestTimeoutMsec, int& t_replyStatusCode, CancellationToken t_cancellationToken) const;
+    virtual QByteArray  downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken);
+    QByteArray          downloadFile(const QNetworkRequest& t_request, int t_requestTimeoutMsec, CancellationToken t_cancellationToken);
+    QString             downloadString(const QString& t_urlPath, int t_requestTimeoutMsec, int& t_replyStatusCode, CancellationToken t_cancellationToken) const;
 
 signals:
     void downloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes);
