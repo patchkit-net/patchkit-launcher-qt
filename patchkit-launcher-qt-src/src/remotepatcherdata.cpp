@@ -114,7 +114,7 @@ bool RemotePatcherData::downloadWith(Downloader& downloader, const QString& t_do
         {
             try
             {
-                downloadedData = downloader.downloadFile(t_contentUrls[i], Config::minConnectionTimeoutMsec, t_cancellationToken);
+                downloadedData = downloader.downloadFile(t_contentUrls[i], Config::minConnectionTimeoutMsec);
 
                 saveData(downloadedData);
 
@@ -122,7 +122,7 @@ bool RemotePatcherData::downloadWith(Downloader& downloader, const QString& t_do
             }
             catch (TimeoutException&)
             {
-                downloadedData = downloader.downloadFile(t_contentUrls[i], Config::maxConnectionTimeoutMsec, t_cancellationToken);
+                downloadedData = downloader.downloadFile(t_contentUrls[i], Config::maxConnectionTimeoutMsec);
 
                 saveData(downloadedData);
 
@@ -157,7 +157,7 @@ bool RemotePatcherData::downloadWith(Downloader& downloader, const QString& t_do
 bool RemotePatcherData::downloadChunked(const QString& t_downloadPath, const QStringList& t_contentUrls, ContentSummary& t_contentSummary, CancellationToken t_cancellationToken)
 {
     QNetworkAccessManager remoteDataSource;
-    ChunkedDownloader downloader(&remoteDataSource, t_contentSummary, HashingStrategy::xxHash, Config::chunkedDownloadStaleTimeoutMsec);
+    ChunkedDownloader downloader(&remoteDataSource, t_contentSummary, HashingStrategy::xxHash, Config::chunkedDownloadStaleTimeoutMsec, t_cancellationToken);
 
     return downloadWith((Downloader&) downloader, t_downloadPath, t_contentUrls, t_cancellationToken);
 }
@@ -165,7 +165,7 @@ bool RemotePatcherData::downloadChunked(const QString& t_downloadPath, const QSt
 bool RemotePatcherData::downloadDirect(const QString& t_downloadPath, const QStringList& t_contentUrls, CancellationToken t_cancellationToken)
 {
     QNetworkAccessManager remoteDataSource;
-    Downloader downloader(&remoteDataSource);
+    Downloader downloader(&remoteDataSource, t_cancellationToken);
 
     return downloadWith(downloader, t_downloadPath, t_contentUrls, t_cancellationToken);
 }

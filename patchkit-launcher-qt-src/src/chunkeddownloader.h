@@ -42,9 +42,15 @@ class ChunkedDownloader : public Downloader
     Q_OBJECT
 
 public:
-    ChunkedDownloader(QNetworkAccessManager* t_dataSource, const ContentSummary& t_contentSummary, HashFunc t_hashingStrategy, int t_staleDownloadTimeoutMsec);
+    ChunkedDownloader(
+            QNetworkAccessManager* t_dataSource,
+            const ContentSummary& t_contentSummary,
+            HashFunc t_hashingStrategy,
+            int t_staleDownloadTimeoutMsec,
+            CancellationToken t_cancellationToken
+            );
 
-    QByteArray downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) override;
+    QByteArray downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec) override;
 
 public slots:
     virtual void abort() override;

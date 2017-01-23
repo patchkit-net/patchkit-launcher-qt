@@ -92,8 +92,8 @@ bool Api::downloadStringFromServer(const QString& t_url, int t_timeout, QString&
 
     try
     {
-        Downloader downloader(&remoteDataSource);
-        t_result = downloader.downloadString(t_url, t_timeout, t_statusCode, t_cancellationToken);
+        Downloader downloader(&remoteDataSource, t_cancellationToken);
+        t_result = downloader.downloadString(t_url, t_timeout, t_statusCode);
 
         if (t_statusCode == 500)
         {

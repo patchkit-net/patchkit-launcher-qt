@@ -22,10 +22,10 @@ SCENARIO("Testing downloader capabilities.")
 
         nam.push("link", testData, 300);
 
-        Downloader downloader(&nam);
-
         std::shared_ptr<CancellationTokenSource> tokenSource(new CancellationTokenSource());
         CancellationToken token(tokenSource);
+
+        Downloader downloader(&nam, token);
 
         int timeoutMsec = 0;
 
@@ -34,7 +34,7 @@ SCENARIO("Testing downloader capabilities.")
             timeoutMsec = 1000;
             THEN("Downloader should download the string without errors.")
             {
-                QByteArray data = downloader.downloadFile("link", timeoutMsec, token);
+                QByteArray data = downloader.downloadFile("link", timeoutMsec);
 
                 REQUIRE(data.toStdString() == testData.toStdString());
             }
@@ -48,7 +48,7 @@ SCENARIO("Testing downloader capabilities.")
                 bool timeoutCaught = false;
                 try
                 {
-                    downloader.downloadFile("link", timeoutMsec, token);
+                    downloader.downloadFile("link", timeoutMsec);
                 }
                 catch (TimeoutException&)
                 {

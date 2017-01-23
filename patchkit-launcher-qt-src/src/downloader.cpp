@@ -8,19 +8,20 @@
 #include "logger.h"
 #include "timeoutexception.h"
 
-Downloader::Downloader(QNetworkAccessManager* t_dataSource)
+Downloader::Downloader(QNetworkAccessManager* t_dataSource, CancellationToken& t_cancellationToken)
     : m_remoteDataSource(t_dataSource)
+    , m_cancellationToken(t_cancellationToken)
 {
 }
 
-QByteArray Downloader::downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken)
+QByteArray Downloader::downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec)
 {
     QNetworkRequest request(t_urlPath);
 
-    return downloadFile(request, t_requestTimeoutMsec, t_cancellationToken);
+    return downloadFile(request, t_requestTimeoutMsec);
 }
 
-QByteArray Downloader::downloadFile(const QNetworkRequest& t_request, int t_requestTimeoutMsec, CancellationToken t_cancellationToken)
+QByteArray Downloader::downloadFile(const QNetworkRequest& t_request, int t_requestTimeoutMsec)
 {
     TRemoteDataReply reply;
 
@@ -28,25 +29,25 @@ QByteArray Downloader::downloadFile(const QNetworkRequest& t_request, int t_requ
 
     connect(reply.data(), &QNetworkReply::downloadProgress, this, &Downloader::onDownloadProgressChanged);
 
-    waitForReply(reply, t_requestTimeoutMsec, t_cancellationToken);
+    waitForReply(reply, t_requestTimeoutMsec);
     validateReply(reply);
 
-    waitForFileDownload(reply, t_cancellationToken);
+    waitForFileDownload(reply);
 
     disconnect(reply.data(), &QNetworkReply::downloadProgress, this, &Downloader::onDownloadProgressChanged);
 
     return reply->readAll();
 }
 
-QString Downloader::downloadString(const QString& t_urlPath, int t_requestTimeoutMsec, int& t_replyStatusCode, CancellationToken t_cancellationToken) const
+QString Downloader::downloadString(const QString& t_urlPath, int t_requestTimeoutMsec, int& t_replyStatusCode) const
 {
     TRemoteDataReply reply;
 
     fetchReply(t_urlPath, reply);
-    waitForReply(reply, t_requestTimeoutMsec, t_cancellationToken);
+    waitForReply(reply, t_requestTimeoutMsec);
     validateReply(reply);
 
-    waitForFileDownload(reply, t_cancellationToken);
+    waitForFileDownload(reply);
 
     t_replyStatusCode = getReplyStatusCode(reply);
 
@@ -95,7 +96,7 @@ void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataRepl
     t_reply = TRemoteDataReply(reply);
 }
 
-void Downloader::waitForReply(TRemoteDataReply& t_reply, int t_requestTimeoutMsec, CancellationToken t_cancellationToken) const
+void Downloader::waitForReply(TRemoteDataReply& t_reply, int t_requestTimeoutMsec) const
 {
     logInfo("Waiting for network reply to be ready.");
 
@@ -111,7 +112,7 @@ void Downloader::waitForReply(TRemoteDataReply& t_reply, int t_requestTimeoutMse
         QTimer timeoutTimer;
 
         connect(t_reply.data(), &QNetworkReply::readyRead, &readyReadLoop, &QEventLoop::quit);
-        connect(&t_cancellationToken, &CancellationToken::cancelled, &readyReadLoop, &QEventLoop::quit);
+        connect(&m_cancellationToken, &CancellationToken::cancelled, &readyReadLoop, &QEventLoop::quit);
         connect(&timeoutTimer, &QTimer::timeout, &readyReadLoop, &QEventLoop::quit);
 
         timeoutTimer.setInterval(t_requestTimeoutMsec);
@@ -120,7 +121,7 @@ void Downloader::waitForReply(TRemoteDataReply& t_reply, int t_requestTimeoutMse
 
         readyReadLoop.exec();
 
-        t_cancellationToken.throwIfCancelled();
+        m_cancellationToken.throwIfCancelled();
 
         if (!timeoutTimer.isActive())
         {
@@ -155,7 +156,7 @@ int Downloader::getReplyStatusCode(TRemoteDataReply& t_reply) const
     return statusCodeValue;
 }
 
-void Downloader::waitForFileDownload(TRemoteDataReply& t_reply, CancellationToken t_cancellationToken) const
+void Downloader::waitForFileDownload(TRemoteDataReply& t_reply) const
 {
     logInfo("Waiting for file download.");
 
@@ -167,11 +168,11 @@ void Downloader::waitForFileDownload(TRemoteDataReply& t_reply, CancellationToke
     QEventLoop finishedLoop;
 
     connect(t_reply.data(), &QNetworkReply::finished, &finishedLoop, &QEventLoop::quit);
-    connect(&t_cancellationToken, &CancellationToken::cancelled, &finishedLoop, &QEventLoop::quit);
+    connect(&m_cancellationToken, &CancellationToken::cancelled, &finishedLoop, &QEventLoop::quit);
 
     finishedLoop.exec();
 
-    t_cancellationToken.throwIfCancelled();
+    m_cancellationToken.throwIfCancelled();
 }
 
 void Downloader::restartDownload(TRemoteDataReply& t_reply, const QUrl& t_url) const

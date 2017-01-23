@@ -13,17 +13,23 @@
 #include "logger.h"
 #include "staledownloadexception.h"
 
-ChunkedDownloader::ChunkedDownloader(QNetworkAccessManager* t_dataSource, const ContentSummary& t_contentSummary, HashFunc t_hashingStrategy, int t_staleTimeoutMsec)
-    : Downloader(t_dataSource)
+ChunkedDownloader::ChunkedDownloader(
+        QNetworkAccessManager* t_dataSource,
+        const ContentSummary& t_contentSummary,
+        HashFunc t_hashingStrategy,
+        int t_staleDownloadTimeoutMsec,
+        CancellationToken t_cancellationToken
+        )
+    : Downloader(t_dataSource, t_cancellationToken)
     , m_contentSummary(t_contentSummary)
     , m_lastValidChunkIndex(0)
     , m_hashingStrategy(t_hashingStrategy)
     , m_running(true)
-    , m_staleTimeoutMsec(t_staleTimeoutMsec)
+    , m_staleTimeoutMsec(t_staleDownloadTimeoutMsec)
 {
 }
 
-QByteArray ChunkedDownloader::downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec, CancellationToken t_cancellationToken)
+QByteArray ChunkedDownloader::downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec)
 {
     if (!m_hashingStrategy)
     {
@@ -48,7 +54,7 @@ QByteArray ChunkedDownloader::downloadFile(const QString& t_urlPath, int t_reque
     {
         try
         {
-            data = Downloader::downloadFile(request, t_requestTimeoutMsec, t_cancellationToken);
+            data = Downloader::downloadFile(request, t_requestTimeoutMsec);
 
             if (validateReceivedData(data))
             {

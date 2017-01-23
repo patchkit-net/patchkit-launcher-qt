@@ -45,11 +45,11 @@ SCENARIO("Testing chunked downloader in multiple scenarios.", "[chunked_download
 
             nam.push("link", data, 300);
 
-            ChunkedDownloader downloader(&nam, summary, &HashingStrategy::xxHash, 1000);
+            ChunkedDownloader downloader(&nam, summary, &HashingStrategy::xxHash, 1000, token);
 
             THEN ("With a 1000 ms permitted timeout, the chunked download should succeed.")
             {
-                QByteArray downloadedData = downloader.downloadFile("link", 1000, token);
+                QByteArray downloadedData = downloader.downloadFile("link", 1000);
 
                 REQUIRE(downloadedData.toStdString() == data.toStdString());
             }
@@ -60,7 +60,7 @@ SCENARIO("Testing chunked downloader in multiple scenarios.", "[chunked_download
 
                 try
                 {
-                    downloader.downloadFile("link", 200, token);
+                    downloader.downloadFile("link", 200);
                 }
                 catch (TimeoutException&)
                 {
@@ -80,9 +80,9 @@ SCENARIO("Testing chunked downloader in multiple scenarios.", "[chunked_download
 
             THEN ("With a 1000 ms permitted timeout and 1000 ms permitted stale download timeout, the chunked download should succeed.")
             {
-                ChunkedDownloader downloader(&nam, summary, &HashingStrategy::xxHash, 1000);
+                ChunkedDownloader downloader(&nam, summary, &HashingStrategy::xxHash, 1000, token);
 
-                QByteArray downloadedData = downloader.downloadFile("link", 1000, token);
+                QByteArray downloadedData = downloader.downloadFile("link", 1000);
 
                 REQUIRE(downloadedData.toStdString() == data.toStdString());
             }
@@ -122,14 +122,14 @@ SCENARIO("Testing the chunked downloader's stale download functionality.", "[chu
 
             GIVEN("A chunked downloader config permitting 500 ms stale download timeout.")
             {
-                ChunkedDownloader downloader(&nam, summary, &HashingStrategy::xxHash, 500);
+                ChunkedDownloader downloader(&nam, summary, &HashingStrategy::xxHash, 500, token);
 
                 THEN("When downloading with 300 ms timeout a stale download exception should occur.")
                 {
                     bool check = false;
                     try
                     {
-                        downloader.downloadFile("link", 300, token);
+                        downloader.downloadFile("link", 300);
                     }
                     catch(StaleDownloadException&)
                     {
