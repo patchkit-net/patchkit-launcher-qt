@@ -54,7 +54,7 @@ QNetworkReply* MockedNAM::createRequest(QNetworkAccessManager::Operation /*op*/,
     return reply;
 }
 
-qint64 MockedNAM::parseRangeHeader(const QByteArray &t_rangeHeader)
+qint64 MockedNAM::parseRangeHeader(const QByteArray& t_rangeHeader)
 {
     if (t_rangeHeader.size() == 0)
     {

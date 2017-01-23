@@ -142,3 +142,57 @@ SCENARIO("Testing the chunked downloader's stale download functionality.", "[chu
         }
     }
 }
+
+SCENARIO("Testing the chunked downloader's stale download functionality with a corrupted data set.", "[chunked_downloader]")
+{
+    std::shared_ptr<CancellationTokenSource> tokenSource(new CancellationTokenSource());
+    CancellationToken token(tokenSource);
+
+    GIVEN("A constant data set in chunks with a content summary.")
+    {
+        const QByteArray data =         "ABCDEFGHIJ";
+        const QByteArray corrupedData = "1234567890";
+
+        ContentSummary summary(1, 0, "none", "none", "xxHash",
+        {
+            HashingStrategy::xxHash(data.mid(0, 1)),
+            HashingStrategy::xxHash(data.mid(1, 1)),
+            HashingStrategy::xxHash(data.mid(2, 1)),
+            HashingStrategy::xxHash(data.mid(3, 1)),
+            HashingStrategy::xxHash(data.mid(4, 1)),
+            HashingStrategy::xxHash(data.mid(5, 1)),
+            HashingStrategy::xxHash(data.mid(6, 1)),
+            HashingStrategy::xxHash(data.mid(7, 1)),
+            HashingStrategy::xxHash(data.mid(8, 1)),
+            HashingStrategy::xxHash(data.mid(9, 1))
+        },
+        {});
+
+        GIVEN("A mocked NAM replying to 'link' with a corruped data reply in 100 ms")
+        {
+            MockedNAM nam;
+
+            nam.push("link", corrupedData, 100);
+
+            GIVEN("A chunked downloader config permitting 1000 ms stale download timeout.")
+            {
+                ChunkedDownloader downloader(&nam, summary, &HashingStrategy::xxHash, 1000, token);
+
+                THEN("When downloading with 300 ms timeout a stale download exception should occur.")
+                {
+                    bool check = false;
+                    try
+                    {
+                        downloader.downloadFile("link", 300);
+                    }
+                    catch(StaleDownloadException&)
+                    {
+                        check = true;
+                    }
+
+                    REQUIRE(check == true);
+                }
+            }
+        }
+    }
+}

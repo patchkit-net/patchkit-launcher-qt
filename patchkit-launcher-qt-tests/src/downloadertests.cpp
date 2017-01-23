@@ -13,7 +13,7 @@
 #include "mockednam.h"
 #include "src/timeoutexception.h"
 
-SCENARIO("Testing downloader capabilities.")
+SCENARIO("Testing downloader capabilities.", "[downloader]")
 {
     GIVEN("A mocked NAM replying to 'link' url 'This is a test' string in 300 milliseconds.")
     {

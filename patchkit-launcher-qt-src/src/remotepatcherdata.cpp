@@ -43,7 +43,7 @@ void RemotePatcherData::download(const QString& t_downloadPath, const Data& t_da
 
     QString contentSummaryPath = QString("1/apps/%1/versions/%2/content_summary").arg(t_data.patcherSecret(), QString::number(t_version));
 
-    logInfo("Downloading content summary from %1", .arg(contentSummaryPath));
+    logInfo("Downloading content summary.");
 
     ContentSummary summary;
 
