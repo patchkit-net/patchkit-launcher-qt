@@ -63,8 +63,10 @@ void LauncherWorker::run()
 LauncherWorker::LauncherWorker()
     : m_cancellationTokenSource(new CancellationTokenSource())
     , m_result(NONE)
-    , m_remotePatcher(m_api)
+    , m_remotePatcher(m_api, &m_networkAccessManager)
 {
+    m_api.moveToThread(this);
+    m_networkAccessManager.moveToThread(this);
     m_remotePatcher.moveToThread(this);
     m_localPatcher.moveToThread(this);
 }
@@ -228,7 +230,9 @@ void LauncherWorker::updatePatcher(const Data& t_data)
 
         QString downloadPath = QDir::cleanPath(Locations::getInstance().applicationDirPath() + "/patcher.zip");
 
-        m_remotePatcher.download(downloadPath, t_data, version, m_cancellationTokenSource);
+        QFile file(downloadPath);
+
+        m_remotePatcher.download(file, t_data, version, m_cancellationTokenSource);
         logInfo("Patcher has been downloaded to %1", .arg(downloadPath));
 
         logDebug("Disconnecting downloadProgressChanged signal from remote patcher to slot from launcher thread.");

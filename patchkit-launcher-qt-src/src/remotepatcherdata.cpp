@@ -12,8 +12,9 @@
 #include "chunkeddownloader.h"
 #include "contentsummary.h"
 
-RemotePatcherData::RemotePatcherData(IApi& t_api)
+RemotePatcherData::RemotePatcherData(IApi& t_api, QNetworkAccessManager* t_networkAccessManager)
     : m_api(t_api)
+    , m_networkAccessManager(t_networkAccessManager)
 {
 }
 
@@ -35,7 +36,7 @@ QString RemotePatcherData::getPatcherSecret(const Data& t_data, CancellationToke
     return parsePatcherSecret(result);
 }
 
-void RemotePatcherData::download(const QString& t_downloadPath, const Data& t_data, int t_version, CancellationToken t_cancellationToken)
+void RemotePatcherData::download(QIODevice& t_dataTarget, const Data& t_data, int t_version, CancellationToken t_cancellationToken)
 {
     logInfo("Downloading patcher %1 version", .arg(QString::number(t_version)));
 
@@ -59,14 +60,14 @@ void RemotePatcherData::download(const QString& t_downloadPath, const Data& t_da
     if (summary.isValid())
     {
         logInfo("Beginning chunked download.");
-        if (downloadChunked(t_downloadPath, contentUrls, summary, t_cancellationToken))
+        if (downloadChunked(t_dataTarget, contentUrls, summary, t_cancellationToken))
         {
             return;
         }
     }
 
     logInfo("Chunked download failed or isn't available, falling back on simple HTTP.");
-    if (downloadDirect(t_downloadPath, contentUrls, t_cancellationToken))
+    if (downloadDirect(t_dataTarget, contentUrls, t_cancellationToken))
     {
         return;
     }
@@ -84,24 +85,22 @@ QStringList RemotePatcherData::getContentUrls(const QString& t_patcherSecret, in
     return parseContentUrlsJson(result);
 }
 
-bool RemotePatcherData::downloadWith(Downloader& downloader, const QString& t_downloadPath, const QStringList& t_contentUrls, CancellationToken t_cancellationToken)
+bool RemotePatcherData::downloadWith(Downloader& downloader, QIODevice& t_dataTarget, const QStringList& t_contentUrls, CancellationToken t_cancellationToken)
 {
     connect(&downloader, &Downloader::downloadProgressChanged, this, &RemotePatcherData::downloadProgressChanged);
 
     QByteArray downloadedData;
 
-    const auto saveData = [t_downloadPath](QByteArray& t_data)
+    const auto saveData = [&t_dataTarget](QByteArray& t_data)
     {
-        QFile file(t_downloadPath);
-
-        if (!file.open(QFile::WriteOnly))
+        if (!t_dataTarget.open(QFile::WriteOnly))
         {
             throw std::runtime_error("Couldn't open file for download.");
         }
 
-        file.write(t_data);
+        t_dataTarget.write(t_data);
 
-        file.close();
+        t_dataTarget.close();
     };
 
     for (int i = 0; i < t_contentUrls.size(); i++)
@@ -154,20 +153,18 @@ bool RemotePatcherData::downloadWith(Downloader& downloader, const QString& t_do
     return false;
 }
 
-bool RemotePatcherData::downloadChunked(const QString& t_downloadPath, const QStringList& t_contentUrls, ContentSummary& t_contentSummary, CancellationToken t_cancellationToken)
+bool RemotePatcherData::downloadChunked(QIODevice& t_dataTarget, const QStringList& t_contentUrls, ContentSummary& t_contentSummary, CancellationToken t_cancellationToken)
 {
-    QNetworkAccessManager remoteDataSource;
-    ChunkedDownloader downloader(&remoteDataSource, t_contentSummary, HashingStrategy::xxHash, Config::chunkedDownloadStaleTimeoutMsec, t_cancellationToken);
+    ChunkedDownloader downloader(m_networkAccessManager, t_contentSummary, HashingStrategy::xxHash, Config::chunkedDownloadStaleTimeoutMsec, t_cancellationToken);
 
-    return downloadWith((Downloader&) downloader, t_downloadPath, t_contentUrls, t_cancellationToken);
+    return downloadWith((Downloader&) downloader, t_dataTarget, t_contentUrls, t_cancellationToken);
 }
 
-bool RemotePatcherData::downloadDirect(const QString& t_downloadPath, const QStringList& t_contentUrls, CancellationToken t_cancellationToken)
+bool RemotePatcherData::downloadDirect(QIODevice& t_dataTarget, const QStringList& t_contentUrls, CancellationToken t_cancellationToken)
 {
-    QNetworkAccessManager remoteDataSource;
-    Downloader downloader(&remoteDataSource, t_cancellationToken);
+    Downloader downloader(m_networkAccessManager, t_cancellationToken);
 
-    return downloadWith(downloader, t_downloadPath, t_contentUrls, t_cancellationToken);
+    return downloadWith(downloader, t_dataTarget, t_contentUrls, t_cancellationToken);
 }
 
 int RemotePatcherData::parseVersionJson(const QString& t_json)

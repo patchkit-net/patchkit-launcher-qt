@@ -19,7 +19,7 @@ struct Data
 
     QString overwritePatcherSecret;
 
-    QString patcherSecret() const
+    virtual QString patcherSecret() const
     {
         if (overwritePatcherSecret.isEmpty())
         {
@@ -28,12 +28,12 @@ struct Data
         return overwritePatcherSecret;
     }
 
-    QString applicationSecret() const
+    virtual QString applicationSecret() const
     {
         return m_applicationSecret;
     }
 
-    QByteArray encodedApplicationSecret() const
+    virtual QByteArray encodedApplicationSecret() const
     {
         return m_encodedApplicationSecret;
     }
