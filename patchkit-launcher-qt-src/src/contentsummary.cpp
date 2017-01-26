@@ -184,6 +184,48 @@ const int ContentSummary::getChunksCount() const
     return m_chunkHashes.size();
 }
 
+const int ContentSummary::getFilesCount() const
+{
+    return m_filesSummary.size();
+}
+
+QJsonDocument ContentSummary::toJson() const
+{
+    QJsonObject root;
+
+    root[encryptionMethodToken] = getEncryptionMethod();
+    root[compressionMethodToken] = getCompressionMethod();
+    root[hashingMethodToken] = getHashingMethod();
+    root[hashCodeToken] = QString::number(getHashCode(), 16);
+
+    QJsonArray filesArray;
+
+    for (const FileData& fileData : m_filesSummary)
+    {
+        QJsonObject fileObject;
+        fileObject[pathToken] = fileData.path;
+        fileObject[hashToken] = QString::number(fileData.hash, 16);
+
+        filesArray.append(fileObject);
+    }
+
+    QJsonObject chunksObject;
+    QJsonArray chunkHashes;
+
+    for (THash hash : m_chunkHashes)
+    {
+        chunkHashes.append(QString::number(hash, 16));
+    }
+
+    chunksObject[sizeToken] = getChunkSize();
+    chunksObject[hashesToken] = chunkHashes;
+
+    root[chunksToken] = chunksObject;
+    root[filesToken] = filesArray;
+
+    return QJsonDocument(root);
+}
+
 bool ContentSummary::parseFiles(QJsonObject& t_document)
 {
     if (!t_document.contains(filesToken))

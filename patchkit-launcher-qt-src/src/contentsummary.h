@@ -94,6 +94,9 @@ public:
     const QString&  getHashingMethod()       const;
     const THash     getHashCode()            const;
     const int       getChunksCount()         const;
+    const int       getFilesCount()          const;
+
+    QJsonDocument   toJson() const;
 
 private:
     bool parseFiles(QJsonObject& t_document);

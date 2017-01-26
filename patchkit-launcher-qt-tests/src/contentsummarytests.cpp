@@ -80,3 +80,38 @@ TEST_CASE("ContentSummary testing on a const data source.", "content_summary")
         }
     }
 }
+
+TEST_CASE("Content summary can be serialized to JSON." ,"[content_summary]")
+{
+    ContentSummary originalSummary(
+        10, 123, "none", "none", "xxhash",
+    {123, 321, 23, 43},
+    {FileData("path", 123), FileData("differentPath", 321)}
+    );
+
+    QJsonDocument serializedContentSummary = originalSummary.toJson();
+
+    ContentSummary deserializedContentSummary(serializedContentSummary);
+
+    CHECK(originalSummary.getChunkSize() == deserializedContentSummary.getChunkSize());
+    CHECK(originalSummary.getHashCode() == deserializedContentSummary.getHashCode());
+    CHECK(originalSummary.getEncryptionMethod() == deserializedContentSummary.getEncryptionMethod());
+    CHECK(originalSummary.getCompressionMethod() == deserializedContentSummary.getCompressionMethod());
+    CHECK(originalSummary.getHashingMethod() == deserializedContentSummary.getHashingMethod());
+
+    REQUIRE(originalSummary.getChunksCount() == deserializedContentSummary.getChunksCount());
+    for (int i = 0; i < originalSummary.getChunksCount(); i++)
+    {
+        REQUIRE(originalSummary.getChunkHash(i) == deserializedContentSummary.getChunkHash(i));
+    }
+
+    REQUIRE(originalSummary.getFilesCount() == deserializedContentSummary.getFilesCount());
+    for (int i = 0; i < originalSummary.getFilesCount(); i++)
+    {
+        const FileData& a = originalSummary.getFileData(i);
+        const FileData& b = deserializedContentSummary.getFileData(i);
+
+        REQUIRE(a.hash == b.hash);
+        REQUIRE(a.path == b.path);
+    }
+}
