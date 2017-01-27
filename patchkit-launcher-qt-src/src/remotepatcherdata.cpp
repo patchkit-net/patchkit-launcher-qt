@@ -12,9 +12,10 @@
 #include "chunkeddownloader.h"
 #include "contentsummary.h"
 
-RemotePatcherData::RemotePatcherData(IApi& t_api, QNetworkAccessManager* t_networkAccessManager)
+RemotePatcherData::RemotePatcherData(IApi& t_api, QNetworkAccessManager* t_networkAccessManager, const Config& t_config)
     : m_api(t_api)
     , m_networkAccessManager(t_networkAccessManager)
+    , m_config(t_config)
 {
 }
 
@@ -113,7 +114,7 @@ bool RemotePatcherData::downloadWith(Downloader& downloader, QIODevice& t_dataTa
         {
             try
             {
-                downloadedData = downloader.downloadFile(t_contentUrls[i], Config::minConnectionTimeoutMsec);
+                downloadedData = downloader.downloadFile(t_contentUrls[i], m_config.minConnectionTimeoutMsec);
 
                 saveData(downloadedData);
 
@@ -121,7 +122,7 @@ bool RemotePatcherData::downloadWith(Downloader& downloader, QIODevice& t_dataTa
             }
             catch (TimeoutException&)
             {
-                downloadedData = downloader.downloadFile(t_contentUrls[i], Config::maxConnectionTimeoutMsec);
+                downloadedData = downloader.downloadFile(t_contentUrls[i], m_config.maxConnectionTimeoutMsec);
 
                 saveData(downloadedData);
 
@@ -155,7 +156,7 @@ bool RemotePatcherData::downloadWith(Downloader& downloader, QIODevice& t_dataTa
 
 bool RemotePatcherData::downloadChunked(QIODevice& t_dataTarget, const QStringList& t_contentUrls, ContentSummary& t_contentSummary, CancellationToken t_cancellationToken)
 {
-    ChunkedDownloader downloader(m_networkAccessManager, t_contentSummary, HashingStrategy::xxHash, Config::chunkedDownloadStaleTimeoutMsec, t_cancellationToken);
+    ChunkedDownloader downloader(m_networkAccessManager, t_contentSummary, HashingStrategy::xxHash, m_config.chunkedDownloadStaleTimeoutMsec, t_cancellationToken);
 
     return downloadWith((Downloader&) downloader, t_dataTarget, t_contentUrls, t_cancellationToken);
 }

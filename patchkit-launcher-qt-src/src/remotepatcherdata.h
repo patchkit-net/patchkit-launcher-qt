@@ -13,12 +13,14 @@ class QNetworkAccessManager;
 
 class ContentSummary;
 
+class Config;
+
 class RemotePatcherData : public QObject
 {
     Q_OBJECT
 
 public:
-    RemotePatcherData(IApi& t_api, QNetworkAccessManager* t_networkAccessManager);
+    RemotePatcherData(IApi& t_api, QNetworkAccessManager* t_networkAccessManager, const Config& t_config);
 
     int getVersion(const Data& t_data, CancellationToken t_cancellationToken);
 
@@ -30,8 +32,6 @@ signals:
     void downloadProgressChanged(const long long& t_bytesDownloaded, const long long& t_totalBytes);
 
 private:
-    IApi& m_api;
-
     QStringList getContentUrls(const QString& t_patcherSecret, int t_version, CancellationToken t_cancellationToken);
 
     bool downloadChunked(QIODevice& t_dataTarget, const QStringList& t_contentUrls, ContentSummary& t_contentSummary, CancellationToken t_cancellationToken);
@@ -46,4 +46,8 @@ private:
     static QStringList parseContentUrlsJson(const QString& t_json);
 
     QNetworkAccessManager* m_networkAccessManager;
+
+    const Config& m_config;
+
+    IApi& m_api;
 };

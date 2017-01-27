@@ -17,7 +17,7 @@ Api::Api(QObject* parent) : QObject(parent)
 
 QString Api::downloadString(const QString& t_resourceUrl, CancellationToken t_cancellationToken) const
 {
-    QStringList cacheApiUrls = Config::cacheApiUrls;
+    QStringList cacheApiUrls = Config::Config::standard.cacheApiUrls;
     return downloadString(t_resourceUrl, cacheApiUrls, false, t_cancellationToken);
 }
 
@@ -29,7 +29,7 @@ QJsonDocument Api::downloadContentSummary(const QString& t_resourceUrl, Cancella
         return !doc.isNull() && !doc.isEmpty();
     };
 
-    QStringList cacheApiUrls = Config::cacheApiUrls;
+    QStringList cacheApiUrls = Config::standard.cacheApiUrls;
 
     QString raw = downloadString(t_resourceUrl, cacheApiUrls, validator, false, t_cancellationToken);
     return QJsonDocument::fromJson(raw.toUtf8());
@@ -45,9 +45,9 @@ QString Api::downloadString(const QString& t_resourceUrl, QStringList& t_cacheAp
     QString result;
     int statusCode;
 
-    int timeout = t_extendedTimeout ? Config::maxConnectionTimeoutMsec : Config::minConnectionTimeoutMsec;
+    int timeout = t_extendedTimeout ? Config::standard.maxConnectionTimeoutMsec : Config::standard.minConnectionTimeoutMsec;
 
-    if (downloadStringFromServer(Config::mainApiUrl + "/" + t_resourceUrl, timeout, result, statusCode, t_cancellationToken))
+    if (downloadStringFromServer(Config::standard.mainApiUrl + "/" + t_resourceUrl, timeout, result, statusCode, t_cancellationToken))
     {
         if (!isVaild(statusCode))
         {

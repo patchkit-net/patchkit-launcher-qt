@@ -7,28 +7,46 @@
 
 #include <QStringList>
 
-class Config
+struct Config
 {
-public:
-    const static QString logFileName;
+    Config( QString t_logFileName,
+            QString t_dataFileName,
+            int t_dataResourceId,
+            int t_dataResourceTypeId,
+            QString t_patcherDirectoryName,
+            QString t_patcherInstallationInfoFileName,
+            QString t_patcherVersionInfoFileName,
+            QString t_patcherIdInfoFileName,
+            QString t_patcherManifestFileName,
+            QString t_applicationDirectoryName,
+            int t_minConnectionTimeoutMsec,
+            int t_maxConnectionTimeoutMsec,
+            int t_chunkedDownloadStaleTimeoutMsec,
+            QString t_mainApiUrl,
+            QStringList t_cacheApiUrls
+            );
 
-    const static QString dataFileName;
-    const static int dataResourceId;
-    const static int dataResourceTypeId;
+    QString logFileName;
 
-    const static QString patcherDirectoryName;
-    const static QString patcherInstallationInfoFileName;
-    const static QString patcherVersionInfoFileName;
-    const static QString patcherIdInfoFileName;
-    const static QString patcherManifestFileName;
+    QString dataFileName;
+    int     dataResourceId;
+    int     dataResourceTypeId;
 
-    const static QString applicationDirectoryName;
+    QString patcherDirectoryName;
+    QString patcherInstallationInfoFileName;
+    QString patcherVersionInfoFileName;
+    QString patcherIdInfoFileName;
+    QString patcherManifestFileName;
 
-    const static int minConnectionTimeoutMsec;
-    const static int maxConnectionTimeoutMsec;
+    QString applicationDirectoryName;
 
-    const static int chunkedDownloadStaleTimeoutMsec;
+    int     minConnectionTimeoutMsec;
+    int     maxConnectionTimeoutMsec;
 
-    const static QString mainApiUrl;
-    const static QStringList cacheApiUrls;
+    int     chunkedDownloadStaleTimeoutMsec;
+
+    QString     mainApiUrl;
+    QStringList cacheApiUrls;
+
+    const static Config standard;
 };
