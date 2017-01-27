@@ -132,6 +132,10 @@ bool RemotePatcherData::downloadWith(Downloader& downloader, QIODevice& t_dataTa
         {
             throw;
         }
+        catch (TimeoutException&)
+        {
+            logWarning("Connection has timed out.");
+        }
         catch (StaleDownloadException&)
         {
             logWarning("Download gone stale.");

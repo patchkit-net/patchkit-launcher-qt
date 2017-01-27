@@ -60,3 +60,74 @@ SCENARIO("Testing downloader capabilities.", "[downloader]")
         }
     }
 }
+
+SCENARIO("Simulating RemotePatcherData's alternate link and min/max timeout functionality.", "[downloader]")
+{
+    std::shared_ptr<CancellationTokenSource> tokenSource(new CancellationTokenSource());
+    CancellationToken token(tokenSource);
+
+    const QByteArray data = "123456789";
+
+    int minTimeout = 100;
+    int maxTimeout = 300;
+
+    GIVEN("A mocked NAM with two possible replies, both with valid data responding in respectively 200 and 400 ms.")
+    {
+        MockedNAM nam;
+        nam.push("link1", data, 400);
+        nam.push("link2", data, 200);
+
+        Downloader downloader(&nam, token);
+
+        WHEN("Downloading from the first link, 2 timeout exceptions should occur.")
+        {
+            int timeoutCounter = 0;
+
+            try
+            {
+                try
+                {
+                    downloader.downloadFile("link1", minTimeout);
+                }
+                catch(TimeoutException&)
+                {
+                    ++timeoutCounter;
+                    downloader.downloadFile("link1", maxTimeout);
+                }
+            }
+            catch(TimeoutException&)
+            {
+                ++timeoutCounter;
+            }
+
+            REQUIRE(timeoutCounter == 2);
+        }
+
+        WHEN("Downloading from the second link, 1 timeout should occur and on the second try the download should succeed.")
+        {
+            int timeoutCounter = 0;
+
+            QByteArray downloadedData;
+
+            try
+            {
+                try
+                {
+                    downloadedData = downloader.downloadFile("link2", minTimeout);
+                }
+                catch(TimeoutException&)
+                {
+                    ++timeoutCounter;
+                    downloadedData = downloader.downloadFile("link2", maxTimeout);
+                }
+            }
+            catch(TimeoutException&)
+            {
+                ++timeoutCounter;
+            }
+
+            REQUIRE(timeoutCounter == 1);
+            REQUIRE(downloadedData.toStdString() == data.toStdString());
+        }
+    }
+}

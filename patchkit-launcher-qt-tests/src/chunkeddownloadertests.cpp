@@ -148,7 +148,7 @@ SCENARIO("Testing the chunked downloader's stale download functionality with a c
     std::shared_ptr<CancellationTokenSource> tokenSource(new CancellationTokenSource());
     CancellationToken token(tokenSource);
 
-    GIVEN("A constant data set in chunks with a content summary.")
+    GIVEN("A corrupted data set in chunks with a content summary.")
     {
         const QByteArray data =         "ABCDEFGHIJ";
         const QByteArray corrupedData = "1234567890";
@@ -192,6 +192,96 @@ SCENARIO("Testing the chunked downloader's stale download functionality with a c
 
                     REQUIRE(check == true);
                 }
+            }
+        }
+    }
+}
+
+SCENARIO("Simulating RemotePatcherData's alternate url's functionality.", "[chunked_downloader]")
+{
+    std::shared_ptr<CancellationTokenSource> tokenSource(new CancellationTokenSource());
+    CancellationToken token(tokenSource);
+
+    GIVEN("A configuration permitting 1000ms stale timeout, 100ms minimal timeout, 300ms max timeout.")
+    {
+        const QByteArray data =         "ABCDEFGHIJ";
+
+        int staleDownloadTimeoutMsec = 1000;
+        int minTimeoutMsec = 100;
+        int maxTimeoutMsec = 300;
+
+        ContentSummary summary(1, 0, "none", "none", "xxHash",
+        {
+            HashingStrategy::xxHash(data.mid(0, 1)),
+            HashingStrategy::xxHash(data.mid(1, 1)),
+            HashingStrategy::xxHash(data.mid(2, 1)),
+            HashingStrategy::xxHash(data.mid(3, 1)),
+            HashingStrategy::xxHash(data.mid(4, 1)),
+            HashingStrategy::xxHash(data.mid(5, 1)),
+            HashingStrategy::xxHash(data.mid(6, 1)),
+            HashingStrategy::xxHash(data.mid(7, 1)),
+            HashingStrategy::xxHash(data.mid(8, 1)),
+            HashingStrategy::xxHash(data.mid(9, 1))
+        },
+        {});
+
+        GIVEN("A mocked NAM with 2 possible responses, both valid, the first responds in 400ms, the second in 200ms.")
+        {
+            MockedNAM nam;
+            nam.push("link1", data, 400);
+            nam.push("link2", data, 200);
+
+            ChunkedDownloader downloader(&nam, summary, HashingStrategy::xxHash, staleDownloadTimeoutMsec, token);
+
+            int timeoutCount = 0;
+
+            WHEN("Downloading from the first link, 2 timeouts should occur.")
+            {
+                try
+                {
+                    try
+                    {
+                        downloader.downloadFile("link1", minTimeoutMsec);
+                    }
+                    catch (TimeoutException&)
+                    {
+                        timeoutCount++;
+                        downloader.downloadFile("link1", maxTimeoutMsec);
+                    }
+                }
+                catch (TimeoutException&)
+                {
+                    timeoutCount++;
+                }
+
+                REQUIRE(timeoutCount == 2);
+            }
+
+            timeoutCount = 0;
+
+            WHEN("Downloading from the second link, 1 timeout should occur and the download should succed the second time.")
+            {
+                QByteArray downloadedData;
+
+                try
+                {
+                    try
+                    {
+                        downloader.downloadFile("link2", minTimeoutMsec);
+                    }
+                    catch (TimeoutException&)
+                    {
+                        timeoutCount++;
+                        downloadedData = downloader.downloadFile("link2", maxTimeoutMsec);
+                    }
+                }
+                catch (TimeoutException&)
+                {
+                    timeoutCount++;
+                }
+
+                CHECK(timeoutCount == 1);
+                REQUIRE(downloadedData.toStdString() == data.toStdString());
             }
         }
     }
