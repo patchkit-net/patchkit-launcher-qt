@@ -10,8 +10,6 @@
 
 #include "mockednam.h"
 
-#include "src/config.h"
-
 namespace RemotePatcherDataTests
 {
 const QByteArray data = "ABCDEFGHIJ";
@@ -98,35 +96,7 @@ SCENARIO("Testing remote patcher data with an appropriate content summary.")
 
         MockedApi api;
 
-        RemotePatcherData remotePatcherData((IApi&)api, &nam, Config::standard);
-
-        QBuffer dataTargetBuffer;
-
-        MockedData mockedData;
-
-        remotePatcherData.download(dataTargetBuffer, (Data&) mockedData, 0, token);
-
-        REQUIRE(dataTargetBuffer.data().toStdString() == data.toStdString());
-    }
-}
-
-SCENARIO("Testing remote patcher data with a corrupted data source.")
-{
-    const QByteArray corruptedData = "12345";
-
-    using namespace RemotePatcherDataTests;
-
-    std::shared_ptr<CancellationTokenSource> tokenSource(new CancellationTokenSource());
-    CancellationToken token(tokenSource);
-
-    GIVEN("A mocked NAM replying to 'link' with specified data and a mocked API.")
-    {
-        MockedNAM nam;
-        nam.push("link", corruptedData, 10);
-
-        MockedApi api;
-
-        RemotePatcherData remotePatcherData((IApi&)api, &nam, Config::standard);
+        RemotePatcherData remotePatcherData((IApi&)api, &nam);
 
         QBuffer dataTargetBuffer;
 

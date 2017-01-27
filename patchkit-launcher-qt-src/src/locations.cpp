@@ -58,7 +58,7 @@ void Locations::initializeCurrentDirPath()
 
     if (isCurrentDirWritable())
     {
-        m_logFilePath = QDir::cleanPath(currentDir.path() + "/" + Config::standard.logFileName);
+        m_logFilePath = QDir::cleanPath(currentDir.path() + "/" + Config::logFileName);
     }
     else
     {
@@ -75,6 +75,6 @@ void Locations::initializeCurrentDirPath()
             writableDir.mkpath(".");
         }
 
-        m_logFilePath = QDir::cleanPath(writableDir.path() + "/" + Config::standard.logFileName);
+        m_logFilePath = QDir::cleanPath(writableDir.path() + "/" + Config::logFileName);
     }
 }

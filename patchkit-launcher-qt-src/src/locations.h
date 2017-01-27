@@ -47,37 +47,37 @@ public:
 
     QString dataFilePath()
     {
-        return QDir::cleanPath(applicationDirPath() + "/" + Config::standard.dataFileName);
+        return QDir::cleanPath(applicationDirPath() + "/" + Config::dataFileName);
     }
 
     QString patcherDirectoryPath()
     {
-        return QDir::cleanPath(currentDirPath() + "/" + Config::standard.patcherDirectoryName);
+        return QDir::cleanPath(currentDirPath() + "/" + Config::patcherDirectoryName);
     }
 
     QString patcherInstallationInfoFilePath()
     {
-        return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::standard.patcherDirectoryName);
+        return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherDirectoryName);
     }
 
     QString patcherVersionInfoFilePath()
     {
-        return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::standard.patcherVersionInfoFileName);
+        return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherVersionInfoFileName);
     }
 
     QString patcherIdInfoFilePath()
     {
-        return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::standard.patcherIdInfoFileName);
+        return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherIdInfoFileName);
     }
 
     QString patcherManifestFilePath()
     {
-        return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::standard.patcherManifestFileName);
+        return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherManifestFileName);
     }
 
     QString applicationInstallationDirPath()
     {
-        return QDir::cleanPath(currentDirPath() + "/" + Config::standard.applicationDirectoryName);
+        return QDir::cleanPath(currentDirPath() + "/" + Config::applicationDirectoryName);
     }
 
 private:

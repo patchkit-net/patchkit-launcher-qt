@@ -63,7 +63,7 @@ void LauncherWorker::run()
 LauncherWorker::LauncherWorker()
     : m_cancellationTokenSource(new CancellationTokenSource())
     , m_result(NONE)
-    , m_remotePatcher(m_api, &m_networkAccessManager, Config::standard)
+    , m_remotePatcher(m_api, &m_networkAccessManager)
 {
     m_api.moveToThread(this);
     m_networkAccessManager.moveToThread(this);
@@ -99,8 +99,8 @@ void LauncherWorker::runWithDataFromResource()
     logInfo("Starting launcher with data from resource.");
 
     Data data = Data::loadFromResources(Locations::getInstance().applicationFilePath(),
-                                        Config::standard.dataResourceId,
-                                        Config::standard.dataResourceTypeId);
+                                        Config::dataResourceId,
+                                        Config::dataResourceTypeId);
 
     runWithData(data);
 }
