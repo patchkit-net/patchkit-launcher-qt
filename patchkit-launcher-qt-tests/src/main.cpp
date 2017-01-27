@@ -7,7 +7,23 @@
 
 #include <QThread>
 
+#include <iostream>
+
+namespace Catch
+{
+    std::ostream& cout()
+    {
+        return std::cerr;
+    }
+
+    std::ostream& cerr()
+    {
+        return std::cerr;
+    }
+}
+
 #define CATCH_IMPL
+#define CATCH_CONFIG_NOSTDOUT
 #include "catch.h"
 
 class Tester : public QThread
@@ -17,7 +33,7 @@ private:
     {
         Catch::Session().run();
 
-        QCoreApplication::exit(0);
+        QCoreApplication::quit();
     }
 };
 
