@@ -11,7 +11,7 @@
 
 #include <src/hashingstrategy.h>
 
-TEST_CASE("HashingStrategy xxHash")
+TEST_CASE("HashingStrategy xxHash", "[xxHash]")
 {
     QByteArray dataOne = "TestData";
     QByteArray dataTwo = "Dummy";

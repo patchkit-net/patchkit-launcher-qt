@@ -85,8 +85,8 @@ TEST_CASE("Content summary can be serialized to JSON." ,"[content_summary]")
 {
     ContentSummary originalSummary(
         10, 123, "none", "none", "xxhash",
-    {123, 321, 23, 43},
-    {FileData("path", 123), FileData("differentPath", 321)}
+        {123, 321, 23, 43},
+        {FileData("path", 123), FileData("differentPath", 321)}
     );
 
     QJsonDocument serializedContentSummary = originalSummary.toJson();
