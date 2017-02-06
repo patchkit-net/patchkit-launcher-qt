@@ -32,6 +32,9 @@ QByteArray Downloader::downloadFile(const QNetworkRequest& t_request, int t_requ
     waitForReply(reply, t_requestTimeoutMsec);
     validateReply(reply);
 
+    // For logging purposes
+    getReplyStatusCode(reply);
+
     waitForFileDownload(reply);
 
     disconnect(reply.data(), &QNetworkReply::downloadProgress, this, &Downloader::onDownloadProgressChanged);
@@ -73,7 +76,7 @@ void Downloader::fetchReply(const QString& t_urlPath, TRemoteDataReply& t_reply)
 
 void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataReply& t_reply) const
 {
-    logInfo("Fetching network reply.");
+    logInfo("Fetching network reply - URL: %1.", .arg(t_urlRequest.url().toString()));
 
     if (!t_reply.isNull())
     {

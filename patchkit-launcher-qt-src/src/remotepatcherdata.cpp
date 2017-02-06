@@ -42,9 +42,13 @@ void RemotePatcherData::download(QIODevice& t_dataTarget, const Data& t_data, in
 
     QStringList contentUrls = getContentUrls(t_data.patcherSecret(), t_version, t_cancellationToken);
 
-    QString contentSummaryPath = QString("1/apps/%1/versions/%2/content_summary").arg(t_data.patcherSecret(), QString::number(t_version));
+    QString patcherSecret = t_data.patcherSecret();
+    QString version = QString::number(t_version);
 
-    logInfo("Downloading content summary.");
+    QString contentSummaryPath = QString("1/apps/%1/versions/%2/content_summary").arg(patcherSecret, version);
+
+    logInfo("Downloading content summary from 1/apps/%1/versions/%2/content_summary.",
+            .arg(Logger::adjustSecretForLog(patcherSecret), version));
 
     ContentSummary summary;
 
@@ -93,10 +97,12 @@ bool RemotePatcherData::downloadWith(Downloader& downloader, QIODevice& t_dataTa
 
     const auto saveData = [&t_dataTarget](QByteArray& t_data)
     {
-        if (!t_dataTarget.open(QFile::WriteOnly))
+        if (!t_dataTarget.open(QIODevice::WriteOnly))
         {
             throw std::runtime_error("Couldn't open file for download.");
         }
+
+        logInfo("Saving downloaded data.");
 
         t_dataTarget.write(t_data);
 
@@ -107,7 +113,8 @@ bool RemotePatcherData::downloadWith(Downloader& downloader, QIODevice& t_dataTa
     {
         t_cancellationToken.throwIfCancelled();
 
-        logInfo("Downloading from %1", .arg(t_contentUrls[i]));
+        logInfo("Attempting download from url %1/%2: %3.",
+                .arg(QString::number(i), QString::number(t_contentUrls.size() - 1), t_contentUrls[i]));
 
         try
         {
@@ -115,13 +122,18 @@ bool RemotePatcherData::downloadWith(Downloader& downloader, QIODevice& t_dataTa
             {
                 downloadedData = downloader.downloadFile(t_contentUrls[i], Config::minConnectionTimeoutMsec);
 
+                logInfo("Download successful.");
+
                 saveData(downloadedData);
 
                 return true;
             }
             catch (TimeoutException&)
             {
+                logInfo("Timeout occured, retrying with an extended timeout.");
                 downloadedData = downloader.downloadFile(t_contentUrls[i], Config::maxConnectionTimeoutMsec);
+
+                logInfo("Download successful.");
 
                 saveData(downloadedData);
 

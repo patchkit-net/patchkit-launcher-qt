@@ -82,6 +82,9 @@ QByteArray ChunkedDownloader::downloadFile(const QString& t_urlPath, int t_reque
                 lastGoodChunksCount = m_chunks.size();
 
                 QByteArray header = "bytes=" + QByteArray::number(startIndex * getChunkSize()) + "-";
+
+                logInfo("Reformulating request URL: %1, Range header: %2", .arg(url.toString(), (QString)header));
+
                 request = QNetworkRequest(url);
                 request.setRawHeader("Range", header);
             }
