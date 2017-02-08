@@ -76,7 +76,7 @@ SCENARIO("Testing chunked downloader in multiple scenarios.", "[chunked_download
             MockedNAM nam;
 
             nam.push("link", data, 300);
-            nam.corruptNext();
+            nam.corrupt();
 
             THEN ("With a 1000 ms permitted timeout and 1000 ms permitted stale download timeout, the chunked download should succeed.")
             {

@@ -39,6 +39,7 @@ void MockedNetworkReply::launch()
     QTimer::singleShot( m_replyDelayMsec, this, [&]()
     {
         this->setFinished(true);
+        setAttribute(QNetworkRequest::HttpStatusCodeAttribute, QVariant::fromValue(200));
         emit readyRead();
         emit finished();
     });

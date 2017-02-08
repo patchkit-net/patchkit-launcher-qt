@@ -18,7 +18,10 @@ public:
     MockedNAM();
 
     void push(QString t_url, QByteArray t_data, int t_replyDelay);
-    void corruptNext();
+    void purge();
+    int  timesUrlAccessed(QString url) const;
+    void corrupt();
+    void corrupt(int t_amount);
 
 protected:
     virtual QNetworkReply* createRequest(Operation op, const QNetworkRequest& request, QIODevice* outgoingData) override;
@@ -29,21 +32,24 @@ private:
         ReplyDefinition(QByteArray t_data, int t_delay)
             : data(t_data)
             , delay(t_delay)
+            , timesAccesed(0)
         {
         }
 
         QByteArray data;
         int delay;
+
+        int timesAccesed;
     };
 
     QByteArray m_data;
     int m_replyDelay;
 
-    bool m_shouldCorruptNext;
+    int m_repliesToCorrupt;
 
     qint64 parseRangeHeader(const QByteArray& t_rangeHeader);
 
-    QMap<QString, ReplyDefinition> m_ReplyDefinitions;
+    QMap<QString, ReplyDefinition> m_replyDefinitions;
 };
 
 #endif // MOCKEDNAM_H

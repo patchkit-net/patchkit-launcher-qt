@@ -95,7 +95,7 @@ bool RemotePatcherData::downloadWith(Downloader& downloader, QIODevice& t_dataTa
 
     QByteArray downloadedData;
 
-    const auto saveData = [&t_dataTarget](QByteArray& t_data)
+    auto saveData = [&t_dataTarget](QByteArray& t_data)
     {
         if (!t_dataTarget.open(QIODevice::WriteOnly))
         {
