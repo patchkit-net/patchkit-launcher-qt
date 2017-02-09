@@ -45,7 +45,7 @@ SCENARIO("Testing chunked downloader in multiple scenarios.", "[chunked_download
 
             nam.push("link", data, 300);
 
-            ChunkedDownloader downloader(&nam, summary, &HashingStrategy::xxHash, 1000, token);
+            ChunkedDownloader downloader(&nam, summary, &HashingStrategy::xxHash, token);
 
             THEN ("With a 1000 ms permitted timeout, the chunked download should succeed.")
             {
@@ -80,118 +80,11 @@ SCENARIO("Testing chunked downloader in multiple scenarios.", "[chunked_download
 
             THEN ("With a 1000 ms permitted timeout and 1000 ms permitted stale download timeout, the chunked download should succeed.")
             {
-                ChunkedDownloader downloader(&nam, summary, &HashingStrategy::xxHash, 1000, token);
+                ChunkedDownloader downloader(&nam, summary, &HashingStrategy::xxHash, token);
 
                 QByteArray downloadedData = downloader.downloadFile("link", 1000);
 
                 REQUIRE(downloadedData.toStdString() == data.toStdString());
-            }
-        }
-    }
-}
-
-SCENARIO("Testing the chunked downloader's stale download functionality.", "[chunked_downloader]")
-{
-    std::shared_ptr<CancellationTokenSource> tokenSource(new CancellationTokenSource());
-    CancellationToken token(tokenSource);
-
-    GIVEN("A constant data set in chunks with a content summary.")
-    {
-        const QByteArray data = "ABCDEFGHIJ";
-
-        ContentSummary summary(1, 0, "none", "none", "xxHash",
-        {
-            HashingStrategy::xxHash(data.mid(0, 1)),
-            HashingStrategy::xxHash(data.mid(1, 1)),
-            HashingStrategy::xxHash(data.mid(2, 1)),
-            HashingStrategy::xxHash(data.mid(3, 1)),
-            HashingStrategy::xxHash(data.mid(4, 1)),
-            HashingStrategy::xxHash(data.mid(5, 1)),
-            HashingStrategy::xxHash(data.mid(6, 1)),
-            HashingStrategy::xxHash(data.mid(7, 1)),
-            HashingStrategy::xxHash(data.mid(8, 1)),
-            HashingStrategy::xxHash(data.mid(9, 1))
-        },
-        {});
-
-        GIVEN("A mocked NAM replying to 'link' always with an empty reply in 100 ms")
-        {
-            MockedNAM nam;
-
-            nam.push("link", "", 100);
-
-            GIVEN("A chunked downloader config permitting 500 ms stale download timeout.")
-            {
-                ChunkedDownloader downloader(&nam, summary, &HashingStrategy::xxHash, 500, token);
-
-                THEN("When downloading with 300 ms timeout a stale download exception should occur.")
-                {
-                    bool check = false;
-                    try
-                    {
-                        downloader.downloadFile("link", 300);
-                    }
-                    catch(StaleDownloadException&)
-                    {
-                        check = true;
-                    }
-
-                    REQUIRE(check == true);
-                }
-            }
-        }
-    }
-}
-
-SCENARIO("Testing the chunked downloader's stale download functionality with a corrupted data set.", "[chunked_downloader]")
-{
-    std::shared_ptr<CancellationTokenSource> tokenSource(new CancellationTokenSource());
-    CancellationToken token(tokenSource);
-
-    GIVEN("A corrupted data set in chunks with a content summary.")
-    {
-        const QByteArray data =         "ABCDEFGHIJ";
-        const QByteArray corrupedData = "1234567890";
-
-        ContentSummary summary(1, 0, "none", "none", "xxHash",
-        {
-            HashingStrategy::xxHash(data.mid(0, 1)),
-            HashingStrategy::xxHash(data.mid(1, 1)),
-            HashingStrategy::xxHash(data.mid(2, 1)),
-            HashingStrategy::xxHash(data.mid(3, 1)),
-            HashingStrategy::xxHash(data.mid(4, 1)),
-            HashingStrategy::xxHash(data.mid(5, 1)),
-            HashingStrategy::xxHash(data.mid(6, 1)),
-            HashingStrategy::xxHash(data.mid(7, 1)),
-            HashingStrategy::xxHash(data.mid(8, 1)),
-            HashingStrategy::xxHash(data.mid(9, 1))
-        },
-        {});
-
-        GIVEN("A mocked NAM replying to 'link' with a corruped data reply in 100 ms")
-        {
-            MockedNAM nam;
-
-            nam.push("link", corrupedData, 100);
-
-            GIVEN("A chunked downloader config permitting 1000 ms stale download timeout.")
-            {
-                ChunkedDownloader downloader(&nam, summary, &HashingStrategy::xxHash, 1000, token);
-
-                THEN("When downloading with 300 ms timeout a stale download exception should occur.")
-                {
-                    bool check = false;
-                    try
-                    {
-                        downloader.downloadFile("link", 300);
-                    }
-                    catch(StaleDownloadException&)
-                    {
-                        check = true;
-                    }
-
-                    REQUIRE(check == true);
-                }
             }
         }
     }
@@ -206,7 +99,6 @@ SCENARIO("Simulating RemotePatcherData's alternate url's functionality.", "[chun
     {
         const QByteArray data =         "ABCDEFGHIJ";
 
-        int staleDownloadTimeoutMsec = 1000;
         int minTimeoutMsec = 100;
         int maxTimeoutMsec = 300;
 
@@ -231,7 +123,7 @@ SCENARIO("Simulating RemotePatcherData's alternate url's functionality.", "[chun
             nam.push("link1", data, 400);
             nam.push("link2", data, 200);
 
-            ChunkedDownloader downloader(&nam, summary, HashingStrategy::xxHash, staleDownloadTimeoutMsec, token);
+            ChunkedDownloader downloader(&nam, summary, HashingStrategy::xxHash, token);
 
             int timeoutCount = 0;
 

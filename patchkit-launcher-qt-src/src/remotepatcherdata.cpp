@@ -232,7 +232,7 @@ bool RemotePatcherData::saveData(QByteArray& t_data, QIODevice& t_dataTarget)
 
 bool RemotePatcherData::downloadChunked(QIODevice& t_dataTarget, const QStringList& t_contentUrls, ContentSummary& t_contentSummary, CancellationToken t_cancellationToken)
 {
-    ChunkedDownloader downloader(m_networkAccessManager, t_contentSummary, HashingStrategy::xxHash, Config::chunkedDownloadStaleTimeoutMsec, t_cancellationToken);
+    ChunkedDownloader downloader(m_networkAccessManager, t_contentSummary, HashingStrategy::xxHash, t_cancellationToken);
 
     return downloadWith((Downloader&) downloader, t_dataTarget, t_contentUrls, t_cancellationToken);
 }

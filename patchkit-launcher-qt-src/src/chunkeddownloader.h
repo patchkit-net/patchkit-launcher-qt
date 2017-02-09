@@ -46,7 +46,6 @@ public:
             QNetworkAccessManager* t_dataSource,
             const ContentSummary& t_contentSummary,
             HashFunc t_hashingStrategy,
-            int t_staleDownloadTimeoutMsec,
             CancellationToken t_cancellationToken
             );
 
@@ -59,8 +58,6 @@ protected slots:
     virtual void onDownloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes) override;
 
 private:
-    int                     m_staleTimeoutMsec;
-
     bool                    m_running;
 
     QVector<QByteArray>     m_chunks;
