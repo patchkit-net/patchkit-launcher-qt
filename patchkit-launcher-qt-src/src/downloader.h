@@ -21,8 +21,10 @@ public:
 
     typedef long long TByteCount;
 
-    virtual QByteArray  downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec);
+    virtual QByteArray  downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec, int* t_replyStatusCode = nullptr);
     QString downloadString(const QString& t_urlPath, int t_requestTimeoutMsec, int& t_replyStatusCode) const;
+
+    static bool doesStatusCodeIndicateSuccess(int t_statusCode);
 
 signals:
     void downloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes);
@@ -35,7 +37,7 @@ protected slots:
     virtual void onDownloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes);
 
 protected:
-    QByteArray          downloadFile(const QNetworkRequest& t_request, int t_requestTimeoutMsec);
+    QByteArray downloadFile(const QNetworkRequest& t_request, int t_requestTimeoutMsec, int* t_replyStatusCode = nullptr);
 
     void fetchReply(const QString& t_urlPath, TRemoteDataReply& t_reply) const;
     void fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataReply& t_reply) const;

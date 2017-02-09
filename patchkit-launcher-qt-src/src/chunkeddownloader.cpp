@@ -29,7 +29,7 @@ ChunkedDownloader::ChunkedDownloader(
 {
 }
 
-QByteArray ChunkedDownloader::downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec)
+QByteArray ChunkedDownloader::downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec, int* t_replyStatusCode)
 {
     if (!m_hashingStrategy)
     {
@@ -43,43 +43,37 @@ QByteArray ChunkedDownloader::downloadFile(const QString& t_urlPath, int t_reque
 
     request = QNetworkRequest(url);
 
-    QTime timeSinceLastGoodChunkDownloaded = QTime::currentTime();
-    int lastGoodChunksCount = 0;
-
     m_running = true;
 
-    bool downloadSuccesful = false;
+    int replyStatusCode = -1;
 
     while (!shouldStop())
     {
         try
         {
-            data = Downloader::downloadFile(request, t_requestTimeoutMsec);
+            data = Downloader::downloadFile(request, t_requestTimeoutMsec, &replyStatusCode);
+
+            if (t_replyStatusCode != nullptr)
+            {
+                *t_replyStatusCode = replyStatusCode;
+            }
+
+            if (!doesStatusCodeIndicateSuccess(replyStatusCode))
+            {
+                throw std::runtime_error(QString("Chunked download failed, status code was %1.").arg(replyStatusCode).toStdString());
+            }
 
             if (validateReceivedData(data))
             {
-                downloadSuccesful = true;
                 break;
             }
             else
             {
-                if (lastGoodChunksCount != m_chunks.size() && m_chunks.size() != 0)
-                {
-                    timeSinceLastGoodChunkDownloaded = QTime::currentTime();
-                }
-
-                if (timeSinceLastGoodChunkDownloaded.msecsTo(QTime::currentTime()) > m_staleTimeoutMsec)
-                {
-                    break;
-                }
-
                 int startIndex = m_lastValidChunkIndex + 1;
                 if (m_lastValidChunkIndex == 0)
                 {
                     startIndex = 0;
                 }
-
-                lastGoodChunksCount = m_chunks.size();
 
                 QByteArray header = "bytes=" + QByteArray::number(startIndex * getChunkSize()) + "-";
 
@@ -97,15 +91,6 @@ QByteArray ChunkedDownloader::downloadFile(const QString& t_urlPath, int t_reque
         {
             throw;
         }
-        catch(...)
-        {
-            throw std::runtime_error("Unexpected exception in ChunkedDownloader");
-        }
-    }
-
-    if (!downloadSuccesful)
-    {
-        throw StaleDownloadException();
     }
 
     QByteArray reassembledData;

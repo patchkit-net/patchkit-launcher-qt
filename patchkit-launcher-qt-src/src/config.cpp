@@ -24,6 +24,8 @@ const int Config::maxConnectionTimeoutMsec = 30000;
 
 const int Config::chunkedDownloadStaleTimeoutMsec = 120000;
 
+const int Config::timeBetweenContentUrlsIterations = 10000;
+
 const QString Config::mainApiUrl = "http://api.patchkit.net";
 const QStringList Config::cacheApiUrls = (QStringList() << "http://api-cache-1.patchkit.net"
     << "http://api-cache-2.patchkit.net"

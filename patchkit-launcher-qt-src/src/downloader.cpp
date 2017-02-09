@@ -14,14 +14,14 @@ Downloader::Downloader(QNetworkAccessManager* t_dataSource, CancellationToken& t
 {
 }
 
-QByteArray Downloader::downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec)
+QByteArray Downloader::downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec, int* t_replyStatusCode)
 {
     QNetworkRequest request(t_urlPath);
 
-    return downloadFile(request, t_requestTimeoutMsec);
+    return downloadFile(request, t_requestTimeoutMsec, t_replyStatusCode);
 }
 
-QByteArray Downloader::downloadFile(const QNetworkRequest& t_request, int t_requestTimeoutMsec)
+QByteArray Downloader::downloadFile(const QNetworkRequest& t_request, int t_requestTimeoutMsec, int* t_replyStatusCode)
 {
     TRemoteDataReply reply;
 
@@ -32,8 +32,17 @@ QByteArray Downloader::downloadFile(const QNetworkRequest& t_request, int t_requ
     waitForReply(reply, t_requestTimeoutMsec);
     validateReply(reply);
 
-    // For logging purposes
-    getReplyStatusCode(reply);
+    int replyStatusCode = getReplyStatusCode(reply);
+
+    if (t_replyStatusCode != nullptr)
+    {
+        *t_replyStatusCode = replyStatusCode;
+    }
+
+    if (replyStatusCode < 200 || replyStatusCode >= 300)
+    {
+        return QByteArray();
+    }
 
     waitForFileDownload(reply);
 
@@ -55,6 +64,11 @@ QString Downloader::downloadString(const QString& t_urlPath, int t_requestTimeou
     t_replyStatusCode = getReplyStatusCode(reply);
 
     return reply->readAll();
+}
+
+bool Downloader::doesStatusCodeIndicateSuccess(int t_statusCode)
+{
+    return t_statusCode >= 200 && t_statusCode < 300;
 }
 
 void Downloader::abort()

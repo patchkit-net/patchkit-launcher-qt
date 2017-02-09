@@ -55,6 +55,7 @@ void RemotePatcherData::download(QIODevice& t_dataTarget, const Data& t_data, in
     try
     {
         summary = m_api.downloadContentSummary(contentSummaryPath, t_cancellationToken);
+        logInfo("Successfully downloaded the content summary.");
     }
     catch(std::runtime_error& err)
     {
@@ -68,12 +69,23 @@ void RemotePatcherData::download(QIODevice& t_dataTarget, const Data& t_data, in
         {
             return;
         }
+        else
+        {
+            logWarning("Chunked download failed, application will fall back on simple HTTP download.");
+        }
     }
-
-    logInfo("Chunked download failed or isn't available, falling back on simple HTTP.");
-    if (downloadDirect(t_dataTarget, contentUrls, t_cancellationToken))
+    else
     {
-        return;
+        logWarning("Content summary is invalid, application will fall back on simple HTTP download.");
+        logInfo("Beginning HTTP download.");
+        if (downloadDirect(t_dataTarget, contentUrls, t_cancellationToken))
+        {
+            return;
+        }
+        else
+        {
+            logCritical("Download failed entirely.");
+        }
     }
 
     throw std::runtime_error("Unable to download patcher version - " + std::to_string(t_version));
@@ -93,80 +105,129 @@ bool RemotePatcherData::downloadWith(Downloader& downloader, QIODevice& t_dataTa
 {
     connect(&downloader, &Downloader::downloadProgressChanged, this, &RemotePatcherData::downloadProgressChanged);
 
-    QByteArray downloadedData;
+    QTime iterationStart = QTime::currentTime();
+    logInfo("Download process start.");
 
-    auto saveData = [&t_dataTarget](QByteArray& t_data)
+    while(iterationStart.msecsTo(QTime::currentTime()) < Config::chunkedDownloadStaleTimeoutMsec)
     {
-        if (!t_dataTarget.open(QIODevice::WriteOnly))
+        logInfo("Starting new iteration.");
+        for (int i = 0; i < t_contentUrls.size(); i++)
         {
-            throw std::runtime_error("Couldn't open file for download.");
-        }
+            t_cancellationToken.throwIfCancelled();
 
-        logInfo("Saving downloaded data.");
+            logInfo("Attempting to download patcher from url %1/%2: %3.",
+                    .arg(QString::number(i+1), QString::number(t_contentUrls.size()), t_contentUrls[i]));
 
-        t_dataTarget.write(t_data);
-
-        t_dataTarget.close();
-    };
-
-    for (int i = 0; i < t_contentUrls.size(); i++)
-    {
-        t_cancellationToken.throwIfCancelled();
-
-        logInfo("Attempting download from url %1/%2: %3.",
-                .arg(QString::number(i), QString::number(t_contentUrls.size() - 1), t_contentUrls[i]));
-
-        try
-        {
             try
             {
-                downloadedData = downloader.downloadFile(t_contentUrls[i], Config::minConnectionTimeoutMsec);
-
-                logInfo("Download successful.");
-
-                saveData(downloadedData);
-
-                return true;
+                if (downloadWithInternal(downloader, t_dataTarget, t_contentUrls[i], t_cancellationToken))
+                {
+                    return true;
+                }
             }
-            catch (TimeoutException&)
+            catch (CancelledException&)
             {
-                logInfo("Timeout occured, retrying with an extended timeout.");
-                downloadedData = downloader.downloadFile(t_contentUrls[i], Config::maxConnectionTimeoutMsec);
-
-                logInfo("Download successful.");
-
-                saveData(downloadedData);
-
-                return true;
+                throw;
+            }
+            catch (QException& exception)
+            {
+                logWarning(exception.what());
+            }
+            catch (std::runtime_error& err)
+            {
+                logWarning(err.what());
+            }
+            catch (...)
+            {
+                logWarning("Unknown exception while downloading patcher.");
             }
         }
-        catch (CancelledException&)
-        {
-            throw;
-        }
-        catch (TimeoutException&)
-        {
-            logWarning("Connection has timed out.");
-        }
-        catch (StaleDownloadException&)
-        {
-            logWarning("Download gone stale.");
-        }
-        catch (QException& exception)
-        {
-            logWarning(exception.what());
-        }
-        catch (std::runtime_error& err)
-        {
-            logWarning(QString("STD runtime error: %1").arg(err.what()));
-        }
-        catch (...)
-        {
-            logWarning("Unknown exception while downloading patcher.");
-        }
+
+        t_cancellationToken.throwIfCancelled();
+        QEventLoop waitLoop;
+        connect(&t_cancellationToken, &CancellationToken::cancelled, &waitLoop, &QEventLoop::quit);
+        QTimer::singleShot(Config::timeBetweenContentUrlsIterations, &waitLoop, &QEventLoop::quit);
+        waitLoop.exec();
     }
 
+    logCritical("After %1 seconds of unsuccessful downloads, the operation was unsuccessful."
+               , .arg(iterationStart.secsTo(QTime::currentTime())));
     return false;
+}
+
+bool RemotePatcherData::downloadWithInternal(Downloader& t_downloader, QIODevice& t_dataTarget, const QString& t_url, CancellationToken t_cancellationToken)
+{
+    QByteArray downloadedData;
+    try
+    {
+        int statusCode = -1;
+        try
+        {
+            downloadedData = t_downloader.downloadFile(t_url, Config::minConnectionTimeoutMsec, &statusCode);
+
+            if (!Downloader::doesStatusCodeIndicateSuccess(statusCode))
+            {
+                return false;
+            }
+
+            if (saveData(downloadedData, t_dataTarget))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        catch(TimeoutException&)
+        {
+            logWarning("Timeout after %1 msecs, retrying with an allowed timeout of %2 msec.",
+                       .arg(QString::number(Config::minConnectionTimeoutMsec), QString::number(Config::maxConnectionTimeoutMsec)));
+
+            downloadedData.clear();
+
+            downloadedData = t_downloader.downloadFile(t_url, Config::maxConnectionTimeoutMsec, &statusCode);
+
+            if (!Downloader::doesStatusCodeIndicateSuccess(statusCode))
+            {
+                return false;
+            }
+
+            if (saveData(downloadedData, t_dataTarget))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+    catch(TimeoutException&)
+    {
+        return false;
+    }
+    catch(...)
+    {
+        throw;
+    }
+}
+
+bool RemotePatcherData::saveData(QByteArray& t_data, QIODevice& t_dataTarget)
+{
+    if (!t_dataTarget.open(QIODevice::WriteOnly))
+    {
+        logWarning("Couldn't open data target for writing.");
+        return false;
+    }
+
+    logInfo("Saving downloaded data.");
+
+    t_dataTarget.write(t_data);
+
+    t_dataTarget.close();
+
+    return true;
 }
 
 bool RemotePatcherData::downloadChunked(QIODevice& t_dataTarget, const QStringList& t_contentUrls, ContentSummary& t_contentSummary, CancellationToken t_cancellationToken)

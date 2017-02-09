@@ -50,7 +50,7 @@ public:
             CancellationToken t_cancellationToken
             );
 
-    QByteArray downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec) override;
+    QByteArray downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec, int* t_replyStatusCode = nullptr) override;
 
 public slots:
     virtual void abort() override;
