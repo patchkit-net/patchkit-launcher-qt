@@ -11,9 +11,9 @@ MockedNAM::MockedNAM()
 {
 }
 
-void MockedNAM::push(QString t_url, QByteArray t_data, int t_replyDelay)
+void MockedNAM::push(QString t_url, QByteArray t_data, int t_replyDelay, int t_statusCode)
 {
-    m_replyDefinitions.insert(t_url, ReplyDefinition(t_data, t_replyDelay));
+    m_replyDefinitions.insert(t_url, ReplyDefinition(t_data, t_replyDelay, t_statusCode));
 }
 
 void MockedNAM::purge()
@@ -55,7 +55,7 @@ QNetworkReply* MockedNAM::createRequest(QNetworkAccessManager::Operation /*op*/,
     ReplyDefinition& def = *m_replyDefinitions.find(url);
     ++def.timesAccesed;
 
-    MockedNetworkReply* reply = new MockedNetworkReply(def.delay, def.data);
+    MockedNetworkReply* reply = new MockedNetworkReply(def.delay, def.data, def.statusCode);
 
     reply->setOffset(offset);
 

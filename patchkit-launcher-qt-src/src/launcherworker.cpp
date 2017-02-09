@@ -36,7 +36,7 @@ void LauncherWorker::run()
         runWithDataFromFile();
 
         m_result = SUCCESS;
-        logInfo("Launcher has succeed.");
+        logInfo("Launcher has succeeded.");
     }
     catch (CancelledException&)
     {

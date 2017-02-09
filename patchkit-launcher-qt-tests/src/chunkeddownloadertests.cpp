@@ -15,6 +15,69 @@
 
 #include "mockednam.h"
 
+SCENARIO("Testing how status codes affect the chunked downloader", "[chunked_downloader]")
+{
+    std::shared_ptr<CancellationTokenSource> tokenSource(new CancellationTokenSource());
+    CancellationToken token(tokenSource);
+
+    GIVEN("A mocked NAM which replies with various error status codes.")
+    {
+        QByteArray data = "ABCDEFGHIJ";
+
+        ContentSummary summary(1, 0, "none", "none", "xxHash",
+        {
+            HashingStrategy::xxHash(data.mid(0, 1)),
+            HashingStrategy::xxHash(data.mid(1, 1)),
+            HashingStrategy::xxHash(data.mid(2, 1)),
+            HashingStrategy::xxHash(data.mid(3, 1)),
+            HashingStrategy::xxHash(data.mid(4, 1)),
+            HashingStrategy::xxHash(data.mid(5, 1)),
+            HashingStrategy::xxHash(data.mid(6, 1)),
+            HashingStrategy::xxHash(data.mid(7, 1)),
+            HashingStrategy::xxHash(data.mid(8, 1)),
+            HashingStrategy::xxHash(data.mid(9, 1))
+        },
+        {});
+
+        int namReplyDelay = 200;
+        QStringList urls =
+        {
+            "link1",
+            "link3",
+            "link4",
+            "link5"
+        };
+
+        MockedNAM nam;
+        nam.push(urls[0], data, namReplyDelay, 100);
+        nam.push(urls[1], data, namReplyDelay, 300);
+        nam.push(urls[2], data, namReplyDelay, 400);
+        nam.push(urls[3], data, namReplyDelay, 500);
+
+        ChunkedDownloader downloader(&nam, summary, &HashingStrategy::xxHash, token);
+
+        int permittedTimeout = 1000;
+
+        THEN("An exception should occur and the download should fail for every one of them.")
+        {
+            for (QString& url : urls)
+            {
+                bool check = false;
+                try
+                {
+                    downloader.downloadFile(url, permittedTimeout);
+                }
+                catch(...)
+                {
+                    check = true;
+                }
+
+                CHECK(check == true);
+            }
+        }
+    }
+}
+
 SCENARIO("Testing chunked downloader in multiple scenarios.", "[chunked_downloader]")
 {
     std::shared_ptr<CancellationTokenSource> tokenSource(new CancellationTokenSource());

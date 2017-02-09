@@ -108,6 +108,11 @@ bool RemotePatcherData::downloadWith(Downloader& downloader, QIODevice& t_dataTa
     QTime iterationStart = QTime::currentTime();
     logInfo("Download process start.");
 
+    connect(&downloader, &Downloader::downloadProgressChanged, [&iterationStart]()
+    {
+        iterationStart = QTime::currentTime();
+    });
+
     while(iterationStart.msecsTo(QTime::currentTime()) < Config::chunkedDownloadStaleTimeoutMsec)
     {
         logInfo("Starting new iteration.");

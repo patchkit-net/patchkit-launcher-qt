@@ -17,7 +17,7 @@ class MockedNAM : public QNetworkAccessManager
 public:
     MockedNAM();
 
-    void push(QString t_url, QByteArray t_data, int t_replyDelay);
+    void push(QString t_url, QByteArray t_data, int t_replyDelay, int t_statusCode = 200);
     void purge();
     int  timesUrlAccessed(QString url) const;
     void corrupt();
@@ -29,16 +29,18 @@ protected:
 private:
     struct ReplyDefinition
     {
-        ReplyDefinition(QByteArray t_data, int t_delay)
+        ReplyDefinition(QByteArray t_data, int t_delay, int t_statusCode = 200)
             : data(t_data)
             , delay(t_delay)
             , timesAccesed(0)
+            , statusCode(t_statusCode)
         {
         }
 
         QByteArray data;
         int delay;
 
+        int statusCode;
         int timesAccesed;
     };
 
