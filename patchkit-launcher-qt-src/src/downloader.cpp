@@ -7,6 +7,7 @@
 
 #include "logger.h"
 #include "timeoutexception.h"
+#include "config.h"
 
 Downloader::Downloader(QNetworkAccessManager* t_dataSource, CancellationToken& t_cancellationToken)
     : m_remoteDataSource(t_dataSource)
@@ -75,7 +76,7 @@ bool Downloader::checkInternetConnection()
 {
     QProcess proc;
     QString exec = "ping";
-    QStringList params = {"8.8.8.8", "-n", "1"};
+    QStringList params = {Config::pingTarget, Config::pingCountArg, "1"};
 
     proc.start(exec, params);
 

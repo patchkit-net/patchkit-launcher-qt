@@ -33,4 +33,7 @@ public:
 
     const static QString mainApiUrl;
     const static QStringList cacheApiUrls;
+
+    const static QString pingTarget;
+    const static QString pingCountArg;
 };
