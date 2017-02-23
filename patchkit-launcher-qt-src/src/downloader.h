@@ -25,6 +25,7 @@ public:
     QString downloadString(const QString& t_urlPath, int t_requestTimeoutMsec, int& t_replyStatusCode) const;
 
     static bool doesStatusCodeIndicateSuccess(int t_statusCode);
+    static bool checkInternetConnection();
 
 signals:
     void downloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes);

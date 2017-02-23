@@ -71,6 +71,33 @@ bool Downloader::doesStatusCodeIndicateSuccess(int t_statusCode)
     return t_statusCode >= 200 && t_statusCode < 300;
 }
 
+bool Downloader::checkInternetConnection()
+{
+    QProcess proc;
+    QString exec = "ping";
+    QStringList params = {"8.8.8.8", "-n", "1"};
+
+    proc.start(exec, params);
+
+    if (!proc.waitForFinished())
+    {
+        return false;
+    }
+
+    if (proc.exitCode() == 0)
+    {
+        return true;
+    }
+    else
+    {
+        logWarning("No internet connection.");
+        QString p_stdout = proc.readAllStandardOutput();
+        logInfo("Ping output was: %1", .arg(p_stdout));
+
+        return false;
+    }
+}
+
 void Downloader::abort()
 {
     emit terminate();
