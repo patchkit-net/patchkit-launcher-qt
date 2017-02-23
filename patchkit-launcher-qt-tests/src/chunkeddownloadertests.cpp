@@ -14,6 +14,7 @@
 #include "src/staledownloadexception.h"
 
 #include "mockednam.h"
+#include "custommacros.h"
 
 SCENARIO("Testing how status codes affect the chunked downloader", "[chunked_downloader]")
 {
@@ -62,17 +63,7 @@ SCENARIO("Testing how status codes affect the chunked downloader", "[chunked_dow
         {
             for (QString& url : urls)
             {
-                bool check = false;
-                try
-                {
-                    downloader.downloadFile(url, permittedTimeout);
-                }
-                catch(...)
-                {
-                    check = true;
-                }
-
-                CHECK(check == true);
+                EXPECT_ANY(downloader.downloadFile(url, permittedTimeout));
             }
         }
     }
@@ -119,18 +110,7 @@ SCENARIO("Testing chunked downloader in multiple scenarios.", "[chunked_download
 
             THEN ("With a 200 ms permitted timeout, an exception should occur.")
             {
-                bool timeoutCaught = false;
-
-                try
-                {
-                    downloader.downloadFile("link", 200);
-                }
-                catch (TimeoutException&)
-                {
-                    timeoutCaught = true;
-                }
-
-                REQUIRE(timeoutCaught == true);
+                EXPECT(downloader.downloadFile("link", 200), TimeoutException&);
             }
         }
 
