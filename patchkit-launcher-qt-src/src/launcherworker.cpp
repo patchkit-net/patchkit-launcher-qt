@@ -6,6 +6,7 @@
 #include "launcherworker.h"
 
 #include <QtMath>
+#include <QMessageBox>
 
 #include "logger.h"
 #include "locations.h"
@@ -119,13 +120,6 @@ void LauncherWorker::runWithDataFromFile()
 
 void LauncherWorker::runWithData(Data& t_data)
 {
-    if (!Downloader::checkInternetConnection() && m_localPatcher.isInstalled())
-    {
-        logInfo("No internet connection but patcher is installed.");
-        startPatcher(t_data);
-        return;
-    }
-
     try
     {
         logInfo("Starting launcher.");
