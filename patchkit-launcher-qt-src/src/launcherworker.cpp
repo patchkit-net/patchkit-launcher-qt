@@ -64,6 +64,7 @@ void LauncherWorker::run()
 
 LauncherWorker::LauncherWorker()
     : m_cancellationTokenSource(new CancellationTokenSource())
+    , m_api(m_cancellationTokenSource)
     , m_result(NONE)
     , m_remotePatcher(m_api, &m_networkAccessManager)
 {

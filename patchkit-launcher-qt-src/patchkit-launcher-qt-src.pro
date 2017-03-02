@@ -9,7 +9,9 @@ CONFIG += staticlib
 INCLUDEPATH += $$PWD/src
 
 SOURCES     += $$PWD/src/*.cpp \
-    src/apioperator.cpp
+    src/apioperator.cpp \
+    src/downloadoperator.cpp
 SOURCES     += $$PWD/src/*.c
 HEADERS     += $$PWD/src/*.h \
-    src/apioperator.h
+    src/apioperator.h \
+    src/downloadoperator.h

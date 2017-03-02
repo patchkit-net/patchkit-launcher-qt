@@ -4,19 +4,18 @@
 #include <QJsonDocument>
 
 #include "iapi.h"
+#include "contentsummary.h"
 
 class ApiOperator
 {
 public:
     ApiOperator(const IApi& t_api);
 
-    // Configuration options
-    void setMinTimeout(int t_timeout);
-    void setMaxTimeout(int t_timeout);
-    void setTimeoutCountTolerance(int t_tolerance);
-
     // Operations
-    QJsonDocument downloadContentSummary();
+    ContentSummary downloadContentSummary();
+    int downloadVersion();
+    QString downloadPatcherSecret();
+
 
 private:
 
