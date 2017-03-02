@@ -57,7 +57,8 @@ private:
         return parsed;
     }
 
-    QString downloadRawDataInternal(const QString& t_url);
+    QString downloadRawData(const QString& t_resourceUrl, IApi::ApiOperationCallback cb, bool* t_ok);
+    QString downloadRawDataInternal(const QString& t_url, int t_timeout, bool* t_ok);
 
     int m_minTimeout;
     int m_maxTimeout;
