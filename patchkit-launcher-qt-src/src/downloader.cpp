@@ -9,62 +9,76 @@
 #include "timeoutexception.h"
 #include "config.h"
 
-Downloader::Downloader(QNetworkAccessManager* t_dataSource, CancellationToken& t_cancellationToken)
+Downloader::Downloader
+    (const QString& t_resourceUrl,
+     TDataSource t_dataSource,
+     CancellationToken& t_cancellationToken)
     : m_remoteDataSource(t_dataSource)
     , m_cancellationToken(t_cancellationToken)
+    , m_resourceRequest(QUrl(t_resourceUrl))
 {
 }
 
-QByteArray Downloader::downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec, int* t_replyStatusCode)
+void Downloader::start()
 {
-    QNetworkRequest request(t_urlPath);
+    fetchReply(m_resourceRequest, m_remoteDataReply);
 
-    return downloadFile(request, t_requestTimeoutMsec, t_replyStatusCode);
+    connect(m_remoteDataReply.data(), &QNetworkReply::readyRead, this, &Downloader::readyReadRelay);
+    connect(m_remoteDataReply.data(), &QNetworkReply::finished, this, &Downloader::finishedRelay);
+
+    connect(m_remoteDataReply.data(),
+            static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
+            this, &Downloader::errorRelay);
+
+    connect(&m_cancellationToken, &CancellationToken::cancelled, m_remoteDataReply.data(), &QNetworkReply::abort);
 }
 
-QByteArray Downloader::downloadFile(const QNetworkRequest& t_request, int t_requestTimeoutMsec, int* t_replyStatusCode)
+int Downloader::getStatusCode()
 {
-    TRemoteDataReply reply;
+    return getReplyStatusCode(m_remoteDataReply);
+}
 
-    fetchReply(t_request, reply);
+void Downloader::setRange(int t_bytesStart, int t_bytesEnd)
+{
+    QByteArray header = "bytes=" + QByteArray::number(t_bytesStart) + "-";
 
-    connect(reply.data(), &QNetworkReply::downloadProgress, this, &Downloader::onDownloadProgressChanged);
-
-    waitForReply(reply, t_requestTimeoutMsec);
-    validateReply(reply);
-
-    int replyStatusCode = getReplyStatusCode(reply);
-
-    if (t_replyStatusCode != nullptr)
+    if (t_bytesEnd != -1 && t_bytesEnd > t_bytesStart)
     {
-        *t_replyStatusCode = replyStatusCode;
+        header += QByteArray::number(t_bytesEnd);
     }
 
-    if (replyStatusCode < 200 || replyStatusCode >= 300)
-    {
-        return QByteArray();
-    }
-
-    waitForFileDownload(reply);
-
-    disconnect(reply.data(), &QNetworkReply::downloadProgress, this, &Downloader::onDownloadProgressChanged);
-
-    return reply->readAll();
+    m_resourceRequest.setRawHeader("Range", header);
 }
 
-QString Downloader::downloadString(const QString& t_urlPath, int t_requestTimeoutMsec, int& t_replyStatusCode) const
+QByteArray Downloader::readData()
 {
-    TRemoteDataReply reply;
+    return m_remoteDataReply->readAll();
+}
 
-    fetchReply(t_urlPath, reply);
-    waitForReply(reply, t_requestTimeoutMsec);
-    validateReply(reply);
+void Downloader::waitUntilFinished()
+{
+    waitForDownloadToFinish(m_remoteDataReply);
+}
 
-    waitForFileDownload(reply);
+void Downloader::readyReadRelay()
+{
+    emit downloadStarted();
+    disconnect(m_remoteDataReply.data(), &QNetworkReply::readyRead, this, &Downloader::readyReadRelay);
 
-    t_replyStatusCode = getReplyStatusCode(reply);
+    connect(m_remoteDataReply.data(), &QNetworkReply::downloadProgress, this, &Downloader::downloadProgressChanged);
+}
 
-    return reply->readAll();
+void Downloader::errorRelay(QNetworkReply::NetworkError t_errorCode)
+{
+    QMetaEnum metaEnum = QMetaEnum::fromType<QNetworkReply::NetworkError>();
+    logWarning("Network reply encountered an error: %1", .arg(metaEnum.valueToKey(t_errorCode)));
+
+    emit downloadError(t_errorCode);
+}
+
+void Downloader::finishedRelay()
+{
+    emit downloadFinished();
 }
 
 bool Downloader::doesStatusCodeIndicateSuccess(int t_statusCode)
@@ -99,21 +113,9 @@ bool Downloader::checkInternetConnection()
     }
 }
 
-void Downloader::abort()
+void Downloader::stop()
 {
-    emit terminate();
-}
-
-void Downloader::onDownloadProgressChanged(const Downloader::TByteCount& t_bytesDownloaded, const Downloader::TByteCount& t_totalBytes)
-{
-    emit downloadProgressChanged(t_bytesDownloaded, t_totalBytes);
-}
-
-void Downloader::fetchReply(const QString& t_urlPath, TRemoteDataReply& t_reply) const
-{
-    QUrl url(t_urlPath);
-
-    fetchReply(QNetworkRequest(url), t_reply);
+    m_remoteDataReply->abort();
 }
 
 void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataReply& t_reply) const
@@ -122,6 +124,11 @@ void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataRepl
 
     if (!t_reply.isNull())
     {
+        if (!t_reply->isFinished())
+        {
+            t_reply->abort();
+        }
+
         t_reply->deleteLater();
         t_reply.reset(nullptr);
     }
@@ -196,14 +203,12 @@ int Downloader::getReplyStatusCode(TRemoteDataReply& t_reply) const
 
     int statusCodeValue = statusCode.toInt();
 
-    logDebug("Reply status code - %1", .arg(statusCodeValue));
-
     return statusCodeValue;
 }
 
-void Downloader::waitForFileDownload(TRemoteDataReply& t_reply) const
+void Downloader::waitForDownloadToFinish(TRemoteDataReply& t_reply) const
 {
-    logInfo("Waiting for file download.");
+    logInfo("Waiting for download to finish.");
 
     if (t_reply->isFinished())
     {
@@ -219,22 +224,3 @@ void Downloader::waitForFileDownload(TRemoteDataReply& t_reply) const
 
     m_cancellationToken.throwIfCancelled();
 }
-
-void Downloader::restartDownload(TRemoteDataReply& t_reply, const QUrl& t_url) const
-{
-    QNetworkRequest request(t_url);
-    restartDownload(t_reply, request);
-}
-
-void Downloader::restartDownload(TRemoteDataReply& t_reply, const QNetworkRequest& t_request) const
-{
-    disconnect(t_reply.data(), &QNetworkReply::downloadProgress, this, &Downloader::onDownloadProgressChanged);
-    disconnect(this, &Downloader::terminate, t_reply.data(), &QNetworkReply::abort);
-
-    // Fetch a new reply
-    fetchReply(t_request, t_reply);
-
-    connect(t_reply.data(), &QNetworkReply::downloadProgress, this, &Downloader::onDownloadProgressChanged);
-    connect(this, &Downloader::terminate, t_reply.data(), &QNetworkReply::abort);
-}
-
