@@ -19,8 +19,7 @@ ChunkedDownloader::ChunkedDownloader(
         HashFunc t_hashingStrategy,
         CancellationToken t_cancellationToken
         )
-    : Downloader(t_dataSource, t_cancellationToken)
-    , m_contentSummary(t_contentSummary)
+    : m_contentSummary(t_contentSummary)
     , m_lastValidChunkIndex(0)
     , m_hashingStrategy(t_hashingStrategy)
     , m_running(true)
@@ -49,14 +48,14 @@ QByteArray ChunkedDownloader::downloadFile(const QString& t_urlPath, int t_reque
     {
         try
         {
-            data = Downloader::downloadFile(request, t_requestTimeoutMsec, &replyStatusCode);
+            //data = Downloader::downloadFile(request, t_requestTimeoutMsec, &replyStatusCode);
 
             if (t_replyStatusCode != nullptr)
             {
                 *t_replyStatusCode = replyStatusCode;
             }
 
-            if (!doesStatusCodeIndicateSuccess(replyStatusCode))
+            if (!Downloader::doesStatusCodeIndicateSuccess(replyStatusCode))
             {
                 throw std::runtime_error(QString("Chunked download failed, status code was %1.").arg(replyStatusCode).toStdString());
             }
@@ -103,7 +102,7 @@ QByteArray ChunkedDownloader::downloadFile(const QString& t_urlPath, int t_reque
 void ChunkedDownloader::onDownloadProgressChanged(const TByteCount &t_bytesDownloaded, const TByteCount &t_totalBytes)
 {
     TByteCount bytesInValidChunksDownloadedSoFar = m_lastValidChunkIndex * getChunkSize();
-    emit Downloader::downloadProgressChanged(bytesInValidChunksDownloadedSoFar + t_bytesDownloaded, bytesInValidChunksDownloadedSoFar+ t_totalBytes);
+    emit downloadProgress(bytesInValidChunksDownloadedSoFar + t_bytesDownloaded, bytesInValidChunksDownloadedSoFar+ t_totalBytes);
 }
 
 bool ChunkedDownloader::shouldStop() const
@@ -113,8 +112,6 @@ bool ChunkedDownloader::shouldStop() const
 
 void ChunkedDownloader::abort()
 {
-    Downloader::abort();
-
     m_running = false;
 }
 

@@ -10,6 +10,13 @@
 
 #include "cancellationtoken.h"
 
+typedef long long TByteCount;
+
+struct DownloadProgress
+{
+
+};
+
 class Downloader : public QObject
 {
     Q_OBJECT
@@ -17,28 +24,36 @@ class Downloader : public QObject
 public:
     typedef QNetworkAccessManager* TDataSource;
 
-    typedef long long TByteCount;
-
     typedef QSharedPointer<QNetworkReply> TRemoteDataReply;
 
     Downloader(const QString& t_resourceUrl, TDataSource t_dataSource, CancellationToken& t_cancellationToken);
+    ~Downloader();
 
     void start();
-    int getStatusCode();
+
+    int  getStatusCode();
+
     void setRange(int t_bytesStart, int t_bytesEnd = -1);
 
-    QByteArray readData();
-
     void waitUntilFinished();
+
+    bool wasStarted() const;
+    bool isFinished() const;
+    bool isRunning() const;
+    bool hasFinishedWithoutErrors() const;
+
+    QByteArray readData();
 
     static bool doesStatusCodeIndicateSuccess(int t_statusCode);
     static bool checkInternetConnection();
 
 signals:
-    void downloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes) const;
-    void downloadStarted(); // This method signals when the first portion of bytes was received.
-    void downloadFinished(); // Signals that the download has finished without errors
-    void downloadError(QNetworkReply::NetworkError t_errorCode); // Signals that the download was stopped for some reason
+    void downloadProgressChanged(TByteCount t_bytesDownloaded, TByteCount t_totalBytes) const;
+    void downloadStarted();
+    void downloadFinished();
+    void downloadError(QNetworkReply::NetworkError t_errorCode);
+
+    void timeout();
 
 public slots:
     void stop();

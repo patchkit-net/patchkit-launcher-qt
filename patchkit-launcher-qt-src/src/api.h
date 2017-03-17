@@ -12,24 +12,20 @@
 #include "contentsummary.h"
 
 #include "iapi.h"
+#include "downloader.h"
 
 class Api : public QObject, public IApi
 {
-    typedef bool (*TValidator)(const QString&);
-
     Q_OBJECT
 public:
-    explicit Api(QObject* parent = nullptr);
+    explicit Api(Downloader::TDataSource t_dataSource, CancellationToken t_cancellationToken, QObject* parent = nullptr);
 
-    QString downloadString(const QString& t_resourceUrl, CancellationToken t_cancellationToken) const override;
-
-    QJsonDocument downloadContentSummary(const QString& t_resourceUrl, CancellationToken t_cancellationToken) const override;
+    ContentSummary  downloadContentSummary(const QString& t_resourceUrl) override;
+    QString         downloadPatcherSecret(const QString& t_resourceUrl) override;
+    int             downloadPatcherVersion(const QString& t_resourceUrl) override;
+    QStringList     downloadContentUrls(const QString& t_resourceUrl) override;
 
 private:
-    QString downloadString(const QString& t_resourceUrl, QStringList& t_cacheApiUrls, bool t_extendedTimeout, CancellationToken t_cancellationToken) const;
-    QString downloadString(const QString& t_resourceUrl, QStringList& t_cacheApiUrls, TValidator t_validator, bool t_extendedTimeout, CancellationToken t_cancellationToken) const;
-
-    bool isVaild(int t_statusCode) const;
-
-    bool downloadStringFromServer(const QString& t_url, int t_timeout, QString& t_result, int& t_statusCode, CancellationToken t_cancellationToken) const;
+    CancellationToken m_cancellationToken;
+    Downloader::TDataSource m_dataSource;
 };

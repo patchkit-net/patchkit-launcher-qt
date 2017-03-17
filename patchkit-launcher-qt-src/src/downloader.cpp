@@ -19,6 +19,17 @@ Downloader::Downloader
 {
 }
 
+Downloader::~Downloader()
+{
+    if (!m_remoteDataReply.isNull())
+    {
+        if (m_remoteDataReply->isRunning())
+        {
+            m_remoteDataReply->abort();
+        }
+    }
+}
+
 void Downloader::start()
 {
     fetchReply(m_resourceRequest, m_remoteDataReply);
@@ -58,6 +69,21 @@ QByteArray Downloader::readData()
 void Downloader::waitUntilFinished()
 {
     waitForDownloadToFinish(m_remoteDataReply);
+}
+
+bool Downloader::wasStarted() const
+{
+    return !m_remoteDataReply.isNull();
+}
+
+bool Downloader::isFinished() const
+{
+    return !m_remoteDataReply.isNull() && m_remoteDataReply->isFinished();
+}
+
+bool Downloader::isRunning() const
+{
+    return !m_remoteDataReply.isNull() && m_remoteDataReply->isRunning();
 }
 
 void Downloader::readyReadRelay()
@@ -116,6 +142,10 @@ bool Downloader::checkInternetConnection()
 void Downloader::stop()
 {
     m_remoteDataReply->abort();
+
+    m_remoteDataReply->deleteLater();
+
+    m_remoteDataReply.reset();
 }
 
 void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataReply& t_reply) const
@@ -194,6 +224,11 @@ void Downloader::validateReply(TRemoteDataReply& t_reply) const
 
 int Downloader::getReplyStatusCode(TRemoteDataReply& t_reply) const
 {
+    if (t_reply.isNull())
+    {
+        throw std::runtime_error("Tried reading status code from a null reply.");
+    }
+
     QVariant statusCode = t_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
 
     if (!statusCode.isValid())

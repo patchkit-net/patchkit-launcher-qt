@@ -37,7 +37,7 @@ class QNetworkAccessManager;
  * This means that if in a set of 20 chunks the chunk #5 happened to be invalid but all the other ones were valid
  * the download will resume from the 5th chunk.
  */
-class ChunkedDownloader : public Downloader
+class ChunkedDownloader : public QObject
 {
     Q_OBJECT
 
@@ -49,13 +49,16 @@ public:
             CancellationToken t_cancellationToken
             );
 
-    QByteArray downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec, int* t_replyStatusCode = nullptr) override;
+    QByteArray downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec, int* t_replyStatusCode = nullptr);
+
+signals:
+    void downloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes);
 
 public slots:
-    virtual void abort() override;
+    void abort();
 
 protected slots:
-    virtual void onDownloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes) override;
+    void onDownloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes);
 
 private:
     bool                    m_running;

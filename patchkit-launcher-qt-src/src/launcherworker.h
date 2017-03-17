@@ -56,13 +56,13 @@ private:
 
     void checkIfCurrentDirectoryIsWritable();
 
+    std::shared_ptr<CancellationTokenSource> m_cancellationTokenSource;
+
+    QNetworkAccessManager m_networkAccessManager;
+
     Api m_api;
     RemotePatcherData m_remotePatcher;
     LocalPatcherData m_localPatcher;
 
-    std::shared_ptr<CancellationTokenSource> m_cancellationTokenSource;
-
     Result m_result;
-
-    QNetworkAccessManager m_networkAccessManager;
 };
