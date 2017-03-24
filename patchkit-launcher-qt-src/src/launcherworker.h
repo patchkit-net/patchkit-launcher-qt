@@ -30,11 +30,20 @@ public:
     LauncherWorker();
 
     void cancel();
+    bool isLocalPatcherInstalled() const;
 
     Result result() const;
 signals:
     void statusChanged(const QString& t_status);
     void progressChanged(int t_progress);
+    void downloadError(DownloadError t_error);
+
+    // Control signals
+    void workerContinue();
+    void workerStop();
+
+public slots:
+
 
 private slots:
     void setDownloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes);
@@ -56,13 +65,13 @@ private:
 
     void checkIfCurrentDirectoryIsWritable();
 
+    std::shared_ptr<CancellationTokenSource> m_cancellationTokenSource;
+
+    QNetworkAccessManager m_networkAccessManager;
+
     Api m_api;
     RemotePatcherData m_remotePatcher;
     LocalPatcherData m_localPatcher;
 
-    std::shared_ptr<CancellationTokenSource> m_cancellationTokenSource;
-
     Result m_result;
-
-    QNetworkAccessManager m_networkAccessManager;
 };

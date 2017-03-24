@@ -5,120 +5,145 @@
 
 #include "api.h"
 
-#include "downloader.h"
 #include "timeoutexception.h"
 #include "config.h"
 
-Api::Api(CancellationToken t_cancellationToken)
-    : m_cancellationToken(t_cancellationToken)
-    , m_mainApiUrl(Config::mainApiUrl)
-    , m_cacheApiUrls(Config::cacheApiUrls)
-    , m_minTimeout(Config::minConnectionTimeoutMsec)
-    , m_maxTimeout(Config::maxConnectionTimeoutMsec)
+#include "downloaderoperator.h"
+#include "defaultdownloadstrategy.h"
+
+#include "contentsummary.h"
+
+Api::Api(Downloader::TDataSource t_dataSource, CancellationToken t_cancellationToken, QObject* parent)
+    : QObject(parent)
+    , m_cancellationToken(t_cancellationToken)
+    , m_dataSource(t_dataSource)
 {
 }
 
-Api::Api(QString t_mainApiUrl, QStringList t_cacheApiUrls, int t_minTimeout, int t_maxTimeout, CancellationToken t_cancellationToken)
-    : m_cancellationToken(t_cancellationToken)
-    , m_mainApiUrl(t_mainApiUrl)
-    , m_cacheApiUrls(t_cacheApiUrls)
-    , m_minTimeout(t_minTimeout)
-    , m_maxTimeout(t_maxTimeout)
+ContentSummary Api::downloadContentSummary(const QString& t_resourceUrl)
 {
+    QByteArray data;
+    data = downloadInternal(t_resourceUrl);
+
+    QJsonDocument doc = QJsonDocument::fromJson(data);
+    return ContentSummary(doc);
 }
 
-const QString &Api::getMainApiUrl() const
+QString Api::downloadPatcherSecret(const QString& t_resourceUrl)
 {
-    return m_mainApiUrl;
-}
+    QByteArray data;
+    data = downloadInternal(t_resourceUrl);
 
-const QStringList &Api::getApiUrls() const
-{
-    return m_cacheApiUrls;
-}
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
 
-ContentSummary Api::downloadContentSummary(IApi::ApiOperationCallback cb, bool* ok) const
-{
-}
-
-int Api::downloadPatcherVersion(IApi::ApiOperationCallback cb, bool* ok) const
-{
-
-}
-
-QString Api::downloadPatcherSecret(IApi::ApiOperationCallback cb, bool* ok) const
-{
-
-}
-
-QStringList Api::downloadContentUrls(IApi::ApiOperationCallback cb, bool* ok) const
-{
-
-}
-
-QString Api::downloadRawData(const QString& t_resourceUrl, IApi::ApiOperationCallback cb, bool* t_ok)
-{
-    auto notify_status = [t_ok](bool val)
+    if (!jsonDocument.isObject())
     {
-        if (t_ok)
-        {
-            *t_ok = val;
-        }
-    };
-
-    QString rawData;
-    bool ok = false;
-    ApiOperationStatus status(0, m_mainApiUrl, m_cacheApiUrls.at(1), m_minTimeout, m_minTimeout);
-
-    // Try main url
-    rawData = downloadRawDataInternal(m_mainApiUrl + t_resourceUrl, m_minTimeout, &ok);
-
-    if (ok)
-    {
-        notify_status(true);
-        return rawData;
-    }
-    else
-    {
-        if (cb && !cb(this, status))
-        {
-            notify_status(false);
-            return QString();
-        }
+        throw std::runtime_error("Couldn't read patcher secret from JSON data.");
     }
 
-    // Cache urls
-    for (int i = 0; i < m_cacheApiUrls.size(); i++)
+    QJsonObject jsonObject = jsonDocument.object();
+
+    if (!jsonObject.contains("patcher_secret"))
     {
-        downloadRawDataInternal(m_cacheApiUrls.at(i), m_minTimeout, &ok);
+        throw std::runtime_error("Couldn't read patcher secret from JSON data.");
     }
+
+    return jsonObject.value("patcher_secret").toString();
 }
 
-QString Api::downloadRawDataInternal(const QString& t_url, int t_timeout, bool *ok)
+int Api::downloadPatcherVersion(const QString& t_resourceUrl)
 {
-    QNetworkAccessManager networkAccessManager;
-    Downloader downloader(&networkAccessManager, m_cancellationToken);
+    QByteArray data;
+    data = downloadInternal(t_resourceUrl);
+    QJsonDocument doc = QJsonDocument::fromJson(data);
 
-    QString rawData;
-    int statusCode = -1;
-    rawData = downloader.downloadString(t_url, t_timeout, statusCode);
-
-    if (Downloader::doesStatusCodeIndicateSuccess(statusCode))
+    if (!doc.isObject())
     {
-        if (ok)
+        throw std::runtime_error("Couldn't read version id from JSON data.");
+    }
+
+    QJsonObject jsonObject = doc.object();
+
+    if (!jsonObject.contains("id"))
+    {
+        throw std::runtime_error("Couldn't read version id from JSON data.");
+    }
+
+    int idValue = jsonObject.value("id").toInt(-1);
+
+    if (idValue == -1)
+    {
+        throw std::runtime_error("Couldn't read version id from JSON data.");
+    }
+
+    return idValue;
+}
+
+QStringList Api::downloadContentUrls(const QString& t_resourceUrl)
+{
+    QByteArray data;
+    data = downloadInternal(t_resourceUrl);
+
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
+
+    if (!jsonDocument.isArray())
+    {
+        throw std::runtime_error("Couldn't read content urls from JSON data.");
+    }
+
+    QJsonArray jsonArray = jsonDocument.array();
+
+    if (jsonArray.size() == 0)
+    {
+        throw std::runtime_error("Empty content urls.");
+    }
+
+    QStringList result;
+
+    for (int i = 0; i < jsonArray.size(); i++)
+    {
+        if (!jsonArray[i].isObject())
         {
-            *ok = true;
+            throw std::runtime_error("Couldn't read content urls from JSON data.");
         }
 
-        return rawData;
-    }
-    else
-    {
-        if (ok)
+        QJsonObject jsonObject = jsonArray[i].toObject();
+
+        if (!jsonObject.contains("url"))
         {
-            *ok = false;
+            throw std::runtime_error("Couldn't read content urls from JSON data.");
         }
 
-        return QString();
+        QJsonValue jsonValue = jsonObject.value("url");
+
+        if (!jsonValue.isString())
+        {
+            throw std::runtime_error("Couldn't read content urls from JSON data.");
+        }
+
+        result.append(jsonValue.toString());
     }
+
+    return result;
+}
+
+QByteArray Api::downloadInternal(const QString& t_resourceUrl)
+{
+    QStringList totalUrlBases = QStringList(Config::mainApiUrl);
+    totalUrlBases.append(Config::cacheApiUrls);
+
+    StringConcatUrlProvider urlProvider(totalUrlBases, t_resourceUrl);
+
+    DefaultDownloadStrategy strategy(Config::minConnectionTimeoutMsec, Config::maxConnectionTimeoutMsec);
+
+    DownloaderOperator op(m_dataSource, urlProvider, m_cancellationToken);
+    connect(&strategy, &DefaultDownloadStrategy::error, this, &Api::downloadError);
+
+    connect(this, &Api::proceed, &strategy, &BaseDownloadStrategy::proceed);
+    connect(this, &Api::stop, &strategy, &BaseDownloadStrategy::stop);
+
+    QByteArray data;
+    data = op.download(&strategy);
+
+    return data;
 }

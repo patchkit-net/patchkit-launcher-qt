@@ -13,109 +13,44 @@
 #include "logger.h"
 #include "staledownloadexception.h"
 
+#include "idownloadstrategy.h"
+
+#include "downloaderoperator.h"
+
 ChunkedDownloader::ChunkedDownloader(
-        QNetworkAccessManager* t_dataSource,
+        Downloader::TDataSource t_dataSource,
         const ContentSummary& t_contentSummary,
         HashFunc t_hashingStrategy,
         CancellationToken t_cancellationToken
         )
-    : Downloader(t_dataSource, t_cancellationToken)
-    , m_contentSummary(t_contentSummary)
-    , m_lastValidChunkIndex(0)
+    : m_contentSummary(t_contentSummary)
     , m_hashingStrategy(t_hashingStrategy)
-    , m_running(true)
+    , m_dataSource(t_dataSource)
+    , m_cancellationToken(t_cancellationToken)
+    , m_downloadStrategy(10000, 30000, *this)
 {
 }
 
-QByteArray ChunkedDownloader::downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec, int* t_replyStatusCode)
+QByteArray ChunkedDownloader::downloadFile(const QStringList& t_contentUrls)
 {
     if (!m_hashingStrategy)
     {
         throw std::runtime_error("No hashing strategy specified.");
     }
 
-    QByteArray data;
-    QNetworkRequest request;
+    StringUrlProvider urlProvider(t_contentUrls);
 
-    QUrl url(t_urlPath);
+    DownloaderOperator op(m_dataSource, urlProvider, m_cancellationToken);
 
-    request = QNetworkRequest(url);
+    connect(&op, &DownloaderOperator::downloadProgress, this, &ChunkedDownloader::downloadProgress);
+    connect(&m_downloadStrategy, &ChunkedDownloadStrategy::error, this, &ChunkedDownloader::downloadError);
 
-    m_running = true;
+    connect(this, &ChunkedDownloader::proceed, &m_downloadStrategy, &BaseDownloadStrategy::proceed);
+    connect(this, &ChunkedDownloader::stop, &m_downloadStrategy, &BaseDownloadStrategy::stop);
 
-    int replyStatusCode = -1;
+    QByteArray data = op.download(&m_downloadStrategy);
 
-    while (!shouldStop())
-    {
-        try
-        {
-            data = Downloader::downloadFile(request, t_requestTimeoutMsec, &replyStatusCode);
-
-            if (t_replyStatusCode != nullptr)
-            {
-                *t_replyStatusCode = replyStatusCode;
-            }
-
-            if (!doesStatusCodeIndicateSuccess(replyStatusCode))
-            {
-                throw std::runtime_error(QString("Chunked download failed, status code was %1.").arg(replyStatusCode).toStdString());
-            }
-
-            if (validateReceivedData(data))
-            {
-                break;
-            }
-            else
-            {
-                int startIndex = m_lastValidChunkIndex + 1;
-                if (m_lastValidChunkIndex == 0)
-                {
-                    startIndex = 0;
-                }
-
-                QByteArray header = "bytes=" + QByteArray::number(startIndex * getChunkSize()) + "-";
-
-                logInfo("Reformulating request URL: %1, Range header: %2", .arg(url.toString(), (QString)header));
-
-                request = QNetworkRequest(url);
-                request.setRawHeader("Range", header);
-            }
-        }
-        catch (CancelledException&)
-        {
-            throw;
-        }
-        catch (TimeoutException&)
-        {
-            throw;
-        }
-    }
-
-    QByteArray reassembledData;
-    for (QByteArray chunk : m_chunks)
-    {
-        reassembledData += chunk;
-    }
-
-    return reassembledData;
-}
-
-void ChunkedDownloader::onDownloadProgressChanged(const TByteCount &t_bytesDownloaded, const TByteCount &t_totalBytes)
-{
-    TByteCount bytesInValidChunksDownloadedSoFar = m_lastValidChunkIndex * getChunkSize();
-    emit Downloader::downloadProgressChanged(bytesInValidChunksDownloadedSoFar + t_bytesDownloaded, bytesInValidChunksDownloadedSoFar+ t_totalBytes);
-}
-
-bool ChunkedDownloader::shouldStop() const
-{
-    return !m_running;
-}
-
-void ChunkedDownloader::abort()
-{
-    Downloader::abort();
-
-    m_running = false;
+    return data;
 }
 
 QVector<QByteArray> ChunkedDownloader::processChunks(QByteArray& t_data) const
@@ -125,7 +60,6 @@ QVector<QByteArray> ChunkedDownloader::processChunks(QByteArray& t_data) const
     const int chunkSize = getChunkSize();
     for (int i = 0; i < t_data.size(); i += chunkSize)
     {
-        // Get the chunk
         QByteArray chunk = t_data.mid(i, chunkSize);
 
         chunks.push_back(chunk);
@@ -134,41 +68,29 @@ QVector<QByteArray> ChunkedDownloader::processChunks(QByteArray& t_data) const
     return chunks;
 }
 
-bool ChunkedDownloader::validateReceivedData(QByteArray& t_data)
+bool ChunkedDownloader::validateChunk(const QByteArray& t_chunkData, int t_chunkIndex) const
 {
-    QVector<QByteArray> chunks = processChunks(t_data);
-
-    m_chunks += chunks;
-
-    for (int i = m_lastValidChunkIndex; i < m_chunks.size(); i++)
+    if (t_chunkIndex > m_contentSummary.getChunksCount())
     {
-        // Get the content summary hash
-        THash valid_hash = m_contentSummary.getChunkHash(i);
-
-        // At this point the m_hashingStrategy is guaranteed to be valid, no need to check if it's null.
-        THash hash = m_hashingStrategy(m_chunks.at(i));
-
-        if (valid_hash != hash)
-        {
-            // Mark the previous index as the last valid
-            m_lastValidChunkIndex = i - 1;
-
-            if (m_lastValidChunkIndex < 0)
-                m_lastValidChunkIndex = 0;
-
-            // Rend the remaining invalid chunks
-            m_chunks.remove(i, m_chunks.size() - i);
-
-            // Signal to restart download
-            return false;
-        }
-        else
-        {
-            m_lastValidChunkIndex = i;
-        }
+        return false;
     }
 
-    return m_chunks.size() == m_contentSummary.getChunksCount();
+    THash valid_hash = m_contentSummary.getChunkHash(t_chunkIndex);
+    THash hash = m_hashingStrategy(t_chunkData);
+
+    return hash == valid_hash;
+}
+
+QVector<bool> ChunkedDownloader::validateAllChunks(const QVector<QByteArray>& t_chunks) const
+{
+    QVector<bool> validChunkMap(t_chunks.size(), false);
+
+    for (int i = 0; i < t_chunks.size(); i++)
+    {
+        validChunkMap[i] = validateChunk(t_chunks.at(i), i);
+    }
+
+    return validChunkMap;
 }
 
 const int ChunkedDownloader::getChunkSize() const

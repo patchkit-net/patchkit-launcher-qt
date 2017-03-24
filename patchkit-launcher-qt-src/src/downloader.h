@@ -10,52 +10,74 @@
 
 #include "cancellationtoken.h"
 
+typedef long long TByteCount;
+
+enum class DownloadError
+{
+    ConnectionIssues
+};
+
+
+
 class Downloader : public QObject
 {
     Q_OBJECT
 
 public:
-    Downloader(QNetworkAccessManager* t_dataSource, CancellationToken& t_cancellationToken);
+    typedef QNetworkAccessManager* TDataSource;
 
-    typedef QSharedPointer<QNetworkReply>          TRemoteDataReply;
+    typedef QSharedPointer<QNetworkReply> TRemoteDataReply;
 
-    typedef long long TByteCount;
+    Downloader(const QString& t_resourceUrl, TDataSource t_dataSource, CancellationToken& t_cancellationToken);
+    ~Downloader();
 
-    virtual QByteArray  downloadFile(const QString& t_urlPath, int t_requestTimeoutMsec, int* t_replyStatusCode = nullptr);
-    QString downloadString(const QString& t_urlPath, int t_requestTimeoutMsec, int& t_replyStatusCode) const;
+    void start();
+
+    int  getStatusCode();
+
+    void setRange(int t_bytesStart, int t_bytesEnd = -1);
+
+    void waitUntilFinished();
+
+    bool wasStarted() const;
+    bool isFinished() const;
+    bool isRunning() const;
+    bool hasFinishedWithoutErrors() const;
+
+    QByteArray readData();
 
     static bool doesStatusCodeIndicateSuccess(int t_statusCode);
     static bool checkInternetConnection();
 
 signals:
-    void downloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes);
-    void terminate();
+    void downloadProgressChanged(TByteCount t_bytesDownloaded, TByteCount t_totalBytes) const;
+    void downloadStarted(int t_statusCode);
+    void downloadFinished();
+    void downloadError(QNetworkReply::NetworkError t_errorCode);
+
+    void timeout();
 
 public slots:
-    virtual void abort();
+    void stop();
 
-protected slots:
-    virtual void onDownloadProgressChanged(const TByteCount& t_bytesDownloaded, const TByteCount& t_totalBytes);
+private slots:
+    void readyReadRelay();
+    void finishedRelay();
+    void errorRelay(QNetworkReply::NetworkError t_errorCode);
 
-protected:
-    QByteArray downloadFile(const QNetworkRequest& t_request, int t_requestTimeoutMsec, int* t_replyStatusCode = nullptr);
-
-    void fetchReply(const QString& t_urlPath, TRemoteDataReply& t_reply) const;
+private:
     void fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataReply& t_reply) const;
-
-    void waitForReply(TRemoteDataReply& t_reply, int t_requestTimeoutMsec) const;
 
     void validateReply(TRemoteDataReply& t_reply) const;
 
     int  getReplyStatusCode(TRemoteDataReply& t_reply) const;
 
-    void waitForFileDownload(TRemoteDataReply& t_reply) const;
+    void waitForDownloadToFinish(TRemoteDataReply& t_reply) const;
 
-    void restartDownload(TRemoteDataReply& t_reply, const QUrl& t_url) const;
-    void restartDownload(TRemoteDataReply& t_reply, const QNetworkRequest& t_request) const;
+    bool m_isActive;
 
-    CancellationToken m_cancellationToken;
-
-private:
-    QNetworkAccessManager* m_remoteDataSource;
+    QNetworkRequest     m_resourceRequest;
+    TDataSource         m_remoteDataSource;
+    TRemoteDataReply    m_remoteDataReply;
+    CancellationToken   m_cancellationToken;
 };

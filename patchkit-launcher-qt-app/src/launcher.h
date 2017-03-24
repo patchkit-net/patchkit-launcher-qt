@@ -23,6 +23,12 @@ private slots:
     void finish();
     void cleanup();
 
+    void onError(DownloadError t_error);
+
+signals:
+    void requestContinue();
+    void requestStop();
+
 private:
     std::unique_ptr<MainWindow> m_mainWindow;
     std::shared_ptr<LauncherWorker> m_worker;

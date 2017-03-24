@@ -66,12 +66,17 @@ LauncherWorker::LauncherWorker()
     : m_cancellationTokenSource(new CancellationTokenSource())
     , m_api(m_cancellationTokenSource)
     , m_result(NONE)
+    , m_api(&m_networkAccessManager, CancellationToken(m_cancellationTokenSource))
     , m_remotePatcher(m_api, &m_networkAccessManager)
 {
     m_api.moveToThread(this);
     m_networkAccessManager.moveToThread(this);
     m_remotePatcher.moveToThread(this);
     m_localPatcher.moveToThread(this);
+
+    connect(&m_remotePatcher, &RemotePatcherData::downloadError, this, &LauncherWorker::downloadError);
+    connect(this, &LauncherWorker::workerContinue, &m_remotePatcher, &RemotePatcherData::proceed);
+    connect(this, &LauncherWorker::workerStop, &m_remotePatcher, &RemotePatcherData::stop);
 }
 
 void LauncherWorker::cancel()
@@ -79,6 +84,11 @@ void LauncherWorker::cancel()
     logInfo("Cancelling launcher thread.");
 
     m_cancellationTokenSource->cancel();
+}
+
+bool LauncherWorker::isLocalPatcherInstalled() const
+{
+    return m_localPatcher.isInstalled();
 }
 
 LauncherWorker::Result LauncherWorker::result() const

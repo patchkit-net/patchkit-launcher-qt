@@ -16,7 +16,7 @@ class LocalPatcherData : public QObject
     Q_OBJECT
 
 public:
-    bool isInstalled();
+    bool isInstalled() const;
 
     bool isInstalledSpecific(int t_version, const Data& t_data);
 
