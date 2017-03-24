@@ -14,7 +14,7 @@
 #include "locations.h"
 #include "ioutils.h"
 
-bool LocalPatcherData::isInstalled()
+bool LocalPatcherData::isInstalled() const
 {
     logInfo("Checking whether patcher is installed.");
 

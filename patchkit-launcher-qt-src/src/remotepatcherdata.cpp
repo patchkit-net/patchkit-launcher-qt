@@ -12,10 +12,16 @@
 #include "chunkeddownloader.h"
 #include "contentsummary.h"
 
+#include "api.h"
+
 RemotePatcherData::RemotePatcherData(IApi& t_api, QNetworkAccessManager* t_networkAccessManager)
     : m_api(t_api)
     , m_networkAccessManager(t_networkAccessManager)
 {
+    connect(static_cast<Api*>(&m_api), &Api::downloadError, this, &RemotePatcherData::downloadError);
+
+    connect(this, &RemotePatcherData::proceed, static_cast<Api*>(&m_api), &Api::proceed);
+    connect(this, &RemotePatcherData::stop, static_cast<Api*>(&m_api), &Api::stop);
 }
 
 int RemotePatcherData::getVersion(const Data& t_data, CancellationToken t_cancellationToken)
@@ -64,9 +70,23 @@ void RemotePatcherData::download(QIODevice& t_dataTarget, const Data& t_data, in
 
     if (summary.isValid())
     {
+        ChunkedDownloader downloader(m_networkAccessManager, summary, HashingStrategy::xxHash, t_cancellationToken);
+
+        connect(&downloader, &ChunkedDownloader::downloadError, this, &RemotePatcherData::downloadError);
+        connect(&downloader, &ChunkedDownloader::downloadProgress, this, &RemotePatcherData::downloadProgressChanged);
+
+        connect(this, &RemotePatcherData::proceed, &downloader, &ChunkedDownloader::proceed);
+        connect(this, &RemotePatcherData::stop, &downloader, &ChunkedDownloader::stop);
+
+        QByteArray data = downloader.downloadFile(contentUrls);
+
+        saveData(data, t_dataTarget);
+
+        return;
     }
     else
     {
+        logCritical("INVALID CONTENT SUMMARY");
     }
 
     throw std::runtime_error("Unable to download patcher version - " + std::to_string(t_version));

@@ -25,7 +25,15 @@ public:
     int             downloadPatcherVersion(const QString& t_resourceUrl) override;
     QStringList     downloadContentUrls(const QString& t_resourceUrl) override;
 
+signals:
+    void downloadError(DownloadError t_error);
+
+    void proceed();
+    void stop();
+
 private:
+    QByteArray downloadInternal(const QString& t_resourceUrl);
+
     CancellationToken m_cancellationToken;
     Downloader::TDataSource m_dataSource;
 };

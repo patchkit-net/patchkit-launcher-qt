@@ -10,23 +10,26 @@ class BaseDownloadStrategy : public QObject, public IDownloadStrategy
 {
     Q_OBJECT
 public:
-    virtual void init(const DownloaderOperator* t_operator) override;
-    virtual void finish() override;
+    void start(const DownloaderOperator* t_operator);
+    void end();
+    QByteArray data();
 
-    virtual QByteArray data() override;
-
-private slots:
-    void onDownloaderStarted();
-    void onDownloaderFinished();
-    void onFirstTimeout();
-    void onSecondTimeout();
+public slots:
+    void proceed();
+    void stop();
 
 signals:
     void done();
-    void error();
-    void downloadProgress(long long t_bytesDownloaded, long long t_totalBytes);
+    void error(DownloadError t_error);
+    void downloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes);
 
-private:
+protected:
+    virtual void init(const DownloaderOperator* t_operator) = 0;
+    virtual void finish() = 0;
+
+    virtual void proceedInternal() = 0;
+    virtual void stopInternal() = 0;
+
     QByteArray m_data;
     const DownloaderOperator* m_operator;
 };

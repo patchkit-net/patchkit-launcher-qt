@@ -9,6 +9,7 @@
 #include "config.h"
 
 #include "downloaderoperator.h"
+#include "defaultdownloadstrategy.h"
 
 #include "contentsummary.h"
 
@@ -21,15 +22,8 @@ Api::Api(Downloader::TDataSource t_dataSource, CancellationToken t_cancellationT
 
 ContentSummary Api::downloadContentSummary(const QString& t_resourceUrl)
 {
-    QStringList totalUrlBases = QStringList(Config::mainApiUrl);
-    totalUrlBases.append(Config::cacheApiUrls);
-
-    StringConcatUrlProvider urlProvider(totalUrlBases, t_resourceUrl);
-
-    DownloaderOperator op(m_dataSource, urlProvider, m_cancellationToken);
-
     QByteArray data;
-    data = op.download();
+    data = downloadInternal(t_resourceUrl);
 
     QJsonDocument doc = QJsonDocument::fromJson(data);
     return ContentSummary(doc);
@@ -37,15 +31,8 @@ ContentSummary Api::downloadContentSummary(const QString& t_resourceUrl)
 
 QString Api::downloadPatcherSecret(const QString& t_resourceUrl)
 {
-    QStringList totalUrlBases = QStringList(Config::mainApiUrl);
-    totalUrlBases.append(Config::cacheApiUrls);
-
-    StringConcatUrlProvider urlProvider(totalUrlBases, t_resourceUrl);
-
-    DownloaderOperator op(m_dataSource, urlProvider, m_cancellationToken);
-
     QByteArray data;
-    data = op.download();
+    data = downloadInternal(t_resourceUrl);
 
     QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
 
@@ -66,16 +53,8 @@ QString Api::downloadPatcherSecret(const QString& t_resourceUrl)
 
 int Api::downloadPatcherVersion(const QString& t_resourceUrl)
 {
-    QStringList totalUrlBases = QStringList(Config::mainApiUrl);
-    totalUrlBases.append(Config::cacheApiUrls);
-
-    StringConcatUrlProvider urlProvider(totalUrlBases, t_resourceUrl);
-
-    DownloaderOperator op(m_dataSource, urlProvider, m_cancellationToken);
-
     QByteArray data;
-    data = op.download();
-
+    data = downloadInternal(t_resourceUrl);
     QJsonDocument doc = QJsonDocument::fromJson(data);
 
     if (!doc.isObject())
@@ -102,15 +81,8 @@ int Api::downloadPatcherVersion(const QString& t_resourceUrl)
 
 QStringList Api::downloadContentUrls(const QString& t_resourceUrl)
 {
-    QStringList totalUrlBases = QStringList(Config::mainApiUrl);
-    totalUrlBases.append(Config::cacheApiUrls);
-
-    StringConcatUrlProvider urlProvider(totalUrlBases, t_resourceUrl);
-
-    DownloaderOperator op(m_dataSource, urlProvider, m_cancellationToken);
-
     QByteArray data;
-    data = op.download();
+    data = downloadInternal(t_resourceUrl);
 
     QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
 
@@ -153,4 +125,25 @@ QStringList Api::downloadContentUrls(const QString& t_resourceUrl)
     }
 
     return result;
+}
+
+QByteArray Api::downloadInternal(const QString& t_resourceUrl)
+{
+    QStringList totalUrlBases = QStringList(Config::mainApiUrl);
+    totalUrlBases.append(Config::cacheApiUrls);
+
+    StringConcatUrlProvider urlProvider(totalUrlBases, t_resourceUrl);
+
+    DefaultDownloadStrategy strategy(Config::minConnectionTimeoutMsec, Config::maxConnectionTimeoutMsec);
+
+    DownloaderOperator op(m_dataSource, urlProvider, m_cancellationToken);
+    connect(&strategy, &DefaultDownloadStrategy::error, this, &Api::downloadError);
+
+    connect(this, &Api::proceed, &strategy, &BaseDownloadStrategy::proceed);
+    connect(this, &Api::stop, &strategy, &BaseDownloadStrategy::stop);
+
+    QByteArray data;
+    data = op.download(&strategy);
+
+    return data;
 }

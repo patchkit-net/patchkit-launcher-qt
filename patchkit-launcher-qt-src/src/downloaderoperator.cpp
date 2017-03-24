@@ -1,11 +1,15 @@
 #include "downloaderoperator.h"
 
-DownloaderOperator::DownloaderOperator(Downloader::TDataSource t_dataSource, const IResourceUrlProvider& urlProvider, CancellationToken t_cancellationToken, QObject* /*parent*/)
+#include "defaultdownloadstrategy.h"
+
+#include "config.h"
+
+DownloaderOperator::DownloaderOperator(Downloader::TDataSource t_dataSource, const IResourceUrlProvider& t_urlProvider, CancellationToken t_cancellationToken, QObject* /*parent*/)
     : m_cancellationToken(t_cancellationToken)
 {
-    for (int i = 0; i < urlProvider.getVariantCount(); i++)
+    for (int i = 0; i < t_urlProvider.getVariantCount(); i++)
     {
-        m_downloaders.push_back(new Downloader(urlProvider.getVariant(i), t_dataSource, t_cancellationToken));
+        m_downloaders.push_back(new Downloader(t_urlProvider.getVariant(i), t_dataSource, t_cancellationToken));
     }
 }
 
@@ -21,11 +25,11 @@ QByteArray DownloaderOperator::download(BaseDownloadStrategy* t_downloadStrategy
 {
     if (!t_downloadStrategy)
     {
-        BaseDownloadStrategy baseDownloadStrategy;
+        DefaultDownloadStrategy baseDownloadStrategy(Config::minConnectionTimeoutMsec, Config::maxConnectionTimeoutMsec);
         return download(&baseDownloadStrategy);
     }
 
-    t_downloadStrategy->init(this);
+    t_downloadStrategy->start(this);
 
     connect(t_downloadStrategy, &BaseDownloadStrategy::downloadProgress, this, &DownloaderOperator::downloadProgress);
 
@@ -38,7 +42,7 @@ QByteArray DownloaderOperator::download(BaseDownloadStrategy* t_downloadStrategy
 
     m_cancellationToken.throwIfCancelled();
 
-    t_downloadStrategy->finish();
+    t_downloadStrategy->end();
 
     return t_downloadStrategy->data();
 }

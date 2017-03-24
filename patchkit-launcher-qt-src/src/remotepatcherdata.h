@@ -28,6 +28,10 @@ public:
 
 signals:
     void downloadProgressChanged(const long long& t_bytesDownloaded, const long long& t_totalBytes);
+    void downloadError(DownloadError t_error);
+
+    void proceed();
+    void stop();
 
 private:
     IApi& m_api;

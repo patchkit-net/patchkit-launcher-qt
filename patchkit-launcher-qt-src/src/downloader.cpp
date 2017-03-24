@@ -9,6 +9,9 @@
 #include "timeoutexception.h"
 #include "config.h"
 
+Q_DECLARE_METATYPE(DownloadError)
+int downloadErrorMetaTypeId = qRegisterMetaType<DownloadError>();
+
 Downloader::Downloader
     (const QString& t_resourceUrl,
      TDataSource t_dataSource,
@@ -16,6 +19,7 @@ Downloader::Downloader
     : m_remoteDataSource(t_dataSource)
     , m_cancellationToken(t_cancellationToken)
     , m_resourceRequest(QUrl(t_resourceUrl))
+    , m_isActive(false)
 {
 }
 
@@ -42,6 +46,8 @@ void Downloader::start()
             this, &Downloader::errorRelay);
 
     connect(&m_cancellationToken, &CancellationToken::cancelled, m_remoteDataReply.data(), &QNetworkReply::abort);
+
+    connect(m_remoteDataReply.data(), &QNetworkReply::downloadProgress, this, &Downloader::downloadProgressChanged);
 }
 
 int Downloader::getStatusCode()
@@ -83,15 +89,16 @@ bool Downloader::isFinished() const
 
 bool Downloader::isRunning() const
 {
-    return !m_remoteDataReply.isNull() && m_remoteDataReply->isRunning();
+    return !m_remoteDataReply.isNull() && m_remoteDataReply->isRunning() && m_isActive;
 }
 
 void Downloader::readyReadRelay()
 {
-    emit downloadStarted();
-    disconnect(m_remoteDataReply.data(), &QNetworkReply::readyRead, this, &Downloader::readyReadRelay);
+    m_isActive = true;
 
-    connect(m_remoteDataReply.data(), &QNetworkReply::downloadProgress, this, &Downloader::downloadProgressChanged);
+    emit downloadStarted(getStatusCode());
+
+    disconnect(m_remoteDataReply.data(), &QNetworkReply::readyRead, this, &Downloader::readyReadRelay);
 }
 
 void Downloader::errorRelay(QNetworkReply::NetworkError t_errorCode)
@@ -104,6 +111,21 @@ void Downloader::errorRelay(QNetworkReply::NetworkError t_errorCode)
 
 void Downloader::finishedRelay()
 {
+    if (m_cancellationToken.isCancelled())
+    {
+        return;
+    }
+
+    if (m_remoteDataReply.isNull())
+    {
+        return;
+    }
+
+    if (!m_isActive)
+    {
+        return;
+    }
+
     emit downloadFinished();
 }
 
@@ -141,11 +163,17 @@ bool Downloader::checkInternetConnection()
 
 void Downloader::stop()
 {
+    logDebug("Stopping the downloader.");
+
+    m_isActive = false;
+    if (m_remoteDataReply.isNull())
+        return;
+
     m_remoteDataReply->abort();
 
     m_remoteDataReply->deleteLater();
 
-    m_remoteDataReply.reset();
+    m_remoteDataReply.reset(nullptr);
 }
 
 void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataReply& t_reply) const
@@ -165,51 +193,19 @@ void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataRepl
 
     if (!m_remoteDataSource)
     {
-        throw std::runtime_error("No remote data source provided.");
+        logCritical("No remote data source provided.");
+        return;
     }
 
     QNetworkReply* reply = m_remoteDataSource->get(t_urlRequest);
 
     if (!reply)
     {
-        throw std::runtime_error("Reply was null.");
-    }
-
-    t_reply = TRemoteDataReply(reply);
-}
-
-void Downloader::waitForReply(TRemoteDataReply& t_reply, int t_requestTimeoutMsec) const
-{
-    logInfo("Waiting for network reply to be ready.");
-
-    if (t_reply->isFinished())
-    {
+        logCritical("Reply was null");
         return;
     }
 
-    if (!t_reply->waitForReadyRead(10))
-    {
-        QEventLoop readyReadLoop;
-
-        QTimer timeoutTimer;
-
-        connect(t_reply.data(), &QNetworkReply::readyRead, &readyReadLoop, &QEventLoop::quit);
-        connect(&m_cancellationToken, &CancellationToken::cancelled, &readyReadLoop, &QEventLoop::quit);
-        connect(&timeoutTimer, &QTimer::timeout, &readyReadLoop, &QEventLoop::quit);
-
-        timeoutTimer.setInterval(t_requestTimeoutMsec);
-        timeoutTimer.setSingleShot(true);
-        timeoutTimer.start();
-
-        readyReadLoop.exec();
-
-        m_cancellationToken.throwIfCancelled();
-
-        if (!timeoutTimer.isActive())
-        {
-            throw TimeoutException();
-        }
-    }
+    t_reply = TRemoteDataReply(reply);
 }
 
 void Downloader::validateReply(TRemoteDataReply& t_reply) const
@@ -226,14 +222,16 @@ int Downloader::getReplyStatusCode(TRemoteDataReply& t_reply) const
 {
     if (t_reply.isNull())
     {
-        throw std::runtime_error("Tried reading status code from a null reply.");
+        //throw std::runtime_error("Tried reading status code from a null reply.");
+        return -1;
     }
 
     QVariant statusCode = t_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
 
     if (!statusCode.isValid())
     {
-        throw std::runtime_error("Couldn't read HTTP status code from reply.");
+        //throw std::runtime_error("Couldn't read HTTP status code from reply.");
+        return -1;
     }
 
     int statusCodeValue = statusCode.toInt();

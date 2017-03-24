@@ -14,6 +14,30 @@ public:
     virtual QString getVariant(int index) const = 0;
 };
 
+class StringUrlProvider : public IResourceUrlProvider
+{
+public:
+    StringUrlProvider(const QStringList& urls)
+    {
+        for (QString url : urls)
+        {
+            m_variants.push_back(url);
+        }
+    }
+
+    virtual int getVariantCount() const override
+    {
+        return m_variants.size();
+    }
+
+    virtual QString getVariant(int index) const override
+    {
+        return m_variants.at(index);
+    }
+private:
+    std::vector<QString> m_variants;
+};
+
 class StringConcatUrlProvider : public IResourceUrlProvider
 {
 public:
@@ -44,8 +68,6 @@ class IDownloadStrategy
 public:
     virtual void init(const DownloaderOperator* t_operator) = 0;
     virtual void finish() = 0;
-
-    virtual QByteArray data() = 0;
 };
 
 #endif // IDOWNLOADSTRATEGY_H

@@ -12,10 +12,12 @@
 
 typedef long long TByteCount;
 
-struct DownloadProgress
+enum class DownloadError
 {
-
+    ConnectionIssues
 };
+
+
 
 class Downloader : public QObject
 {
@@ -49,7 +51,7 @@ public:
 
 signals:
     void downloadProgressChanged(TByteCount t_bytesDownloaded, TByteCount t_totalBytes) const;
-    void downloadStarted();
+    void downloadStarted(int t_statusCode);
     void downloadFinished();
     void downloadError(QNetworkReply::NetworkError t_errorCode);
 
@@ -66,13 +68,13 @@ private slots:
 private:
     void fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataReply& t_reply) const;
 
-    void waitForReply(TRemoteDataReply& t_reply, int t_requestTimeoutMsec) const;
-
     void validateReply(TRemoteDataReply& t_reply) const;
 
     int  getReplyStatusCode(TRemoteDataReply& t_reply) const;
 
     void waitForDownloadToFinish(TRemoteDataReply& t_reply) const;
+
+    bool m_isActive;
 
     QNetworkRequest     m_resourceRequest;
     TDataSource         m_remoteDataSource;

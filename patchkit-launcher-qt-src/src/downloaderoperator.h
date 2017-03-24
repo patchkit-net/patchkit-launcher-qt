@@ -13,7 +13,7 @@ class DownloaderOperator : public QObject
 {
     Q_OBJECT
 public:
-    DownloaderOperator(Downloader::TDataSource t_dataSource, const IResourceUrlProvider& urlProvider, CancellationToken t_cancellationToken, QObject* parent = nullptr);
+    DownloaderOperator(Downloader::TDataSource t_dataSource, const IResourceUrlProvider& t_urlProvider, CancellationToken t_cancellationToken, QObject* parent = nullptr);
     ~DownloaderOperator();
 
     QByteArray download(BaseDownloadStrategy* t_downloadStrategy = nullptr);
