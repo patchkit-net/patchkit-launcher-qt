@@ -36,6 +36,8 @@ Downloader::~Downloader()
 
 void Downloader::start()
 {
+    logInfo("Downloader %1 - Start.", .arg(debugName()));
+
     fetchReply(m_resourceRequest, m_remoteDataReply);
 
     connect(m_remoteDataReply.data(), &QNetworkReply::readyRead, this, &Downloader::readyReadRelay);
@@ -92,6 +94,21 @@ bool Downloader::isRunning() const
     return !m_remoteDataReply.isNull() && m_remoteDataReply->isRunning() && m_isActive;
 }
 
+QString Downloader::debugName() const
+{
+    return QString::number((size_t) this, 16);
+}
+
+QString Downloader::debugInfo() const
+{
+    QString sb;
+    sb.append(QString("Memory address: %1 \n").arg((size_t) this));
+    sb.append(QString("Url: %1 \n").arg(m_resourceRequest.url().toString()));
+    sb.append(QString("Reply status: %1 \n").arg(m_remoteDataReply.isNull() ? "Null" : "Exists"));
+
+    return sb;
+}
+
 void Downloader::readyReadRelay()
 {
     m_isActive = true;
@@ -104,7 +121,8 @@ void Downloader::readyReadRelay()
 void Downloader::errorRelay(QNetworkReply::NetworkError t_errorCode)
 {
     QMetaEnum metaEnum = QMetaEnum::fromType<QNetworkReply::NetworkError>();
-    logWarning("Network reply encountered an error: %1", .arg(metaEnum.valueToKey(t_errorCode)));
+    logWarning("Downloader %1 - Network reply encountered an error: %2",
+               .arg(debugName(), metaEnum.valueToKey(t_errorCode)));
 
     emit downloadError(t_errorCode);
 }
@@ -163,7 +181,7 @@ bool Downloader::checkInternetConnection()
 
 void Downloader::stop()
 {
-    logDebug("Stopping the downloader.");
+    logDebug("Downloader %1 - Stopping.", .arg(debugName()));
 
     m_isActive = false;
     if (m_remoteDataReply.isNull())
@@ -178,7 +196,8 @@ void Downloader::stop()
 
 void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataReply& t_reply) const
 {
-    logInfo("Fetching network reply - URL: %1.", .arg(t_urlRequest.url().toString()));
+    logInfo("Downloader %1 - Fetching network reply - URL: %2.",
+            .arg(debugName(), t_urlRequest.url().toString()));
 
     if (!t_reply.isNull())
     {

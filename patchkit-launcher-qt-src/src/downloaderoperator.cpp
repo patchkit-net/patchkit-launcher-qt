@@ -4,7 +4,7 @@
 
 #include "config.h"
 
-DownloaderOperator::DownloaderOperator(Downloader::TDataSource t_dataSource, const IResourceUrlProvider& t_urlProvider, CancellationToken t_cancellationToken, QObject* /*parent*/)
+DownloaderOperator::DownloaderOperator(Downloader::TDataSource t_dataSource, const IUrlProvider& t_urlProvider, CancellationToken t_cancellationToken, QObject* /*parent*/)
     : m_cancellationToken(t_cancellationToken)
 {
     for (int i = 0; i < t_urlProvider.getVariantCount(); i++)
@@ -84,4 +84,12 @@ std::vector<Downloader*> DownloaderOperator::getDownloaders(bool (*t_predicate)(
     }
 
     return downloaders;
+}
+
+void DownloaderOperator::stopAll()
+{
+    for (Downloader* downloader : m_downloaders)
+    {
+        downloader->stop();
+    }
 }

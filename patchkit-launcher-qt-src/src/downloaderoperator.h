@@ -9,11 +9,13 @@
 #include "downloader.h"
 #include "basedownloadstrategy.h"
 
+#include "urlprovider.h"
+
 class DownloaderOperator : public QObject
 {
     Q_OBJECT
 public:
-    DownloaderOperator(Downloader::TDataSource t_dataSource, const IResourceUrlProvider& t_urlProvider, CancellationToken t_cancellationToken, QObject* parent = nullptr);
+    DownloaderOperator(Downloader::TDataSource t_dataSource, const IUrlProvider& t_urlProvider, CancellationToken t_cancellationToken, QObject* parent = nullptr);
     ~DownloaderOperator();
 
     QByteArray download(BaseDownloadStrategy* t_downloadStrategy = nullptr);
@@ -32,6 +34,8 @@ public:
     std::vector<Downloader*> getDownloaders(bool (*t_predicate)(Downloader*) = nullptr) const;
 
     int countAvailableDownloaders() const;
+
+    void stopAll();
 
 signals:
     void downloadProgress(long long t_bytesDownloaded, long long t_totalBytes);

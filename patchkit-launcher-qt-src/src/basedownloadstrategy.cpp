@@ -4,11 +4,11 @@
 
 #include <QMessageBox>
 
-void BaseDownloadStrategy::start(const DownloaderOperator* t_operator)
+void BaseDownloadStrategy::start(DownloaderOperator* t_operator)
 {
     m_operator = t_operator;
 
-    init(m_operator);
+    init();
 }
 
 void BaseDownloadStrategy::end()

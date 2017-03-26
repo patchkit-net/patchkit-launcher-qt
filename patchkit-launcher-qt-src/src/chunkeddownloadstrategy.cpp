@@ -16,11 +16,6 @@ ChunkedDownloadStrategy::ChunkedDownloadStrategy(int t_minTimeout, int t_maxTime
 {
 }
 
-void ChunkedDownloadStrategy::init(const DownloaderOperator* t_operator)
-{
-    DefaultDownloadStrategy::init(t_operator);
-}
-
 void ChunkedDownloadStrategy::finish()
 {
     DefaultDownloadStrategy::finish();
@@ -28,6 +23,8 @@ void ChunkedDownloadStrategy::finish()
 
 void ChunkedDownloadStrategy::onDownloaderFinished()
 {
+    logInfo("Chunked download strategy - a downloader finished downloading, processing downloaded data.");
+
     Downloader* downloader = static_cast<Downloader*> (sender());
 
     disconnect(downloader, &Downloader::downloadFinished, this, &ChunkedDownloadStrategy::onDownloaderFinished);
@@ -51,18 +48,27 @@ void ChunkedDownloadStrategy::onDownloaderFinished()
         if (firstInvalidChunkIndex == -1)
         {
             setRanges(m_parent.getChunkSize() * validChunkMap.size());
+            m_data.clear();
+
+            for (QByteArray& chunk : chunks)
+            {
+                m_data += chunk;
+            }
         }
         else if (firstInvalidChunkIndex != 0)
         {
             setRanges(m_parent.getChunkSize() * firstInvalidChunkIndex);
+            m_data.clear();
+
+            for (int i = 0 ; i < firstInvalidChunkIndex; i++)
+            {
+                m_data += chunks.at(i);
+            }
         }
 
-        for (auto downloader : m_operator->getDownloaders())
-        {
-            downloader->stop();
-        }
+        m_operator->stopAll();
 
-        DefaultDownloadStrategy::init(m_operator);
+        init();
     }
 }
 

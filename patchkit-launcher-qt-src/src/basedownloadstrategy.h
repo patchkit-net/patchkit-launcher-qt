@@ -6,11 +6,13 @@
 #include "idownloadstrategy.h"
 #include "downloader.h"
 
+class DownloaderOperator;
+
 class BaseDownloadStrategy : public QObject, public IDownloadStrategy
 {
     Q_OBJECT
 public:
-    void start(const DownloaderOperator* t_operator);
+    void start(DownloaderOperator* t_operator);
     void end();
     QByteArray data();
 
@@ -24,14 +26,13 @@ signals:
     void downloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes);
 
 protected:
-    virtual void init(const DownloaderOperator* t_operator) = 0;
+    virtual void init() = 0;
     virtual void finish() = 0;
-
     virtual void proceedInternal() = 0;
     virtual void stopInternal() = 0;
 
     QByteArray m_data;
-    const DownloaderOperator* m_operator;
+    DownloaderOperator* m_operator;
 };
 
 #endif // BASEDOWNLOADSTRATEGY_H

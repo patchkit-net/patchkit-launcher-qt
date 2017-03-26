@@ -10,25 +10,26 @@ DefaultDownloadStrategy::DefaultDownloadStrategy(int t_minTimeout, int t_maxTime
     , m_iterator(0)
     , m_timeoutCounter(0)
 {
+    connect(&m_timer, &QTimer::timeout, this, &DefaultDownloadStrategy::onTimeout);
 }
 
-void DefaultDownloadStrategy::init(const DownloaderOperator* t_operator)
+void DefaultDownloadStrategy::init()
 {
     logInfo("Download strategy started.");
 
-    m_operator = t_operator;
-
-    auto inactiveDownloaders = t_operator->getInactiveDownloaders();
-    auto allDownloaders = t_operator->getDownloaders();
+    auto inactiveDownloaders = m_operator->getInactiveDownloaders();
+    auto allDownloaders = m_operator->getDownloaders();
 
     if (inactiveDownloaders.size() == 0)
     {
-        throw std::exception("No downloaders were available.");
+        logCritical("No downloaders were available.");
+        emit error(DownloadError::ConnectionIssues);
+        return;
     }
 
     if (allDownloaders.size() != inactiveDownloaders.size())
     {
-        logWarning("Some downloaders have not been reset, issues may occur.");
+        logWarning("Some downloaders are still processing, errors may occur.");
     }
 
     inactiveDownloaders.at(m_iterator)->start();
@@ -36,9 +37,7 @@ void DefaultDownloadStrategy::init(const DownloaderOperator* t_operator)
     connect(inactiveDownloaders.at(m_iterator), &Downloader::downloadStarted, this, &DefaultDownloadStrategy::onDownloaderStarted);
 
     m_timer.setSingleShot(true);
-    m_timer.setInterval(m_minTimeout);
-    m_timer.start();
-    connect(&m_timer, &QTimer::timeout, this, &DefaultDownloadStrategy::onTimeout);
+    m_timer.start(m_minTimeout);
 }
 
 void DefaultDownloadStrategy::onTimeout()
@@ -69,7 +68,7 @@ void DefaultDownloadStrategy::proceedInternal()
         m_iterator = 0;
     }
 
-    init(m_operator);
+    init();
 }
 
 void DefaultDownloadStrategy::stopInternal()
@@ -94,7 +93,7 @@ void DefaultDownloadStrategy::onDownloaderStarted()
         return;
     }
 
-    logInfo("Downloader has started downloading.");
+    logInfo("A downloader has started downloading.");
     auto staleDownloaders = m_operator->getStaleDownloaders();
     for (Downloader* d : staleDownloaders)
     {
@@ -110,6 +109,7 @@ void DefaultDownloadStrategy::onDownloaderStarted()
 
 void DefaultDownloadStrategy::onDownloaderFinished()
 {
+    logInfo("A downloader finished downloading.");
     Downloader* downloader = static_cast<Downloader*> (sender());
 
     int statusCode = downloader->getStatusCode();
@@ -121,19 +121,20 @@ void DefaultDownloadStrategy::onDownloaderFinished()
     {
         logWarning("A downloader has finished with a status code: %1", .arg(statusCode));
 
-        if (m_operator->getStaleDownloaders().size() == 0)
+        if (m_operator->getStaleDownloaders().size() == 0 && m_operator->getActiveDownloaders().size() == 0)
         {
-            logDebug("No pending downloaders, disabling the timer and emitting connection issues error.");
+            logWarning("No pending or active downloaders, disabling the timer and emitting connection issues error.");
 
             m_timer.stop();
-
             emit error(DownloadError::ConnectionIssues);
+            return;
         }
     }
 
-    logInfo("Downloader has finished downloading.");
-
+    m_timer.stop();
     m_data = downloader->readData();
+
+    m_operator->stopAll();
 
     emit done();
 }
@@ -152,8 +153,8 @@ void DefaultDownloadStrategy::onFirstTimeout()
         }
     }
 
-    m_timer.setInterval(m_maxTimeout - m_minTimeout);
-    m_timer.start();
+    m_timer.setSingleShot(true);
+    m_timer.start(m_maxTimeout);
 }
 
 void DefaultDownloadStrategy::onSecondTimeout()
@@ -163,8 +164,23 @@ void DefaultDownloadStrategy::onSecondTimeout()
     {
         for (Downloader* d : m_operator->getStaleDownloaders())
         {
+            d->stop();
             disconnect(d,&Downloader::downloadStarted, this, &DefaultDownloadStrategy::onDownloaderStarted);
         }
         emit error(DownloadError::ConnectionIssues);
     }
+}
+
+void DefaultDownloadStrategy::printDebugInfo()
+{
+    QString base("Download startegy debug info -- START");
+
+    for (Downloader* d : m_operator->getDownloaders())
+    {
+        base.append("\n");
+        base.append(d->debugInfo());
+    }
+
+    logDebug(base);
+    logDebug("Download startegy debug info -- END");
 }

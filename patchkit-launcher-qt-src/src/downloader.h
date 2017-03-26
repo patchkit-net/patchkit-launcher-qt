@@ -17,8 +17,6 @@ enum class DownloadError
     ConnectionIssues
 };
 
-
-
 class Downloader : public QObject
 {
     Q_OBJECT
@@ -43,6 +41,9 @@ public:
     bool isFinished() const;
     bool isRunning() const;
     bool hasFinishedWithoutErrors() const;
+
+    QString debugInfo() const;
+    QString debugName() const;
 
     QByteArray readData();
 

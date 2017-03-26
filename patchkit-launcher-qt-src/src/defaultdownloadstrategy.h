@@ -10,9 +10,8 @@ public:
     DefaultDownloadStrategy(int t_minTimeout, int t_maxTimeout);
 
 protected:
-    virtual void init(const DownloaderOperator* t_operator) override;
+    virtual void init() override;
     virtual void finish() override;
-
     virtual void proceedInternal() override;
     virtual void stopInternal() override;
 
@@ -21,6 +20,8 @@ protected slots:
     virtual void onDownloaderFinished();
     virtual void onFirstTimeout();
     virtual void onSecondTimeout();
+
+    void printDebugInfo();
 
 private:
     QTimer m_timer;
