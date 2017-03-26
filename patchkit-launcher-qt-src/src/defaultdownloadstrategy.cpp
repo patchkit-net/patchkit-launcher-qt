@@ -73,6 +73,7 @@ void DefaultDownloadStrategy::proceedInternal()
 
 void DefaultDownloadStrategy::stopInternal()
 {
+    logInfo("Stop internal requested.");
     emit done();
 }
 
@@ -81,16 +82,22 @@ void DefaultDownloadStrategy::onDownloaderStarted()
     // Recover the sender
     Downloader* downloader = static_cast<Downloader*> (sender());
 
+    disconnect(downloader, &Downloader::downloadStarted, this, &DefaultDownloadStrategy::onDownloaderStarted);
+
     int statusCode = downloader->getStatusCode();
 
     if (!Downloader::doesStatusCodeIndicateSuccess(statusCode))
     {
         logInfo("Downloader failed to start, status code was: %1", .arg(statusCode));
 
-        disconnect(downloader, &Downloader::downloadStarted, this, &DefaultDownloadStrategy::onDownloaderStarted);
         downloader->stop();
 
         return;
+    }
+
+    if (!downloader->isRunning())
+    {
+        logWarning("The downloader is supposed to have started, but it's status shows otherwise.");
     }
 
     logInfo("A downloader has started downloading.");
@@ -100,8 +107,6 @@ void DefaultDownloadStrategy::onDownloaderStarted()
         disconnect(d, &Downloader::downloadStarted, this, &DefaultDownloadStrategy::onDownloaderStarted);
         d->stop();
     }
-
-    disconnect(downloader, &Downloader::downloadStarted, this, &DefaultDownloadStrategy::onDownloaderStarted);
 
     connect(downloader, &Downloader::downloadFinished, this, &DefaultDownloadStrategy::onDownloaderFinished);
     connect(downloader, &Downloader::downloadProgressChanged, this, &DefaultDownloadStrategy::downloadProgress);

@@ -129,21 +129,27 @@ void Downloader::errorRelay(QNetworkReply::NetworkError t_errorCode)
 
 void Downloader::finishedRelay()
 {
+    logInfo("Downloader %1 - Downloader is finishing...", .arg(debugName()));
+
     if (m_cancellationToken.isCancelled())
     {
+        logInfo("Finished by cancellatoin, will not emit finished signal.");
         return;
     }
 
     if (m_remoteDataReply.isNull())
     {
+        logWarning("Finished but network reply is null, will not emit finished signal.");
         return;
     }
 
     if (!m_isActive)
     {
+        logInfo("Finished but is not active, will not emit finished signal.");
         return;
     }
 
+    logInfo("Emitting finished signal.");
     emit downloadFinished();
 }
 

@@ -13,6 +13,8 @@
 
 #include "contentsummary.h"
 
+#include "logger.h"
+
 Api::Api(Downloader::TDataSource t_dataSource, CancellationToken t_cancellationToken, QObject* parent)
     : QObject(parent)
     , m_cancellationToken(t_cancellationToken)
@@ -22,6 +24,7 @@ Api::Api(Downloader::TDataSource t_dataSource, CancellationToken t_cancellationT
 
 ContentSummary Api::downloadContentSummary(const QString& t_resourceUrl)
 {
+    logInfo("Download content summary.");
     QByteArray data;
     data = downloadInternal(t_resourceUrl);
 
@@ -31,6 +34,7 @@ ContentSummary Api::downloadContentSummary(const QString& t_resourceUrl)
 
 QString Api::downloadPatcherSecret(const QString& t_resourceUrl)
 {
+    logInfo("Downloading patcher secret.");
     QByteArray data;
     data = downloadInternal(t_resourceUrl);
 
@@ -53,6 +57,7 @@ QString Api::downloadPatcherSecret(const QString& t_resourceUrl)
 
 int Api::downloadPatcherVersion(const QString& t_resourceUrl)
 {
+    logInfo("Downloading patcher version.");
     QByteArray data;
     data = downloadInternal(t_resourceUrl);
     QJsonDocument doc = QJsonDocument::fromJson(data);
@@ -81,6 +86,7 @@ int Api::downloadPatcherVersion(const QString& t_resourceUrl)
 
 QStringList Api::downloadContentUrls(const QString& t_resourceUrl)
 {
+    logInfo("Downloading content urls.");
     QByteArray data;
     data = downloadInternal(t_resourceUrl);
 

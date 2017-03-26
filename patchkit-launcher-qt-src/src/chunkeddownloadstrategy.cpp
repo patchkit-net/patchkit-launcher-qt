@@ -26,6 +26,7 @@ void ChunkedDownloadStrategy::onDownloaderFinished()
     logInfo("Chunked download strategy - a downloader finished downloading, processing downloaded data.");
 
     Downloader* downloader = static_cast<Downloader*> (sender());
+    logDebug("Downloader name is: %1", .arg(downloader->debugName()));
 
     disconnect(downloader, &Downloader::downloadFinished, this, &ChunkedDownloadStrategy::onDownloaderFinished);
     disconnect(downloader, &Downloader::downloadProgressChanged, this, &DefaultDownloadStrategy::downloadProgress);
@@ -38,6 +39,7 @@ void ChunkedDownloadStrategy::onDownloaderFinished()
 
     if (validChunkMap.size() == validChunkCount && !validChunkMap.contains(false))
     {
+        logInfo("Downloaded data is valid and complete.");
         m_data = data;
         emit done();
     }
@@ -47,6 +49,7 @@ void ChunkedDownloadStrategy::onDownloaderFinished()
 
         if (firstInvalidChunkIndex == -1)
         {
+            logInfo("Downloaded data is valid but incomplete.");
             setRanges(m_parent.getChunkSize() * validChunkMap.size());
             m_data.clear();
 
@@ -57,6 +60,7 @@ void ChunkedDownloadStrategy::onDownloaderFinished()
         }
         else if (firstInvalidChunkIndex != 0)
         {
+            logInfo("Downloaded data contains invalid chunks or is incomplete.");
             setRanges(m_parent.getChunkSize() * firstInvalidChunkIndex);
             m_data.clear();
 
