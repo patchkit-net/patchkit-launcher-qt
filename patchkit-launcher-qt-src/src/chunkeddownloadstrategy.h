@@ -13,8 +13,8 @@ public:
 
     virtual void finish() override;
 
-protected slots:
-    virtual void onDownloaderFinished();
+protected:
+    virtual void onDownloaderFinished(Downloader* downloader) override;
 
 private:
     const ChunkedDownloader& m_parent;

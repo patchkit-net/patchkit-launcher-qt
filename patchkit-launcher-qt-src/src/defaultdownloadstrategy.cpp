@@ -34,7 +34,7 @@ void DefaultDownloadStrategy::init()
 
     inactiveDownloaders.at(m_iterator)->start();
 
-    connect(inactiveDownloaders.at(m_iterator), &Downloader::downloadStarted, this, &DefaultDownloadStrategy::onDownloaderStarted);
+    hookDownloaderOnInit(inactiveDownloaders.at(m_iterator));
 
     m_timer.setSingleShot(true);
     m_timer.start(m_minTimeout);
@@ -77,12 +77,9 @@ void DefaultDownloadStrategy::stopInternal()
     emit done();
 }
 
-void DefaultDownloadStrategy::onDownloaderStarted()
+void DefaultDownloadStrategy::onDownloaderStarted(Downloader* downloader)
 {
-    // Recover the sender
-    Downloader* downloader = static_cast<Downloader*> (sender());
-
-    disconnect(downloader, &Downloader::downloadStarted, this, &DefaultDownloadStrategy::onDownloaderStarted);
+    hookDownloaderOnInit(downloader, true);
 
     int statusCode = downloader->getStatusCode();
 
@@ -104,23 +101,20 @@ void DefaultDownloadStrategy::onDownloaderStarted()
     auto staleDownloaders = m_operator->getStaleDownloaders();
     for (Downloader* d : staleDownloaders)
     {
-        disconnect(d, &Downloader::downloadStarted, this, &DefaultDownloadStrategy::onDownloaderStarted);
+        hookDownloaderOnInit(d, false);
         d->stop();
     }
 
-    connect(downloader, &Downloader::downloadFinished, this, &DefaultDownloadStrategy::onDownloaderFinished);
-    connect(downloader, &Downloader::downloadProgressChanged, this, &DefaultDownloadStrategy::downloadProgress);
+    hookAnActiveDownloader(downloader);
 }
 
-void DefaultDownloadStrategy::onDownloaderFinished()
+void DefaultDownloadStrategy::onDownloaderFinished(Downloader* downloader)
 {
     logInfo("A downloader finished downloading.");
-    Downloader* downloader = static_cast<Downloader*> (sender());
 
     int statusCode = downloader->getStatusCode();
 
-    disconnect(downloader, &Downloader::downloadFinished, this, &DefaultDownloadStrategy::onDownloaderFinished);
-    disconnect(downloader, &Downloader::downloadProgressChanged, this, &DefaultDownloadStrategy::downloadProgress);
+    hookAnActiveDownloader(downloader, true);
 
     if (!Downloader::doesStatusCodeIndicateSuccess(statusCode))
     {
@@ -132,6 +126,7 @@ void DefaultDownloadStrategy::onDownloaderFinished()
 
             m_timer.stop();
             emit error(DownloadError::ConnectionIssues);
+            reset();
             return;
         }
     }
@@ -144,6 +139,21 @@ void DefaultDownloadStrategy::onDownloaderFinished()
     emit done();
 }
 
+void DefaultDownloadStrategy::onDownloaderStartedInternal()
+{
+    // Recover the sender
+    Downloader* downloader = static_cast<Downloader*> (sender());
+
+    onDownloaderStarted(downloader);
+}
+
+void DefaultDownloadStrategy::onDownloaderFinishedInternal()
+{
+    Downloader* downloader = static_cast<Downloader*> (sender());
+
+    onDownloaderFinished(downloader);
+}
+
 void DefaultDownloadStrategy::onFirstTimeout()
 {
     logInfo("First timeout.");
@@ -154,7 +164,7 @@ void DefaultDownloadStrategy::onFirstTimeout()
         for (int i = 0; i < 2 && i < downloaders.size(); i++)
         {
             downloaders.at(i)->start();
-            connect(downloaders.at(i), &Downloader::downloadStarted, this, &DefaultDownloadStrategy::onDownloaderStarted);
+            hookDownloaderOnInit(downloaders.at(i));
         }
     }
 
@@ -170,9 +180,45 @@ void DefaultDownloadStrategy::onSecondTimeout()
         for (Downloader* d : m_operator->getStaleDownloaders())
         {
             d->stop();
-            disconnect(d,&Downloader::downloadStarted, this, &DefaultDownloadStrategy::onDownloaderStarted);
+            hookDownloaderOnInit(d, true);
         }
         emit error(DownloadError::ConnectionIssues);
+    }
+}
+
+void DefaultDownloadStrategy::hookAnActiveDownloader(Downloader* downloader, bool unhook)
+{
+    if (unhook)
+    {
+        disconnect(downloader, &Downloader::downloadFinished, this, &DefaultDownloadStrategy::onDownloaderFinishedInternal);
+        disconnect(downloader, &Downloader::downloadProgressChanged, this, &DefaultDownloadStrategy::downloadProgress);
+    }
+    else
+    {
+        connect(downloader, &Downloader::downloadFinished, this, &DefaultDownloadStrategy::onDownloaderFinishedInternal);
+        connect(downloader, &Downloader::downloadProgressChanged, this, &DefaultDownloadStrategy::downloadProgress);
+    }
+}
+
+void DefaultDownloadStrategy::hookDownloaderOnInit(Downloader* downloader, bool unhook)
+{
+    if (unhook)
+    {
+        disconnect(downloader, &Downloader::downloadStarted, this, &DefaultDownloadStrategy::onDownloaderStartedInternal);
+    }
+    else
+    {
+        connect(downloader, &Downloader::downloadStarted, this, &DefaultDownloadStrategy::onDownloaderStartedInternal);
+    }
+}
+
+void DefaultDownloadStrategy::reset()
+{
+    m_operator->stopAll();
+
+    for (Downloader* d : m_operator->getDownloaders())
+    {
+        d->disconnect();
     }
 }
 

@@ -15,19 +15,26 @@ protected:
     virtual void proceedInternal() override;
     virtual void stopInternal() override;
 
-protected slots:
-    virtual void onDownloaderStarted();
-    virtual void onDownloaderFinished();
+    virtual void onDownloaderStarted(Downloader* downloader);
+    virtual void onDownloaderFinished(Downloader* downloader);
     virtual void onFirstTimeout();
     virtual void onSecondTimeout();
+
+    void hookAnActiveDownloader(Downloader* downloader, bool unhook = false);
+    void hookDownloaderOnInit(Downloader* downloader ,bool unhook = false);
+
+    void reset();
+
+protected slots:
+    void onDownloaderStartedInternal();
+    void onDownloaderFinishedInternal();
+    void onTimeout();
 
     void printDebugInfo();
 
 private:
     QTimer m_timer;
     int m_timeoutCounter;
-
-    void onTimeout();
 
     int m_iterator;
     int m_minTimeout;

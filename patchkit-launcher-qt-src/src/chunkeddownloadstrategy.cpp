@@ -21,15 +21,13 @@ void ChunkedDownloadStrategy::finish()
     DefaultDownloadStrategy::finish();
 }
 
-void ChunkedDownloadStrategy::onDownloaderFinished()
+void ChunkedDownloadStrategy::onDownloaderFinished(Downloader* downloader)
 {
     logInfo("Chunked download strategy - a downloader finished downloading, processing downloaded data.");
 
-    Downloader* downloader = static_cast<Downloader*> (sender());
     logDebug("Downloader name is: %1", .arg(downloader->debugName()));
 
-    disconnect(downloader, &Downloader::downloadFinished, this, &ChunkedDownloadStrategy::onDownloaderFinished);
-    disconnect(downloader, &Downloader::downloadProgressChanged, this, &DefaultDownloadStrategy::downloadProgress);
+    hookAnActiveDownloader(downloader ,false);
 
     QByteArray data = m_data + downloader->readData();
 
@@ -70,8 +68,7 @@ void ChunkedDownloadStrategy::onDownloaderFinished()
             }
         }
 
-        m_operator->stopAll();
-
+        reset();
         init();
     }
 }
