@@ -215,11 +215,6 @@ void DefaultDownloadStrategy::hookDownloaderOnInit(Downloader* downloader, bool 
 void DefaultDownloadStrategy::reset()
 {
     m_operator->stopAll();
-
-    for (Downloader* d : m_operator->getDownloaders())
-    {
-        d->disconnect();
-    }
 }
 
 void DefaultDownloadStrategy::printDebugInfo()
