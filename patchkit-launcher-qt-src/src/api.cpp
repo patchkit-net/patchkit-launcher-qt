@@ -5,105 +5,151 @@
 
 #include "api.h"
 
-#include "downloader.h"
 #include "timeoutexception.h"
 #include "config.h"
 
+#include "downloaderoperator.h"
+#include "defaultdownloadstrategy.h"
+
 #include "contentsummary.h"
 
-Api::Api(QObject* parent) : QObject(parent)
+#include "logger.h"
+
+Api::Api(Downloader::TDataSource t_dataSource, CancellationToken t_cancellationToken, QObject* parent)
+    : QObject(parent)
+    , m_cancellationToken(t_cancellationToken)
+    , m_dataSource(t_dataSource)
 {
 }
 
-QString Api::downloadString(const QString& t_resourceUrl, CancellationToken t_cancellationToken) const
+ContentSummary Api::downloadContentSummary(const QString& t_resourceUrl)
 {
-    QStringList cacheApiUrls = Config::cacheApiUrls;
-    return downloadString(t_resourceUrl, cacheApiUrls, false, t_cancellationToken);
+    logInfo("Download content summary.");
+    QByteArray data;
+    data = downloadInternal(t_resourceUrl);
+
+    QJsonDocument doc = QJsonDocument::fromJson(data);
+    return ContentSummary(doc);
 }
 
-QJsonDocument Api::downloadContentSummary(const QString& t_resourceUrl, CancellationToken t_cancellationToken) const
+QString Api::downloadPatcherSecret(const QString& t_resourceUrl)
 {
-    const auto validator = [](const QString& data) -> bool
+    logInfo("Downloading patcher secret.");
+    QByteArray data;
+    data = downloadInternal(t_resourceUrl);
+
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
+
+    if (!jsonDocument.isObject())
     {
-        QJsonDocument doc = QJsonDocument::fromJson(data.toUtf8());
-        return !doc.isNull() && !doc.isEmpty();
-    };
+        throw std::runtime_error("Couldn't read patcher secret from JSON data.");
+    }
 
-    QStringList cacheApiUrls = Config::cacheApiUrls;
+    QJsonObject jsonObject = jsonDocument.object();
 
-    QString raw = downloadString(t_resourceUrl, cacheApiUrls, validator, false, t_cancellationToken);
-    return QJsonDocument::fromJson(raw.toUtf8());
-}
-
-QString Api::downloadString(const QString& t_resourceUrl, QStringList& t_cacheApiUrls, bool t_extendedTimeout, CancellationToken t_cancellationToken) const
-{
-    return downloadString(t_resourceUrl, t_cacheApiUrls, nullptr, t_extendedTimeout, t_cancellationToken);
-}
-
-QString Api::downloadString(const QString& t_resourceUrl, QStringList& t_cacheApiUrls, TValidator t_validator, bool t_extendedTimeout, CancellationToken t_cancellationToken) const
-{
-    QString result;
-    int statusCode;
-
-    int timeout = t_extendedTimeout ? Config::maxConnectionTimeoutMsec : Config::minConnectionTimeoutMsec;
-
-    if (downloadStringFromServer(Config::mainApiUrl + "/" + t_resourceUrl, timeout, result, statusCode, t_cancellationToken))
+    if (!jsonObject.contains("patcher_secret"))
     {
-        if (!isVaild(statusCode))
+        throw std::runtime_error("Couldn't read patcher secret from JSON data.");
+    }
+
+    return jsonObject.value("patcher_secret").toString();
+}
+
+int Api::downloadPatcherVersion(const QString& t_resourceUrl)
+{
+    logInfo("Downloading patcher version.");
+    QByteArray data;
+    data = downloadInternal(t_resourceUrl);
+    QJsonDocument doc = QJsonDocument::fromJson(data);
+
+    if (!doc.isObject())
+    {
+        throw std::runtime_error("Couldn't read version id from JSON data.");
+    }
+
+    QJsonObject jsonObject = doc.object();
+
+    if (!jsonObject.contains("id"))
+    {
+        throw std::runtime_error("Couldn't read version id from JSON data.");
+    }
+
+    int idValue = jsonObject.value("id").toInt(-1);
+
+    if (idValue == -1)
+    {
+        throw std::runtime_error("Couldn't read version id from JSON data.");
+    }
+
+    return idValue;
+}
+
+QStringList Api::downloadContentUrls(const QString& t_resourceUrl)
+{
+    logInfo("Downloading content urls.");
+    QByteArray data;
+    data = downloadInternal(t_resourceUrl);
+
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
+
+    if (!jsonDocument.isArray())
+    {
+        throw std::runtime_error("Couldn't read content urls from JSON data.");
+    }
+
+    QJsonArray jsonArray = jsonDocument.array();
+
+    if (jsonArray.size() == 0)
+    {
+        throw std::runtime_error("Empty content urls.");
+    }
+
+    QStringList result;
+
+    for (int i = 0; i < jsonArray.size(); i++)
+    {
+        if (!jsonArray[i].isObject())
         {
-            throw std::runtime_error("API response error. Status code - " + std::to_string(statusCode));
+            throw std::runtime_error("Couldn't read content urls from JSON data.");
         }
 
-        if (!t_validator || (t_validator && t_validator(result)))
-            return result;
-    }
+        QJsonObject jsonObject = jsonArray[i].toObject();
 
-    for (int i = 0; i < t_cacheApiUrls.length(); i++)
-    {
-        if (downloadStringFromServer(t_cacheApiUrls[i] + "/" + t_resourceUrl, timeout, result, statusCode, t_cancellationToken))
+        if (!jsonObject.contains("url"))
         {
-            if (isVaild(statusCode))
-            {
-                if (!t_validator || (t_validator && t_validator(result)))
-                    return result;
-            }
-
-            t_cacheApiUrls.removeAt(i);
-            i--;
-        }
-    }
-
-    if (t_extendedTimeout)
-    {
-        throw std::runtime_error("API connection error.");
-    }
-
-    return downloadString(t_resourceUrl, t_cacheApiUrls, t_validator, true, t_cancellationToken);
-}
-
-bool Api::isVaild(int t_statusCode) const
-{
-    return t_statusCode == 200;
-}
-
-bool Api::downloadStringFromServer(const QString& t_url, int t_timeout, QString& t_result, int& t_statusCode, CancellationToken t_cancellationToken) const
-{
-    QNetworkAccessManager remoteDataSource;
-
-    try
-    {
-        Downloader downloader(&remoteDataSource, t_cancellationToken);
-        t_result = downloader.downloadString(t_url, t_timeout, t_statusCode);
-
-        if (t_statusCode == 500)
-        {
-            return false;
+            throw std::runtime_error("Couldn't read content urls from JSON data.");
         }
 
-        return true;
+        QJsonValue jsonValue = jsonObject.value("url");
+
+        if (!jsonValue.isString())
+        {
+            throw std::runtime_error("Couldn't read content urls from JSON data.");
+        }
+
+        result.append(jsonValue.toString());
     }
-    catch (TimeoutException&)
-    {
-        return false;
-    }
+
+    return result;
+}
+
+QByteArray Api::downloadInternal(const QString& t_resourceUrl)
+{
+    QStringList totalUrlBases = QStringList(Config::mainApiUrl);
+    totalUrlBases.append(Config::cacheApiUrls);
+
+    StringConcatUrlProvider urlProvider(totalUrlBases, t_resourceUrl);
+
+    DefaultDownloadStrategy strategy(Config::minConnectionTimeoutMsec, Config::maxConnectionTimeoutMsec);
+
+    DownloaderOperator op(m_dataSource, urlProvider, m_cancellationToken);
+    connect(&strategy, &DefaultDownloadStrategy::error, this, &Api::downloadError);
+
+    connect(this, &Api::proceed, &strategy, &BaseDownloadStrategy::proceed);
+    connect(this, &Api::stop, &strategy, &BaseDownloadStrategy::stop);
+
+    QByteArray data;
+    data = op.download(&strategy);
+
+    return data;
 }

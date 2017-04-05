@@ -28,18 +28,16 @@ public:
 
 signals:
     void downloadProgressChanged(const long long& t_bytesDownloaded, const long long& t_totalBytes);
+    void downloadError(DownloadError t_error);
+
+    void proceed();
+    void stop();
 
 private:
     IApi& m_api;
 
     QStringList getContentUrls(const QString& t_patcherSecret, int t_version, CancellationToken t_cancellationToken);
 
-    bool downloadChunked(QIODevice& t_dataTarget, const QStringList& t_contentUrls, ContentSummary& t_contentSummary, CancellationToken t_cancellationToken);
-    bool downloadDirect(QIODevice& t_dataTarget, const QStringList& t_contentUrls, CancellationToken t_cancellationToken);
-
-    bool downloadWith(Downloader& downloader, QIODevice& t_dataTarget, const QStringList& t_contentUrls, CancellationToken t_cancellationToken);
-
-    bool downloadWithInternal(Downloader& t_downloader, QIODevice& t_dataTarget, const QString& t_url, CancellationToken t_cancellationToken);
     bool saveData(QByteArray& t_data, QIODevice& t_dataTarget);
 
     static int parseVersionJson(const QString& t_json);

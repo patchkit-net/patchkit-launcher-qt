@@ -24,6 +24,10 @@ void Launcher::start()
     m_mainWindow = std::make_unique<MainWindow>(m_worker, nullptr);
 
     connect(m_worker.get(), &QThread::finished, this, &Launcher::finish);
+    connect(m_worker.get(), &LauncherWorker::downloadError, this, &Launcher::onError);
+
+    connect(this, &Launcher::requestContinue, m_worker.get(), &LauncherWorker::workerContinue);
+    connect(this, &Launcher::requestStop, m_worker.get(), &LauncherWorker::workerStop);
 
     logInfo("Showing main window.");
     m_mainWindow->show();
@@ -32,12 +36,46 @@ void Launcher::start()
     m_worker->start();
 }
 
+void Launcher::onError(DownloadError t_error)
+{
+    if (t_error == DownloadError::ConnectionIssues)
+    {
+        logWarning("Connection issues.");
+        if (m_worker->isLocalPatcherInstalled())
+        {
+            logInfo("A version of patcher is installed, asking if launcher should go into offline mode.");
+            int answer = QMessageBox::question(nullptr, "Connection issues!",
+                                  "Launcher is experiencing connection issues, would you like to continue in offline mode?",
+                                  QMessageBox::Yes, QMessageBox::No);
+
+            if (answer == QMessageBox::Yes)
+            {
+                logInfo("User chose to go into offline mode.");
+                emit requestStop();
+            }
+            else if (answer == QMessageBox::No)
+            {
+                logInfo("User chose to continue trying to download the newest version of patcher.");
+                emit requestContinue();
+            }
+            else
+            {
+                logWarning("Unexpected outcome.");
+            }
+        }
+        else
+        {
+            logInfo("No version of patcher is installed, forcing to proceed.");
+            emit requestContinue();
+        }
+    }
+}
+
 void Launcher::finish()
 {
     disconnect(m_worker.get(), &QThread::finished, this, &Launcher::finish);
 
     logInfo("Launcher worker has finished. Checking result.");
-
 
     if (m_worker->result() == LauncherWorker::CANCELLED ||
         m_worker->result() == LauncherWorker::SUCCESS)
