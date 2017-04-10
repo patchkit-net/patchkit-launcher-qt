@@ -49,7 +49,8 @@ QNetworkReply* MockedNAM::createRequest(QNetworkAccessManager::Operation /*op*/,
 
     if (!m_replyDefinitions.contains(url))
     {
-        return nullptr;
+        MockedNetworkReply* reply = new MockedNetworkReply(0, QByteArray(), 404);
+        return reply;
     }
 
     ReplyDefinition& def = *m_replyDefinitions.find(url);

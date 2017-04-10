@@ -40,7 +40,6 @@ public:
     bool wasStarted() const;
     bool isFinished() const;
     bool isRunning() const;
-    bool hasFinishedWithoutErrors() const;
 
     QString debugInfo() const;
     QString debugName() const;

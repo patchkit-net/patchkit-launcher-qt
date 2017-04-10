@@ -71,6 +71,11 @@ void Downloader::setRange(int t_bytesStart, int t_bytesEnd)
 
 QByteArray Downloader::readData()
 {
+    if (m_remoteDataReply.isNull())
+    {
+        return QByteArray();
+    }
+
     return m_remoteDataReply->readAll();
 }
 
