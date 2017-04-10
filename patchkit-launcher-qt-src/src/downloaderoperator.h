@@ -26,7 +26,7 @@ public:
     std::vector<Downloader*> getActiveDownloaders() const;
 
     // Returns all downloaders that have been started but haven't started downloading yet
-    std::vector<Downloader*> getStaleDownloaders() const;
+    std::vector<Downloader*> getStartingDownloaders() const;
 
     // Returns all downloaders that haven't been started ( or aren't running )
     std::vector<Downloader*> getInactiveDownloaders() const;

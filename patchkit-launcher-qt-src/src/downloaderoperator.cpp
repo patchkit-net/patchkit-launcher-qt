@@ -42,7 +42,7 @@ QByteArray DownloaderOperator::download(BaseDownloadStrategy* t_downloadStrategy
 
     m_cancellationToken.throwIfCancelled();
 
-    t_downloadStrategy->end();
+    t_downloadStrategy->stop();
 
     return t_downloadStrategy->data();
 }
@@ -55,7 +55,7 @@ std::vector<Downloader*> DownloaderOperator::getActiveDownloaders() const
     });
 }
 
-std::vector<Downloader*> DownloaderOperator::getStaleDownloaders() const
+std::vector<Downloader*> DownloaderOperator::getStartingDownloaders() const
 {
     return getDownloaders([](Downloader* downloader)
     {

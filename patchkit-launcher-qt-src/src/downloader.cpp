@@ -105,6 +105,7 @@ QString Downloader::debugInfo() const
     sb.append(QString("Memory address: %1 \n").arg((size_t) this));
     sb.append(QString("Url: %1 \n").arg(m_resourceRequest.url().toString()));
     sb.append(QString("Reply status: %1 \n").arg(m_remoteDataReply.isNull() ? "Null" : "Exists"));
+    sb.append(QString("Active: %1 \n").arg(m_isActive ? "Yes" : "No"));
 
     return sb;
 }
@@ -133,7 +134,7 @@ void Downloader::finishedRelay()
 
     if (m_cancellationToken.isCancelled())
     {
-        logInfo("Finished by cancellatoin, will not emit finished signal.");
+        logInfo("Finished by cancellation, will not emit finished signal.");
         return;
     }
 
@@ -247,7 +248,6 @@ int Downloader::getReplyStatusCode(TRemoteDataReply& t_reply) const
 {
     if (t_reply.isNull())
     {
-        //throw std::runtime_error("Tried reading status code from a null reply.");
         return -1;
     }
 
@@ -255,7 +255,6 @@ int Downloader::getReplyStatusCode(TRemoteDataReply& t_reply) const
 
     if (!statusCode.isValid())
     {
-        //throw std::runtime_error("Couldn't read HTTP status code from reply.");
         return -1;
     }
 

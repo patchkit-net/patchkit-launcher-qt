@@ -20,8 +20,11 @@ protected:
     virtual void onFirstTimeout();
     virtual void onSecondTimeout();
 
-    void hookAnActiveDownloader(Downloader* downloader, bool unhook = false);
-    void hookDownloaderOnInit(Downloader* downloader ,bool unhook = false);
+    void prepareDownloader(Downloader* t_downloader);
+    void discardDownloader(Downloader* t_downloader);
+
+    void acceptActiveDownloader(Downloader* t_downloader);
+    void discardActiveDownloader(Downloader* t_downloader);
 
     void reset();
 
@@ -39,6 +42,9 @@ private:
     int m_iterator;
     int m_minTimeout;
     int m_maxTimeout;
+
+    QVector<Downloader*> m_activeDownloaders;
+    QVector<Downloader*> m_startingDownloaders;
 };
 
 #endif // DEFAULTDOWNLOADSTRATEGY_H

@@ -22,7 +22,17 @@ void DefaultDownloadStrategy::init()
 
     if (inactiveDownloaders.size() == 0)
     {
-        logCritical("No downloaders were available.");
+        logCritical("No inactive downloaders were available.");
+
+        logDebug("Starting count: %1", .arg(m_startingDownloaders.size()));
+        logDebug("Active count: %1", .arg(m_activeDownloaders.size()));
+
+        logDebug("Downloaders debug info dump: ");
+        for (Downloader* d : allDownloaders)
+        {
+            logDebug(d->debugInfo());
+        }
+
         emit error(DownloadError::ConnectionIssues);
         return;
     }
@@ -34,7 +44,7 @@ void DefaultDownloadStrategy::init()
 
     inactiveDownloaders.at(m_iterator)->start();
 
-    hookDownloaderOnInit(inactiveDownloaders.at(m_iterator));
+    prepareDownloader(inactiveDownloaders.at(m_iterator));
 
     m_timer.setSingleShot(true);
     m_timer.start(m_minTimeout);
@@ -77,50 +87,46 @@ void DefaultDownloadStrategy::stopInternal()
     emit done();
 }
 
-void DefaultDownloadStrategy::onDownloaderStarted(Downloader* downloader)
+void DefaultDownloadStrategy::onDownloaderStarted(Downloader* t_downloader)
 {
-    hookDownloaderOnInit(downloader, true);
-
-    int statusCode = downloader->getStatusCode();
+    int statusCode = t_downloader->getStatusCode();
 
     if (!Downloader::doesStatusCodeIndicateSuccess(statusCode))
     {
         logInfo("Downloader failed to start, status code was: %1", .arg(statusCode));
 
-        downloader->stop();
+        discardDownloader(t_downloader);
+        t_downloader->stop();
 
         return;
     }
 
-    if (!downloader->isRunning())
+    if (!t_downloader->isRunning())
     {
         logWarning("The downloader is supposed to have started, but it's status shows otherwise.");
     }
 
+    acceptActiveDownloader(t_downloader);
+
     logInfo("A downloader has started downloading.");
-    auto staleDownloaders = m_operator->getStaleDownloaders();
-    for (Downloader* d : staleDownloaders)
+    for (Downloader* d : m_startingDownloaders)
     {
-        hookDownloaderOnInit(d, false);
+        discardDownloader(d);
         d->stop();
     }
-
-    hookAnActiveDownloader(downloader);
 }
 
-void DefaultDownloadStrategy::onDownloaderFinished(Downloader* downloader)
+void DefaultDownloadStrategy::onDownloaderFinished(Downloader* t_downloader)
 {
     logInfo("A downloader finished downloading.");
 
-    int statusCode = downloader->getStatusCode();
-
-    hookAnActiveDownloader(downloader, true);
+    int statusCode = t_downloader->getStatusCode();
 
     if (!Downloader::doesStatusCodeIndicateSuccess(statusCode))
     {
         logWarning("A downloader has finished with a status code: %1", .arg(statusCode));
 
-        if (m_operator->getStaleDownloaders().size() == 0 && m_operator->getActiveDownloaders().size() == 0)
+        if (m_operator->getStartingDownloaders().size() == 0 && m_operator->getActiveDownloaders().size() == 0)
         {
             logWarning("No pending or active downloaders, disabling the timer and emitting connection issues error.");
 
@@ -131,9 +137,12 @@ void DefaultDownloadStrategy::onDownloaderFinished(Downloader* downloader)
         }
     }
 
-    m_timer.stop();
-    m_data = downloader->readData();
+    logInfo("Download successful. Reseting and emitting done signal.");
 
+    m_timer.stop();
+    m_data = t_downloader->readData();
+
+    reset();
     m_operator->stopAll();
 
     emit done();
@@ -164,7 +173,7 @@ void DefaultDownloadStrategy::onFirstTimeout()
         for (int i = 0; i < 2 && i < downloaders.size(); i++)
         {
             downloaders.at(i)->start();
-            hookDownloaderOnInit(downloaders.at(i));
+            prepareDownloader(downloaders.at(i));
         }
     }
 
@@ -177,44 +186,88 @@ void DefaultDownloadStrategy::onSecondTimeout()
     logInfo("Second timeout.");
     if (m_operator->getActiveDownloaders().size() == 0)
     {
-        for (Downloader* d : m_operator->getStaleDownloaders())
-        {
-            d->stop();
-            hookDownloaderOnInit(d, true);
-        }
+        reset();
         emit error(DownloadError::ConnectionIssues);
     }
 }
 
-void DefaultDownloadStrategy::hookAnActiveDownloader(Downloader* downloader, bool unhook)
+void DefaultDownloadStrategy::prepareDownloader(Downloader* t_downloader)
 {
-    if (unhook)
+    if (m_startingDownloaders.contains(t_downloader))
     {
-        disconnect(downloader, &Downloader::downloadFinished, this, &DefaultDownloadStrategy::onDownloaderFinishedInternal);
-        disconnect(downloader, &Downloader::downloadProgressChanged, this, &DefaultDownloadStrategy::downloadProgress);
+        logWarning("Downloader already prepared.");
+        return;
     }
-    else
-    {
-        connect(downloader, &Downloader::downloadFinished, this, &DefaultDownloadStrategy::onDownloaderFinishedInternal);
-        connect(downloader, &Downloader::downloadProgressChanged, this, &DefaultDownloadStrategy::downloadProgress);
-    }
+
+    m_startingDownloaders.push_back(t_downloader);
+
+    connect(t_downloader, &Downloader::downloadStarted, this, &DefaultDownloadStrategy::onDownloaderStartedInternal);
 }
 
-void DefaultDownloadStrategy::hookDownloaderOnInit(Downloader* downloader, bool unhook)
+void DefaultDownloadStrategy::discardDownloader(Downloader* t_downloader)
 {
-    if (unhook)
+    if (!m_startingDownloaders.contains(t_downloader))
     {
-        disconnect(downloader, &Downloader::downloadStarted, this, &DefaultDownloadStrategy::onDownloaderStartedInternal);
+        logWarning("Couldn't find the downloader in the starting downloaders list.");
+        return;
     }
-    else
+
+    m_startingDownloaders.removeOne(t_downloader);
+
+    disconnect(t_downloader, &Downloader::downloadStarted, this, &DefaultDownloadStrategy::onDownloaderStartedInternal);
+
+    t_downloader->stop();
+}
+
+void DefaultDownloadStrategy::acceptActiveDownloader(Downloader* t_downloader)
+{
+    if (m_activeDownloaders.contains(t_downloader))
     {
-        connect(downloader, &Downloader::downloadStarted, this, &DefaultDownloadStrategy::onDownloaderStartedInternal);
+        logWarning("Downloader has already been accepted.");
+        return;
     }
+
+    m_startingDownloaders.removeOne(t_downloader);
+
+    disconnect(t_downloader, &Downloader::downloadStarted, this, &DefaultDownloadStrategy::onDownloaderStartedInternal);
+
+    m_activeDownloaders.push_back(t_downloader);
+
+    connect(t_downloader, &Downloader::downloadFinished, this, &DefaultDownloadStrategy::onDownloaderFinishedInternal);
+    connect(t_downloader, &Downloader::downloadProgressChanged, this, &BaseDownloadStrategy::downloadProgress);
+}
+
+void DefaultDownloadStrategy::discardActiveDownloader(Downloader* t_downloader)
+{
+    if (!m_activeDownloaders.contains(t_downloader))
+    {
+        logWarning("Couldn't find the downloader in the active downloaders list.");
+        return;
+    }
+
+    m_activeDownloaders.removeOne(t_downloader);
+
+    disconnect(t_downloader, &Downloader::downloadFinished, this, &DefaultDownloadStrategy::onDownloaderFinishedInternal);
+    disconnect(t_downloader, &Downloader::downloadProgressChanged, this, &BaseDownloadStrategy::downloadProgress);
+
+    t_downloader->stop();
 }
 
 void DefaultDownloadStrategy::reset()
 {
-    m_operator->stopAll();
+    for (Downloader* downloader : m_activeDownloaders)
+    {
+        discardActiveDownloader(downloader);
+    }
+
+    m_activeDownloaders.clear();
+
+    for (Downloader* downloader : m_startingDownloaders)
+    {
+        discardDownloader(downloader);
+    }
+
+    m_startingDownloaders.clear();
 }
 
 void DefaultDownloadStrategy::printDebugInfo()
