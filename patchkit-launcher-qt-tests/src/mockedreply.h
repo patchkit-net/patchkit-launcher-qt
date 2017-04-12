@@ -3,8 +3,7 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#ifndef MOCKEDREPLY_H
-#define MOCKEDREPLY_H
+#pragma once
 
 #include <QNetworkReply>
 
@@ -37,5 +36,3 @@ private:
     int m_statusCode;
     int m_replyDelayMsec;
 };
-
-#endif // MOCKEDREPLY_H

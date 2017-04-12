@@ -1,5 +1,9 @@
-#ifndef IAPI_H
-#define IAPI_H
+/*
+* Copyright (C) Upsoft 2016
+* License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
+*/
+
+#pragma once
 
 class ContentSummary;
 class QString;
@@ -13,5 +17,3 @@ public:
     virtual int             downloadPatcherVersion(const QString& t_resourceUrl) = 0;
     virtual QStringList     downloadContentUrls(const QString& t_resourceUrl) = 0;
 };
-
-#endif // IAPI_H

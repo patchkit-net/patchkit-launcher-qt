@@ -1,3 +1,8 @@
+/*
+* Copyright (C) Upsoft 2016
+* License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
+*/
+
 #include "downloaderoperator.h"
 
 #include "defaultdownloadstrategy.h"
@@ -23,6 +28,10 @@ DownloaderOperator::~DownloaderOperator()
 
 QByteArray DownloaderOperator::download(BaseDownloadStrategy* t_downloadStrategy)
 {
+    /*
+     *  TODO: Figure out a mechanism to ensure that signals aren't being connected to the download strategy multiple times.
+     */
+
     if (!t_downloadStrategy)
     {
         DefaultDownloadStrategy baseDownloadStrategy(Config::minConnectionTimeoutMsec, Config::maxConnectionTimeoutMsec);

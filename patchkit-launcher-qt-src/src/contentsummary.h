@@ -3,8 +3,7 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#ifndef CONTENTSUMMARY_H
-#define CONTENTSUMMARY_H
+#pragma once
 
 #include <QString>
 #include <QVector>
@@ -111,5 +110,3 @@ private:
     QVector<THash>      m_chunkHashes;
     QVector<FileData>   m_filesSummary;
 };
-
-#endif // CONTENTSUMMARY_H

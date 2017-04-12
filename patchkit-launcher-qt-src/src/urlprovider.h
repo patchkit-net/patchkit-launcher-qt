@@ -24,6 +24,7 @@ private:
     std::vector<QString> m_variants;
 };
 
+// TODO: Reconsider naming of 'bases' and 'end' to match actual URL parts.
 class StringConcatUrlProvider : public IUrlProvider
 {
 public:

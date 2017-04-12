@@ -1,5 +1,9 @@
-#ifndef DOWNLOADEROPERATOR_H
-#define DOWNLOADEROPERATOR_H
+/*
+* Copyright (C) Upsoft 2016
+* License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
+*/
+
+#pragma once
 
 #include <vector>
 #include <deque>
@@ -40,5 +44,3 @@ private:
     CancellationToken m_cancellationToken;
     std::vector<Downloader*> m_downloaders;
 };
-
-#endif // DOWNLOADEROPERATOR_H

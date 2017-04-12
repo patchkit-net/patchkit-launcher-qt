@@ -3,8 +3,7 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#ifndef CHUNKEDDOWNLOADER_H
-#define CHUNKEDDOWNLOADER_H
+#pragma once
 
 #include <QObject>
 #include <QVector>
@@ -55,5 +54,3 @@ private:
 
     friend class ChunkedDownloadStrategy;
 };
-
-#endif // CHUNKEDDOWNLOADER_H

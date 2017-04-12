@@ -170,6 +170,7 @@ void DefaultDownloadStrategy::onFirstTimeout()
     {
         auto downloaders = m_operator->getInactiveDownloaders();
 
+        // TODO: Put the '2' in a constant
         for (int i = 0; i < 2 && i < downloaders.size(); i++)
         {
             downloaders.at(i)->start();

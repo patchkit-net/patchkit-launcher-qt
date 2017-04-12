@@ -1,5 +1,9 @@
-#ifndef BASEDOWNLOADSTRATEGY_H
-#define BASEDOWNLOADSTRATEGY_H
+/*
+* Copyright (C) Upsoft 2016
+* License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
+*/
+
+#pragma once
 
 #include <QObject>
 
@@ -34,5 +38,3 @@ protected:
     QByteArray m_data;
     DownloaderOperator* m_operator;
 };
-
-#endif // BASEDOWNLOADSTRATEGY_H

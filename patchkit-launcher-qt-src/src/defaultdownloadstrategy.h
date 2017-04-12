@@ -1,5 +1,9 @@
-#ifndef DEFAULTDOWNLOADSTRATEGY_H
-#define DEFAULTDOWNLOADSTRATEGY_H
+/*
+* Copyright (C) Upsoft 2016
+* License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
+*/
+
+#pragma once
 
 #include "basedownloadstrategy.h"
 
@@ -46,5 +50,3 @@ private:
     QVector<Downloader*> m_activeDownloaders;
     QVector<Downloader*> m_startingDownloaders;
 };
-
-#endif // DEFAULTDOWNLOADSTRATEGY_H

@@ -3,8 +3,7 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#ifndef MOCKEDNAM_H
-#define MOCKEDNAM_H
+#pragma once
 
 #include "mockedreply.h"
 
@@ -53,5 +52,3 @@ private:
 
     QMap<QString, ReplyDefinition> m_replyDefinitions;
 };
-
-#endif // MOCKEDNAM_H
