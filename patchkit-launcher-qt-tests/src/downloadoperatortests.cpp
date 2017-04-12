@@ -7,7 +7,6 @@
 #include "src/defaultdownloadstrategy.h"
 
 #include "mockednam.h"
-#include "mockeddownloadstrategy.h"
 
 SCENARIO("Operator state testing.")
 {
