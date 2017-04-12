@@ -20,8 +20,6 @@ public:
 
     QByteArray download(BaseDownloadStrategy* t_downloadStrategy = nullptr);
 
-    QByteArray readData();
-
     // Returns all downloaders that have been started and have successfully started downloading
     std::vector<Downloader*> getActiveDownloaders() const;
 
@@ -32,8 +30,6 @@ public:
     std::vector<Downloader*> getInactiveDownloaders() const;
 
     std::vector<Downloader*> getDownloaders(bool (*t_predicate)(Downloader*) = nullptr) const;
-
-    int countAvailableDownloaders() const;
 
     void stopAll();
 

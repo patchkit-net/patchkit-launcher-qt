@@ -35,6 +35,7 @@ public:
 
     void setRange(int t_bytesStart, int t_bytesEnd = -1);
 
+    void waitUntilReadyRead();
     void waitUntilFinished();
 
     bool wasStarted() const;
@@ -73,6 +74,7 @@ private:
     int  getReplyStatusCode(TRemoteDataReply& t_reply) const;
 
     void waitForDownloadToFinish(TRemoteDataReply& t_reply) const;
+    void waitForReadyRead(TRemoteDataReply& t_reply) const;
 
     bool m_isActive;
 

@@ -53,7 +53,7 @@ SCENARIO("Downloading partial data.")
 {
     MockedNAM nam;
 
-    QByteArray originalData = "somedata";
+    QByteArray originalData = "123456789";
     int rangeOffset = 3;
 
     nam.push("link", originalData, 300);
@@ -64,21 +64,9 @@ SCENARIO("Downloading partial data.")
     Downloader d("link", &nam, token);
     d.setRange(rangeOffset);
 
-    REQUIRE_FALSE(d.wasStarted());
-    REQUIRE_FALSE(d.isRunning());
-    REQUIRE_FALSE(d.isFinished());
-
     d.start();
 
-    REQUIRE_FALSE(!d.wasStarted());
-    REQUIRE_FALSE(d.isRunning());
-    REQUIRE_FALSE(d.isFinished());
-
     d.waitUntilFinished();
-
-    REQUIRE_FALSE(!d.wasStarted());
-    REQUIRE_FALSE(d.isRunning());
-    REQUIRE_FALSE(!d.isFinished());
 
     QByteArray data = d.readData();
 
