@@ -53,6 +53,13 @@ public:
     const static QString   chunksToken;
     const static QString   sizeToken;
 
+    static ContentSummary fromData(
+            const QByteArray& t_data,
+            int t_chunkSize,
+            HashFunc t_hashingMethod,
+            THash t_hashCode = 0,
+            QString t_hashingMethodName = "xxHash");
+
     ContentSummary(const QJsonDocument& t_document);
     ContentSummary();
 
