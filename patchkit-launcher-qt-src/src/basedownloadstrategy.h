@@ -23,6 +23,7 @@ public:
 public slots:
     void proceed();
     void stop();
+    virtual void downloadProgressRelay(const long long& t_bytesDownloaded, const long long& t_totalBytes);
 
 signals:
     void done();

@@ -17,6 +17,9 @@ public:
 
     virtual void finish() override;
 
+public slots:
+    virtual void downloadProgressRelay(const long long& t_bytesDownloaded, const long long& t_totalBytes) override;
+
 protected:
     virtual void onDownloaderFinished(Downloader* downloader) override;
 

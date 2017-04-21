@@ -236,7 +236,7 @@ void DefaultDownloadStrategy::acceptActiveDownloader(Downloader* t_downloader)
     m_activeDownloaders.push_back(t_downloader);
 
     connect(t_downloader, &Downloader::downloadFinished, this, &DefaultDownloadStrategy::onDownloaderFinishedInternal);
-    connect(t_downloader, &Downloader::downloadProgressChanged, this, &BaseDownloadStrategy::downloadProgress);
+    connect(t_downloader, &Downloader::downloadProgressChanged, this, &BaseDownloadStrategy::downloadProgressRelay);
 }
 
 void DefaultDownloadStrategy::discardActiveDownloader(Downloader* t_downloader)

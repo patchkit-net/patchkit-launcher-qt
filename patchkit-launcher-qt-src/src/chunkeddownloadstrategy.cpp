@@ -73,6 +73,13 @@ void ChunkedDownloadStrategy::onDownloaderFinished(Downloader* t_downloader)
     }
 }
 
+void ChunkedDownloadStrategy::downloadProgressRelay(const long long& t_bytesDownloaded, const long long& t_totalBytes)
+{
+    long long bytesProcessed = m_data.size();
+
+    emit downloadProgress(t_bytesDownloaded + bytesProcessed, t_totalBytes + bytesProcessed);
+}
+
 void ChunkedDownloadStrategy::setRanges(int t_from)
 {
     for (auto downloader : m_operator->getDownloaders())

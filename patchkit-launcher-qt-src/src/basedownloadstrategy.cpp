@@ -35,3 +35,8 @@ void BaseDownloadStrategy::stop()
 {
     stopInternal();
 }
+
+void BaseDownloadStrategy::downloadProgressRelay(const long long& t_bytesDownloaded, const long long& t_totalBytes)
+{
+    emit downloadProgress(t_bytesDownloaded, t_totalBytes);
+}
