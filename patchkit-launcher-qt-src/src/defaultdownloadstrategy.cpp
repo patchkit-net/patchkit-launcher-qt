@@ -13,6 +13,8 @@ DefaultDownloadStrategy::DefaultDownloadStrategy(int t_minTimeout, int t_maxTime
     connect(&m_timer, &QTimer::timeout, this, &DefaultDownloadStrategy::onTimeout);
 }
 
+const int DefaultDownloadStrategy::maxStartingDownloadersCount = 3;
+
 void DefaultDownloadStrategy::init()
 {
     logInfo("Download strategy started.");
@@ -170,8 +172,7 @@ void DefaultDownloadStrategy::onFirstTimeout()
     {
         auto downloaders = m_operator->getInactiveDownloaders();
 
-        // TODO: Put the '2' in a constant
-        for (int i = 0; i < 2 && i < downloaders.size(); i++)
+        for (int i = 0; i < (maxStartingDownloadersCount - 1) && i < downloaders.size(); i++)
         {
             downloaders.at(i)->start();
             prepareDownloader(downloaders.at(i));

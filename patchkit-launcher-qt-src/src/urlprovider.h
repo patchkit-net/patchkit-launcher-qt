@@ -1,5 +1,9 @@
-#ifndef URLPROVIDER_H
-#define URLPROVIDER_H
+/*
+* Copyright (C) Upsoft 2016
+* License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
+*/
+
+#pragma once
 
 #include <QStringList>
 #include <QString>
@@ -24,11 +28,10 @@ private:
     std::vector<QString> m_variants;
 };
 
-// TODO: Reconsider naming of 'bases' and 'end' to match actual URL parts.
 class StringConcatUrlProvider : public IUrlProvider
 {
 public:
-    StringConcatUrlProvider(const QStringList& bases, const QString& end);
+    StringConcatUrlProvider(const QStringList& hosts, const QString& path);
 
     virtual int getVariantCount() const override;
 
@@ -37,5 +40,3 @@ public:
 private:
     std::vector<QString> m_variants;
 };
-
-#endif // URLPROVIDER_H

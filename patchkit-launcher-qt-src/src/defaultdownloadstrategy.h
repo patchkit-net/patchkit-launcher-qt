@@ -13,6 +13,8 @@ class DefaultDownloadStrategy : public BaseDownloadStrategy
 public:
     DefaultDownloadStrategy(int t_minTimeout, int t_maxTimeout);
 
+    const static int maxStartingDownloadersCount;
+
 protected:
     virtual void init() override;
     virtual void finish() override;

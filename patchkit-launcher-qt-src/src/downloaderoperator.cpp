@@ -28,10 +28,6 @@ DownloaderOperator::~DownloaderOperator()
 
 QByteArray DownloaderOperator::download(BaseDownloadStrategy* t_downloadStrategy)
 {
-    /*
-     *  TODO: Figure out a mechanism to ensure that signals aren't being connected to the download strategy multiple times.
-     */
-
     if (!t_downloadStrategy)
     {
         DefaultDownloadStrategy baseDownloadStrategy(Config::minConnectionTimeoutMsec, Config::maxConnectionTimeoutMsec);
@@ -52,6 +48,10 @@ QByteArray DownloaderOperator::download(BaseDownloadStrategy* t_downloadStrategy
     m_cancellationToken.throwIfCancelled();
 
     t_downloadStrategy->stop();
+
+    disconnect(t_downloadStrategy, &BaseDownloadStrategy::downloadProgress, this, &DownloaderOperator::downloadProgress);
+    disconnect(t_downloadStrategy, &BaseDownloadStrategy::done, &loop, &QEventLoop::quit);
+    disconnect(&m_cancellationToken, &CancellationToken::cancelled, &loop, &QEventLoop::quit);
 
     return t_downloadStrategy->data();
 }

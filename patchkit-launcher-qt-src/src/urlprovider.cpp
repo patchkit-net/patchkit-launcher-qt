@@ -18,11 +18,11 @@ QString StringUrlProvider::getVariant(int index) const
     return m_variants.at(index);
 }
 
-StringConcatUrlProvider::StringConcatUrlProvider(const QStringList& bases, const QString& end)
+StringConcatUrlProvider::StringConcatUrlProvider(const QStringList& hosts, const QString& path)
 {
-    for (QString b : bases)
+    for (QString b : hosts)
     {
-        m_variants.push_back(b + "/" + end);
+        m_variants.push_back(b + "/" + path);
     }
 }
 

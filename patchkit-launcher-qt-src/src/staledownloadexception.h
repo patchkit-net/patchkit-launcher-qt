@@ -3,8 +3,7 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#ifndef STALEDOWNLOADEXCEPTION_H
-#define STALEDOWNLOADEXCEPTION_H
+#pragma once
 
 #include <exception>
 
@@ -25,5 +24,3 @@ public:
     }
 
 };
-
-#endif // STALEDOWNLOADEXCEPTION_H
