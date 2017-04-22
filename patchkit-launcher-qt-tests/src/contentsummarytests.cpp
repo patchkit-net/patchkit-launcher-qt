@@ -115,3 +115,15 @@ TEST_CASE("Content summary can be serialized to JSON." ,"[content_summary]")
         REQUIRE(a.path == b.path);
     }
 }
+
+TEST_CASE("Generating content summary from data.", "[content_summary]")
+{
+    int chunkSize = 2;
+    QByteArray data = "somerandomdata";
+
+    ContentSummary contentSummary = ContentSummary::fromData(data, chunkSize, &HashingStrategy::xxHash);
+
+    REQUIRE(contentSummary.getChunkSize() == chunkSize);
+    REQUIRE(contentSummary.getChunksCount() == (data.size() / chunkSize));
+    REQUIRE(contentSummary.getChunkHash(0) == HashingStrategy::xxHash(data.mid(0, chunkSize)));
+}
