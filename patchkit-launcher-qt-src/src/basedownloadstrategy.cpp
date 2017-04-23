@@ -1,3 +1,8 @@
+/*
+* Copyright (C) Upsoft 2016
+* License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
+*/
+
 #include "basedownloadstrategy.h"
 
 #include "downloaderoperator.h"
@@ -29,4 +34,9 @@ void BaseDownloadStrategy::proceed()
 void BaseDownloadStrategy::stop()
 {
     stopInternal();
+}
+
+void BaseDownloadStrategy::downloadProgressRelay(const long long& t_bytesDownloaded, const long long& t_totalBytes)
+{
+    emit downloadProgress(t_bytesDownloaded, t_totalBytes);
 }

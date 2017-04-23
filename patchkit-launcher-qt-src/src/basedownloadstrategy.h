@@ -1,5 +1,9 @@
-#ifndef BASEDOWNLOADSTRATEGY_H
-#define BASEDOWNLOADSTRATEGY_H
+/*
+* Copyright (C) Upsoft 2016
+* License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
+*/
+
+#pragma once
 
 #include <QObject>
 
@@ -19,6 +23,7 @@ public:
 public slots:
     void proceed();
     void stop();
+    virtual void downloadProgressRelay(const long long& t_bytesDownloaded, const long long& t_totalBytes);
 
 signals:
     void done();
@@ -34,5 +39,3 @@ protected:
     QByteArray m_data;
     DownloaderOperator* m_operator;
 };
-
-#endif // BASEDOWNLOADSTRATEGY_H

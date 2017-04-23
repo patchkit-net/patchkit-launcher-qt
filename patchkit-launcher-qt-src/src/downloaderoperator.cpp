@@ -1,3 +1,8 @@
+/*
+* Copyright (C) Upsoft 2016
+* License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
+*/
+
 #include "downloaderoperator.h"
 
 #include "defaultdownloadstrategy.h"
@@ -42,7 +47,11 @@ QByteArray DownloaderOperator::download(BaseDownloadStrategy* t_downloadStrategy
 
     m_cancellationToken.throwIfCancelled();
 
-    t_downloadStrategy->end();
+    t_downloadStrategy->stop();
+
+    disconnect(t_downloadStrategy, &BaseDownloadStrategy::downloadProgress, this, &DownloaderOperator::downloadProgress);
+    disconnect(t_downloadStrategy, &BaseDownloadStrategy::done, &loop, &QEventLoop::quit);
+    disconnect(&m_cancellationToken, &CancellationToken::cancelled, &loop, &QEventLoop::quit);
 
     return t_downloadStrategy->data();
 }
@@ -55,7 +64,7 @@ std::vector<Downloader*> DownloaderOperator::getActiveDownloaders() const
     });
 }
 
-std::vector<Downloader*> DownloaderOperator::getStaleDownloaders() const
+std::vector<Downloader*> DownloaderOperator::getStartingDownloaders() const
 {
     return getDownloaders([](Downloader* downloader)
     {

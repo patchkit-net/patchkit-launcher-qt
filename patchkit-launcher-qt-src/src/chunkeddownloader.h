@@ -3,8 +3,7 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#ifndef CHUNKEDDOWNLOADER_H
-#define CHUNKEDDOWNLOADER_H
+#pragma once
 
 #include <QObject>
 #include <QVector>
@@ -32,6 +31,10 @@ public:
 
     QByteArray downloadFile(const QStringList& t_contentUrls);
 
+    QVector<QByteArray> processChunks(QByteArray& t_data) const;
+    QVector<bool>       validateAllChunks(const QVector<QByteArray>& t_chunks) const;
+    bool                validateChunk(const QByteArray& t_chunkData, int t_chunkIndex) const;
+
 signals:
     void downloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes);
     void downloadError(DownloadError t_error);
@@ -45,15 +48,9 @@ private:
     CancellationToken       m_cancellationToken;
     Downloader::TDataSource m_dataSource;
 
-    QVector<QByteArray> processChunks(QByteArray& t_data) const;
-    QVector<bool>       validateAllChunks(const QVector<QByteArray>& t_chunks) const;
-    bool                validateChunk(const QByteArray& t_chunkData, int t_chunkIndex) const;
-
     const int   getChunkSize() const;
 
     ChunkedDownloadStrategy m_downloadStrategy;
 
     friend class ChunkedDownloadStrategy;
 };
-
-#endif // CHUNKEDDOWNLOADER_H

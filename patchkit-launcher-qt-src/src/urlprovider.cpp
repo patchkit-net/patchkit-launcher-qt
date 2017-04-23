@@ -10,7 +10,7 @@ StringUrlProvider::StringUrlProvider(const QStringList& urls)
 
 int StringUrlProvider::getVariantCount() const
 {
-    return m_variants.size();
+    return (int) m_variants.size();
 }
 
 QString StringUrlProvider::getVariant(int index) const
@@ -18,17 +18,17 @@ QString StringUrlProvider::getVariant(int index) const
     return m_variants.at(index);
 }
 
-StringConcatUrlProvider::StringConcatUrlProvider(const QStringList& bases, const QString& end)
+StringConcatUrlProvider::StringConcatUrlProvider(const QStringList& hosts, const QString& path)
 {
-    for (QString b : bases)
+    for (QString host : hosts)
     {
-        m_variants.push_back(b + "/" + end);
+        m_variants.push_back(host + "/" + path);
     }
 }
 
 int StringConcatUrlProvider::getVariantCount() const
 {
-    return m_variants.size();
+    return (int) m_variants.size();
 }
 
 QString StringConcatUrlProvider::getVariant(int index) const

@@ -13,121 +13,62 @@
 #include "mockednam.h"
 #include "src/timeoutexception.h"
 
-//SCENARIO("Testing downloader capabilities.", "[downloader]")
-//{
-//    GIVEN("A mocked NAM replying to 'link' url 'This is a test' string in 300 milliseconds.")
-//    {
-//        QByteArray testData = "This is a test.";
-//        MockedNAM nam;
+SCENARIO("Downloader life.")
+{
+    MockedNAM nam;
 
-//        nam.push("link", testData, 300);
+    QByteArray originalData = "somedata";
+    nam.push("link", originalData, 300);
 
-//        std::shared_ptr<CancellationTokenSource> tokenSource(new CancellationTokenSource());
-//        CancellationToken token(tokenSource);
+    std::shared_ptr<CancellationTokenSource> tokenSource(new CancellationTokenSource());
+    CancellationToken token(tokenSource);
 
-//        Downloader downloader(&nam, token);
+    Downloader d("link", &nam, token);
 
-//        int timeoutMsec = 0;
+    REQUIRE(d.readData().toStdString() == QByteArray().toStdString());
 
-//        GIVEN("Downloader configuration permitting a 1000 millisecond timeout.")
-//        {
-//            timeoutMsec = 1000;
-//            THEN("Downloader should download the string without errors.")
-//            {
-//                QByteArray data = downloader.downloadFile("link", timeoutMsec);
+    REQUIRE_FALSE(d.wasStarted());
+    REQUIRE_FALSE(d.isRunning());
+    REQUIRE_FALSE(d.isFinished());
 
-//                REQUIRE(data.toStdString() == testData.toStdString());
-//            }
-//        }
+    d.start();
 
-//        GIVEN("Downloader configuration permitting a 200 millisecond timeout.")
-//        {
-//            timeoutMsec = 200;
-//            THEN("A timeout exception should occur.")
-//            {
-//                bool timeoutCaught = false;
-//                try
-//                {
-//                    downloader.downloadFile("link", timeoutMsec);
-//                }
-//                catch (TimeoutException&)
-//                {
-//                    timeoutCaught = true;
-//                }
+    REQUIRE_FALSE(!d.wasStarted());
+    REQUIRE_FALSE(d.isRunning());
+    REQUIRE_FALSE(d.isFinished());
 
-//                REQUIRE(timeoutCaught == true);
-//            }
-//        }
-//    }
-//}
+    d.waitUntilFinished();
 
-//SCENARIO("Simulating RemotePatcherData's alternate link and min/max timeout functionality.", "[downloader]")
-//{
-//    std::shared_ptr<CancellationTokenSource> tokenSource(new CancellationTokenSource());
-//    CancellationToken token(tokenSource);
+    REQUIRE_FALSE(!d.wasStarted());
+    REQUIRE_FALSE(d.isRunning());
+    REQUIRE_FALSE(!d.isFinished());
 
-//    const QByteArray data = "123456789";
+    QByteArray data = d.readData();
 
-//    int minTimeout = 100;
-//    int maxTimeout = 300;
+    REQUIRE(data.toStdString() == originalData.toStdString());
+    REQUIRE(d.getStatusCode() == 200);
+}
 
-//    GIVEN("A mocked NAM with two possible replies, both with valid data responding in respectively 200 and 400 ms.")
-//    {
-//        MockedNAM nam;
-//        nam.push("link1", data, 400);
-//        nam.push("link2", data, 200);
+SCENARIO("Downloading partial data.")
+{
+    MockedNAM nam;
 
-//        Downloader downloader(&nam, token);
+    QByteArray originalData = "123456789";
+    int rangeOffset = 3;
 
-//        WHEN("Downloading from the first link, 2 timeout exceptions should occur.")
-//        {
-//            int timeoutCounter = 0;
+    nam.push("link", originalData, 300);
 
-//            try
-//            {
-//                try
-//                {
-//                    downloader.downloadFile("link1", minTimeout);
-//                }
-//                catch(TimeoutException&)
-//                {
-//                    ++timeoutCounter;
-//                    downloader.downloadFile("link1", maxTimeout);
-//                }
-//            }
-//            catch(TimeoutException&)
-//            {
-//                ++timeoutCounter;
-//            }
+    std::shared_ptr<CancellationTokenSource> tokenSource(new CancellationTokenSource());
+    CancellationToken token(tokenSource);
 
-//            REQUIRE(timeoutCounter == 2);
-//        }
+    Downloader d("link", &nam, token);
+    d.setRange(rangeOffset);
 
-//        WHEN("Downloading from the second link, 1 timeout should occur and on the second try the download should succeed.")
-//        {
-//            int timeoutCounter = 0;
+    d.start();
 
-//            QByteArray downloadedData;
+    d.waitUntilFinished();
 
-//            try
-//            {
-//                try
-//                {
-//                    downloadedData = downloader.downloadFile("link2", minTimeout);
-//                }
-//                catch(TimeoutException&)
-//                {
-//                    ++timeoutCounter;
-//                    downloadedData = downloader.downloadFile("link2", maxTimeout);
-//                }
-//            }
-//            catch(TimeoutException&)
-//            {
-//                ++timeoutCounter;
-//            }
+    QByteArray data = d.readData();
 
-//            REQUIRE(timeoutCounter == 1);
-//            REQUIRE(downloadedData.toStdString() == data.toStdString());
-//        }
-//    }
-//}
+    REQUIRE(data.toStdString() == originalData.mid(rangeOffset).toStdString());
+}

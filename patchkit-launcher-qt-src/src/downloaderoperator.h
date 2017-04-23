@@ -1,5 +1,9 @@
-#ifndef DOWNLOADEROPERATOR_H
-#define DOWNLOADEROPERATOR_H
+/*
+* Copyright (C) Upsoft 2016
+* License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
+*/
+
+#pragma once
 
 #include <vector>
 #include <deque>
@@ -20,20 +24,16 @@ public:
 
     QByteArray download(BaseDownloadStrategy* t_downloadStrategy = nullptr);
 
-    QByteArray readData();
-
     // Returns all downloaders that have been started and have successfully started downloading
     std::vector<Downloader*> getActiveDownloaders() const;
 
     // Returns all downloaders that have been started but haven't started downloading yet
-    std::vector<Downloader*> getStaleDownloaders() const;
+    std::vector<Downloader*> getStartingDownloaders() const;
 
     // Returns all downloaders that haven't been started ( or aren't running )
     std::vector<Downloader*> getInactiveDownloaders() const;
 
     std::vector<Downloader*> getDownloaders(bool (*t_predicate)(Downloader*) = nullptr) const;
-
-    int countAvailableDownloaders() const;
 
     void stopAll();
 
@@ -44,5 +44,3 @@ private:
     CancellationToken m_cancellationToken;
     std::vector<Downloader*> m_downloaders;
 };
-
-#endif // DOWNLOADEROPERATOR_H

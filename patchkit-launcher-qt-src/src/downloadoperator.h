@@ -1,5 +1,9 @@
-#ifndef DOWNLOADOPERATOR_H
-#define DOWNLOADOPERATOR_H
+/*
+* Copyright (C) Upsoft 2016
+* License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
+*/
+
+#pragma once
 
 #include <QObject>
 
@@ -20,5 +24,3 @@ public:
 private:
     std::shared_ptr<Downloader> m_downloader;
 };
-
-#endif // DOWNLOADOPERATOR_H

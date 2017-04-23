@@ -1,5 +1,9 @@
-#ifndef DEFAULTDOWNLOADSTRATEGY_H
-#define DEFAULTDOWNLOADSTRATEGY_H
+/*
+* Copyright (C) Upsoft 2016
+* License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
+*/
+
+#pragma once
 
 #include "basedownloadstrategy.h"
 
@@ -8,6 +12,8 @@ class DefaultDownloadStrategy : public BaseDownloadStrategy
     Q_OBJECT
 public:
     DefaultDownloadStrategy(int t_minTimeout, int t_maxTimeout);
+
+    const static int maxStartingDownloadersCount;
 
 protected:
     virtual void init() override;
@@ -20,8 +26,11 @@ protected:
     virtual void onFirstTimeout();
     virtual void onSecondTimeout();
 
-    void hookAnActiveDownloader(Downloader* downloader, bool unhook = false);
-    void hookDownloaderOnInit(Downloader* downloader ,bool unhook = false);
+    void prepareDownloader(Downloader* t_downloader);
+    void discardDownloader(Downloader* t_downloader);
+
+    void acceptActiveDownloader(Downloader* t_downloader);
+    void discardActiveDownloader(Downloader* t_downloader);
 
     void reset();
 
@@ -39,6 +48,7 @@ private:
     int m_iterator;
     int m_minTimeout;
     int m_maxTimeout;
-};
 
-#endif // DEFAULTDOWNLOADSTRATEGY_H
+    QVector<Downloader*> m_activeDownloaders;
+    QVector<Downloader*> m_startingDownloaders;
+};

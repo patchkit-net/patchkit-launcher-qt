@@ -47,6 +47,21 @@ ContentSummary::ContentSummary(int t_chunkSize, THash t_hashCode
 {
 }
 
+ContentSummary ContentSummary::fromData(const QByteArray& t_data, int t_chunkSize, HashFunc t_hashingMethod, THash t_hashCode, QString t_hashingMethodName)
+{
+    QVector<THash> hashes;
+    for (int i = 0; i < t_data.size(); i += t_chunkSize)
+    {
+        hashes.push_back(t_hashingMethod(t_data.mid(i, t_chunkSize)));
+    }
+
+    return ContentSummary(
+                t_chunkSize, t_hashCode,
+                "none", "none", t_hashingMethodName,
+                hashes, {}
+                );
+}
+
 ContentSummary::ContentSummary(const QJsonDocument& t_document)
     : m_isValid(false)
 {

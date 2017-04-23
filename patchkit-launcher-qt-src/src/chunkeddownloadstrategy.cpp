@@ -21,15 +21,15 @@ void ChunkedDownloadStrategy::finish()
     DefaultDownloadStrategy::finish();
 }
 
-void ChunkedDownloadStrategy::onDownloaderFinished(Downloader* downloader)
+void ChunkedDownloadStrategy::onDownloaderFinished(Downloader* t_downloader)
 {
     logInfo("Chunked download strategy - a downloader finished downloading, processing downloaded data.");
 
-    logDebug("Downloader name is: %1", .arg(downloader->debugName()));
+    logDebug("Downloader name is: %1", .arg(t_downloader->debugName()));
 
-    hookAnActiveDownloader(downloader ,false);
+    QByteArray data = m_data + t_downloader->readData();
 
-    QByteArray data = m_data + downloader->readData();
+    discardActiveDownloader(t_downloader);
 
     QVector<QByteArray> chunks = m_parent.processChunks(data);
     QVector<bool> validChunkMap = m_parent.validateAllChunks(chunks);
@@ -71,6 +71,13 @@ void ChunkedDownloadStrategy::onDownloaderFinished(Downloader* downloader)
         reset();
         init();
     }
+}
+
+void ChunkedDownloadStrategy::downloadProgressRelay(const long long& t_bytesDownloaded, const long long& t_totalBytes)
+{
+    long long bytesProcessed = m_data.size();
+
+    emit downloadProgress(t_bytesDownloaded + bytesProcessed, t_totalBytes + bytesProcessed);
 }
 
 void ChunkedDownloadStrategy::setRanges(int t_from)

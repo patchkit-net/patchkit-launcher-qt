@@ -3,8 +3,7 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#ifndef HASHINGSTRATEGY_H
-#define HASHINGSTRATEGY_H
+#pragma once
 
 #include <QByteArray>
 
@@ -21,5 +20,3 @@ namespace HashingStrategy
 
     THash xxHash(const QByteArray& t_data);
 }
-
-#endif // HASHINGSTRATEGY_H

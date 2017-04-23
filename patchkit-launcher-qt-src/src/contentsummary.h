@@ -3,8 +3,7 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#ifndef CONTENTSUMMARY_H
-#define CONTENTSUMMARY_H
+#pragma once
 
 #include <QString>
 #include <QVector>
@@ -53,6 +52,13 @@ public:
     const static QString   pathToken;
     const static QString   chunksToken;
     const static QString   sizeToken;
+
+    static ContentSummary fromData(
+            const QByteArray& t_data,
+            int t_chunkSize,
+            HashFunc t_hashingMethod,
+            THash t_hashCode = 0,
+            QString t_hashingMethodName = "xxHash");
 
     ContentSummary(const QJsonDocument& t_document);
     ContentSummary();
@@ -111,5 +117,3 @@ private:
     QVector<THash>      m_chunkHashes;
     QVector<FileData>   m_filesSummary;
 };
-
-#endif // CONTENTSUMMARY_H

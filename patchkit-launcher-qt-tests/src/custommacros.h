@@ -1,5 +1,9 @@
-#ifndef CUSTOMMACROS_H
-#define CUSTOMMACROS_H
+/*
+* Copyright (C) Upsoft 2016
+* License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
+*/
+
+#pragma once
 
 #include "catch.h"
 
@@ -18,5 +22,3 @@
     }
 
 #define EXPECT_ANY(operation) EXPECT(operation, ...)
-
-#endif // CUSTOMMACROS_H
