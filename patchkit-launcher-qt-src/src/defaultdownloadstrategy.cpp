@@ -167,9 +167,10 @@ void DefaultDownloadStrategy::onDownloaderFinishedInternal()
 
 void DefaultDownloadStrategy::onFirstTimeout()
 {
-    logInfo("First timeout.");
     if (m_operator->getActiveDownloaders().size() == 0)
     {
+        logWarning("No active downloaders after %1 ms, starting additional downloaders.", .arg(m_minTimeout));
+
         auto downloaders = m_operator->getInactiveDownloaders();
 
         for (int i = 0; i < (maxStartingDownloadersCount - 1) && i < downloaders.size(); i++)
@@ -185,9 +186,10 @@ void DefaultDownloadStrategy::onFirstTimeout()
 
 void DefaultDownloadStrategy::onSecondTimeout()
 {
-    logInfo("Second timeout.");
     if (m_operator->getActiveDownloaders().size() == 0)
     {
+        logWarning("No active downloaders after %1 ms, will emit connection issues error.", .arg(m_maxTimeout + m_minTimeout));
+
         reset();
         emit error(DownloadError::ConnectionIssues);
     }
