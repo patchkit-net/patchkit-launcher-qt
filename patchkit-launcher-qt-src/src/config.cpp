@@ -19,11 +19,9 @@ const QString Config::patcherManifestFileName = "patcher.manifest";
 #if defined(Q_OS_OSX)
 const QString Config::patcherDirectoryName = "Patcher";
 const QString Config::applicationDirectoryName = "Data";
-const QString Config::logDirectoryName = "Logs";
 #else
 const QString Config::patcherDirectoryName = "patcher";
 const QString Config::applicationDirectoryName = "app";
-const QString Config::logDirectoryName = "";
 #endif
 
 const int Config::minConnectionTimeoutMsec = 10000;

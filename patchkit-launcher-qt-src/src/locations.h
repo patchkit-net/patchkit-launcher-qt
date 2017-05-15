@@ -52,4 +52,7 @@ public:
 #if defined(QT_DEBUG)
     void evalutatePaths() const;
 #endif
+
+private:
+    QString m_logPath;
 };

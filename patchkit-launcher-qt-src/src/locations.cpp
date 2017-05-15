@@ -31,12 +31,27 @@ bool Locations::isCurrentDirWritable() const
 
 Locations::Locations()
 {
+#if defined(Q_OS_OSX)
+    QDir genericDataLocation = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
 
+    QDir patchKitAppsPath = QDir::cleanPath(genericDataLocation.path() + "/" + "PatchKit/Apps");
+
+    if (!patchKitAppsPath.exists())
+    {
+        patchKitAppsPath.mkpath(".");
+    }
+
+    m_logPath = QDir::cleanPath(patchKitAppsPath.path() + "/" + Config::logFileName);
+#else
+
+    m_logPath = QDir::cleanPath(applicationDirPath() + "/" + Config::logFileName);
+
+#endif
 }
 
 void Locations::initializeWithData(const Data& t_data)
 {
-#if defined(Q_OS_OSX) || 1
+#if defined(Q_OS_OSX)
 
     logDebug("OSX initializing path.");
 
@@ -97,7 +112,7 @@ QString Locations::currentDirPath() const
 
 QString Locations::logFilePath() const
 {
-    return QDir::cleanPath(currentDirPath() + "/" + Config::logDirectoryName + "/" + Config::logFileName);
+    return m_logPath;
 }
 
 QString Locations::dataFilePath() const
