@@ -11,13 +11,20 @@ const QString Config::dataFileName = "launcher.dat";
 const int Config::dataResourceId = 3151;
 const int Config::dataResourceTypeId = 10;
 
-const QString Config::patcherDirectoryName = "patcher";
 const QString Config::patcherInstallationInfoFileName = "install_info";
 const QString Config::patcherVersionInfoFileName = "version_info";
 const QString Config::patcherIdInfoFileName = "id_info";
 const QString Config::patcherManifestFileName = "patcher.manifest";
 
+#if defined(Q_OS_OSX)
+const QString Config::patcherDirectoryName = "Patcher";
+const QString Config::applicationDirectoryName = "Data";
+const QString Config::logDirectoryName = "Logs";
+#else
+const QString Config::patcherDirectoryName = "patcher";
 const QString Config::applicationDirectoryName = "app";
+const QString Config::logDirectoryName = "";
+#endif
 
 const int Config::minConnectionTimeoutMsec = 10000;
 const int Config::maxConnectionTimeoutMsec = 30000;

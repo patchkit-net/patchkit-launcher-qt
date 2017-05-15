@@ -8,6 +8,7 @@
 #include <QString>
 #include <QDateTime>
 #include <QTextStream>
+#include <QFileInfo>
 #include "locations.h"
 
 Logger::Logger() :

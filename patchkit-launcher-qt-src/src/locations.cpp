@@ -7,16 +7,15 @@
 
 #include <QApplication>
 #include <QStandardPaths>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
 
-Locations::Locations()
-{
-    m_applicationFilePath = QApplication::applicationFilePath();
-    m_applicationDirPath = QApplication::applicationDirPath();
+#include "config.h"
+#include "data.h"
+#include "logger.h"
 
-    initializeCurrentDirPath();
-}
-
-bool Locations::isCurrentDirWritable()
+bool Locations::isCurrentDirWritable() const
 {
     QFile permissionsCheckFile(QDir::cleanPath(currentDirPath() + "/.writable_check"));
 
@@ -30,51 +29,129 @@ bool Locations::isCurrentDirWritable()
     return false;
 }
 
-void Locations::initializeCurrentDirPath()
+Locations::Locations()
 {
-    QDir currentDir;
 
-#if defined(Q_OS_OSX)
-        currentDir = QDir(applicationDirPath());
-        currentDir.cdUp();
+}
 
-        if (!currentDir.exists("Resources"))
-        {
-            currentDir.mkdir("Resources");
-        }
-        currentDir.cd("Resources");
-#elif defined(Q_OS_WIN)
-    currentDir = QDir(applicationDirPath());
-#else
-        currentDir = QDir(applicationDirPath());
-#endif
+void Locations::initializeWithData(const Data& t_data)
+{
+#if defined(Q_OS_OSX) || 1
 
-    if (!currentDir.exists())
+    logDebug("OSX initializing path.");
+
+    QDir genericDataLocation = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+
+    QDir patchKitAppsPath = QDir::cleanPath(genericDataLocation.path() + "/" + "PatchKit/Apps");
+
+    QDir appPath = QDir::cleanPath(patchKitAppsPath.path() + "/" + t_data.applicationSecret().mid(0, 8));
+
+    if (!appPath.exists())
     {
-        currentDir.mkpath(".");
+        appPath.mkpath(".");
     }
 
-    QDir::setCurrent(currentDir.path());
-
-    if (isCurrentDirWritable())
+    if (QDir::setCurrent(appPath.path()))
     {
-        m_logFilePath = QDir::cleanPath(currentDir.path() + "/" + Config::logFileName);
+        logDebug("Path set to %1", .arg(appPath.path()));
+
     }
     else
     {
-        /*
-         * Locations provided by QStandardPaths::DataLocation.
-         * Windows - C:/Users/<USER>/AppData/Local/<APPNAME>
-         * OSX     - ~/Library/Application Support/<APPNAME>
-         * Linux   - ~/.local/share/<APPNAME>
-         */
-        QDir writableDir = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+        logDebug("Couldn't set path to %1", .arg(appPath.path()));
 
-        if (!writableDir.exists())
-        {
-            writableDir.mkpath(".");
-        }
-
-        m_logFilePath = QDir::cleanPath(writableDir.path() + "/" + Config::logFileName);
     }
+
+#else
+
+    logDebug("Initializing path.");
+
+    QDir appPath = applicationDirPath();
+
+    logDebug("Path set to %1", .arg(appPath.path()));
+
+    QDir::setCurrent(appPath.path());
+
+#endif
+
+#if defined(QT_DEBUG)
+    logDebug("Evaulating all the paths:");
+    evalutatePaths();
+#endif
 }
+
+QString Locations::applicationFilePath() const
+{
+    return QApplication::applicationFilePath();
+}
+
+QString Locations::applicationDirPath() const
+{
+    return QApplication::applicationDirPath();
+}
+
+QString Locations::currentDirPath() const
+{
+    return QDir::currentPath();
+}
+
+QString Locations::logFilePath() const
+{
+    return QDir::cleanPath(currentDirPath() + "/" + Config::logDirectoryName + "/" + Config::logFileName);
+}
+
+QString Locations::dataFilePath() const
+{
+    return QDir::cleanPath(applicationDirPath() + "/" + Config::dataFileName);
+}
+
+QString Locations::patcherDirectoryPath() const
+{
+    return QDir::cleanPath(currentDirPath() + "/" + Config::patcherDirectoryName);
+}
+
+QString Locations::patcherInstallationInfoFilePath() const
+{
+    return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherDirectoryName);
+}
+
+QString Locations::patcherVersionInfoFilePath() const
+{
+    return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherVersionInfoFileName);
+}
+
+QString Locations::patcherIdInfoFilePath() const
+{
+    return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherIdInfoFileName);
+}
+
+QString Locations::patcherManifestFilePath() const
+{
+    return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherManifestFileName);
+}
+
+QString Locations::applicationInstallationDirPath() const
+{
+    return QDir::cleanPath(currentDirPath() + "/" + Config::applicationDirectoryName);
+}
+
+#if defined (QT_DEBUG)
+void Locations::evalutatePaths() const
+{
+    logDebug("Application file path %1", .arg(applicationFilePath()));
+    logDebug("Application dir path %1", .arg(applicationDirPath()));
+
+    logDebug("Current dir path %1", .arg(currentDirPath()));
+
+    logDebug("Log file path %1", .arg(logFilePath()));
+    logDebug("Data file path %1", .arg(dataFilePath()));
+
+    logDebug("Patcher directory path %1", .arg(patcherDirectoryPath()));
+    logDebug("Patcher installation info file path %1", .arg(patcherInstallationInfoFilePath()));
+    logDebug("Patcher version info file path %1", .arg(patcherVersionInfoFilePath()));
+    logDebug("Patcher if info file path %1", .arg(patcherIdInfoFilePath()));
+    logDebug("Patcher manifest file path %1", .arg(patcherManifestFilePath()));
+
+    logDebug("Application installation dir path %1", .arg(applicationInstallationDirPath()));
+}
+#endif

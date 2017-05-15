@@ -10,6 +10,7 @@
 class Config
 {
 public:
+    const static QString logDirectoryName;
     const static QString logFileName;
 
     const static QString dataFileName;

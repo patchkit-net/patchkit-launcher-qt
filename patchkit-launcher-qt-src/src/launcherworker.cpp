@@ -12,6 +12,7 @@
 #include "locations.h"
 #include "fatalexception.h"
 #include "downloader.h"
+#include "config.h"
 
 #if defined(Q_OS_WIN)
 #include <Windows.h>
@@ -135,6 +136,8 @@ void LauncherWorker::runWithData(Data& t_data)
         logInfo("Starting launcher.");
 
         setupPatcherSecret(t_data);
+
+        Locations::getInstance().initializeWithData(t_data);
 
         logInfo("Current directory set to - %1", .arg(Locations::getInstance().currentDirPath()));
 

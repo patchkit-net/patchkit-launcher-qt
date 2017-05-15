@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include <QDir>
+#include <QString>
 
-#include "config.h"
+struct Data;
 
 class Locations
 {
@@ -23,67 +23,33 @@ public:
         return instance;
     }
 
-    QString applicationFilePath()
-    {
-        return m_applicationFilePath;
-    }
+    void initializeWithData(const Data& t_data);
 
-    QString applicationDirPath()
-    {
-        return m_applicationDirPath;
-    }
+    QString applicationFilePath() const;
 
-    QString currentDirPath()
-    {
-        return QDir::currentPath();
-    }
+    QString applicationDirPath() const;
 
-    bool isCurrentDirWritable();
+    QString currentDirPath() const;
 
-    QString logFilePath()
-    {
-        return m_logFilePath;
-    }
+    QString logFilePath() const;
 
-    QString dataFilePath()
-    {
-        return QDir::cleanPath(applicationDirPath() + "/" + Config::dataFileName);
-    }
+    QString dataFilePath() const;
 
-    QString patcherDirectoryPath()
-    {
-        return QDir::cleanPath(currentDirPath() + "/" + Config::patcherDirectoryName);
-    }
+    QString patcherDirectoryPath() const;
 
-    QString patcherInstallationInfoFilePath()
-    {
-        return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherDirectoryName);
-    }
+    QString patcherInstallationInfoFilePath() const;
 
-    QString patcherVersionInfoFilePath()
-    {
-        return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherVersionInfoFileName);
-    }
+    QString patcherVersionInfoFilePath() const;
 
-    QString patcherIdInfoFilePath()
-    {
-        return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherIdInfoFileName);
-    }
+    QString patcherIdInfoFilePath() const;
 
-    QString patcherManifestFilePath()
-    {
-        return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherManifestFileName);
-    }
+    QString patcherManifestFilePath() const;
 
-    QString applicationInstallationDirPath()
-    {
-        return QDir::cleanPath(currentDirPath() + "/" + Config::applicationDirectoryName);
-    }
+    QString applicationInstallationDirPath() const;
 
-private:
-    QString m_applicationFilePath;
-    QString m_applicationDirPath;
-    QString m_logFilePath;
+    bool isCurrentDirWritable() const;
 
-    void initializeCurrentDirPath();
+#if defined(QT_DEBUG)
+    void evalutatePaths() const;
+#endif
 };

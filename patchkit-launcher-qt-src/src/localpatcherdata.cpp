@@ -9,6 +9,7 @@
 #include <QJsonObject>
 #include <QProcess>
 #include <QTextStream>
+#include <QDir>
 
 #include "logger.h"
 #include "locations.h"
