@@ -14,14 +14,14 @@
 
 #include "api.h"
 
-RemotePatcherData::RemotePatcherData(IApi& t_api, QNetworkAccessManager* t_networkAccessManager)
+RemotePatcherData::RemotePatcherData(Api& t_api, QNetworkAccessManager* t_networkAccessManager)
     : m_api(t_api)
     , m_networkAccessManager(t_networkAccessManager)
 {
-    connect(static_cast<Api*>(&m_api), &Api::downloadError, this, &RemotePatcherData::downloadError);
+    connect(&m_api, &Api::downloadError, this, &RemotePatcherData::downloadError);
 
-    connect(this, &RemotePatcherData::proceed, static_cast<Api*>(&m_api), &Api::proceed);
-    connect(this, &RemotePatcherData::stop, static_cast<Api*>(&m_api), &Api::stop);
+    connect(this, &RemotePatcherData::proceed, &m_api, &Api::proceed);
+    connect(this, &RemotePatcherData::stop, &m_api, &Api::stop);
 }
 
 int RemotePatcherData::getVersion(const Data& t_data, CancellationToken t_cancellationToken)

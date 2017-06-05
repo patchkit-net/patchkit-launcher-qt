@@ -7,7 +7,7 @@
 
 #include "data.h"
 #include "downloader.h"
-#include "iapi.h"
+#include "api.h"
 
 class QNetworkAccessManager;
 
@@ -18,7 +18,7 @@ class RemotePatcherData : public QObject
     Q_OBJECT
 
 public:
-    RemotePatcherData(IApi& t_api, QNetworkAccessManager* t_networkAccessManager);
+    RemotePatcherData(Api& t_api, QNetworkAccessManager* t_networkAccessManager);
 
     int getVersion(const Data& t_data, CancellationToken t_cancellationToken);
 
@@ -34,7 +34,7 @@ signals:
     void stop();
 
 private:
-    IApi& m_api;
+    Api& m_api;
 
     QStringList getContentUrls(const QString& t_patcherSecret, int t_version, CancellationToken t_cancellationToken);
 

@@ -68,6 +68,7 @@ LauncherWorker::LauncherWorker()
     , m_result(NONE)
     , m_api(&m_networkAccessManager, CancellationToken(m_cancellationTokenSource))
     , m_remotePatcher(m_api, &m_networkAccessManager)
+    , m_shouldUpdate(true)
 {
     m_api.moveToThread(this);
     m_networkAccessManager.moveToThread(this);
@@ -94,6 +95,11 @@ bool LauncherWorker::isLocalPatcherInstalled() const
 LauncherWorker::Result LauncherWorker::result() const
 {
     return m_result;
+}
+
+void LauncherWorker::stopUpdate()
+{
+    m_shouldUpdate = false;
 }
 
 void LauncherWorker::setDownloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes)
@@ -136,6 +142,11 @@ void LauncherWorker::runWithData(Data& t_data)
         logInfo("Starting launcher.");
 
         setupPatcherSecret(t_data);
+
+        if (!m_shouldUpdate)
+        {
+            throw std::exception("Offline mode was requested.");
+        }
 
         Locations::getInstance().initializeWithData(t_data);
 

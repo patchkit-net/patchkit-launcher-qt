@@ -28,6 +28,7 @@ void Launcher::start()
 
     connect(this, &Launcher::requestContinue, m_worker.get(), &LauncherWorker::workerContinue);
     connect(this, &Launcher::requestStop, m_worker.get(), &LauncherWorker::workerStop);
+    connect(this, &Launcher::requestStop, m_worker.get(), &LauncherWorker::stopUpdate);
 
     logInfo("Showing main window.");
     m_mainWindow->show();

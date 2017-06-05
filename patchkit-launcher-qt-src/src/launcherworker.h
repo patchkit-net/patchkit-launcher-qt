@@ -43,7 +43,7 @@ signals:
     void workerStop();
 
 public slots:
-
+    void stopUpdate();
 
 private slots:
     void setDownloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes);
@@ -74,4 +74,6 @@ private:
     LocalPatcherData m_localPatcher;
 
     Result m_result;
+
+    bool m_shouldUpdate;
 };
