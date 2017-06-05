@@ -139,6 +139,9 @@ void LauncherWorker::runWithData(Data& t_data)
 {
     try
     {
+        emit progressChanged(0);
+        emit statusChanged("Waiting...");
+
         logInfo("Starting launcher.");
 
         setupPatcherSecret(t_data);
@@ -237,9 +240,6 @@ void LauncherWorker::updatePatcher(const Data& t_data)
 
     int version = m_remotePatcher.getVersion(t_data, m_cancellationTokenSource);
     logDebug("Current remote patcher version - %1", .arg(QString::number(version)));
-
-    emit progressChanged(0);
-    emit statusChanged("Waiting...");
 
     if (!m_localPatcher.isInstalledSpecific(version, t_data))
     {
