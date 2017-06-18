@@ -172,7 +172,7 @@ void LauncherWorker::runWithData(Data& t_data)
 
         if (!m_shouldUpdate)
         {
-            throw std::exception("Offline mode was requested.");
+            throw std::runtime_error("Offline mode was requested.");
         }
 
         Locations::getInstance().initializeWithData(t_data);

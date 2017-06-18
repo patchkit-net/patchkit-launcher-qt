@@ -30,7 +30,11 @@ Data Data::loadFromConfig()
         throw std::runtime_error("Can't load data from config.");
     }
 
-    unsigned int dataSize = Config::inlineData[0] | (Config::inlineData[1] << 8);
+    unsigned char byteOne = (unsigned char) Config::inlineData[0];
+    unsigned char byteTwo = (unsigned char) Config::inlineData[1];
+
+    unsigned int dataSize = 0 | byteOne | (byteTwo << 8);
+
     const char* dataInConfig = Config::inlineData + 2;
 
     logDebug("Data size: ", .arg(dataSize));

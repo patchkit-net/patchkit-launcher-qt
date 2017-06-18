@@ -11,7 +11,6 @@
 #include "src/chunkeddownloader.h"
 #include "src/timeoutexception.h"
 #include "src/contentsummary.h"
-#include "src/staledownloadexception.h"
 
 #include "mockednam.h"
 #include "custommacros.h"

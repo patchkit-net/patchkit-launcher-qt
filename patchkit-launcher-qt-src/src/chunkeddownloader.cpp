@@ -11,7 +11,6 @@
 #include "contentsummary.h"
 #include "downloader.h"
 #include "logger.h"
-#include "staledownloadexception.h"
 
 #include "idownloadstrategy.h"
 
