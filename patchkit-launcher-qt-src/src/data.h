@@ -11,6 +11,10 @@ struct Data
 {
     Data();
 
+    static bool canLoadFromConfig();
+
+    static Data loadFromConfig();
+
     static Data loadFromFile(const QString& t_filePath);
 
 #ifdef Q_OS_WIN

@@ -6,6 +6,7 @@
 #include "api.h"
 
 #include "timeoutexception.h"
+#include "customexceptions.h"
 #include "config.h"
 
 #include "downloaderoperator.h"
@@ -19,6 +20,7 @@ Api::Api(Downloader::TDataSource t_dataSource, CancellationToken t_cancellationT
     : QObject(parent)
     , m_cancellationToken(t_cancellationToken)
     , m_dataSource(t_dataSource)
+    , m_strategy(Config::minConnectionTimeoutMsec, Config::maxConnectionTimeoutMsec)
 {
 }
 
@@ -38,6 +40,11 @@ QString Api::downloadPatcherSecret(const QString& t_resourceUrl)
     QByteArray data;
     data = downloadInternal(t_resourceUrl);
 
+    if (!m_didLastDownloadSucceed)
+    {
+        throw ContentUnavailableException("Couldn't download patcher secret.");
+    }
+
     QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
 
     if (!jsonDocument.isObject())
@@ -55,11 +62,22 @@ QString Api::downloadPatcherSecret(const QString& t_resourceUrl)
     return jsonObject.value("patcher_secret").toString();
 }
 
+QString Api::downloadDefaultPatcherSecret()
+{
+    return "stub";
+}
+
 int Api::downloadPatcherVersion(const QString& t_resourceUrl)
 {
     logInfo("Downloading patcher version.");
     QByteArray data;
     data = downloadInternal(t_resourceUrl);
+
+    if (!m_didLastDownloadSucceed)
+    {
+        throw ContentUnavailableException("Couldn't download patcher secret.");
+    }
+
     QJsonDocument doc = QJsonDocument::fromJson(data);
 
     if (!doc.isObject())
@@ -133,23 +151,36 @@ QStringList Api::downloadContentUrls(const QString& t_resourceUrl)
     return result;
 }
 
+void Api::downloadErrorRelay(DownloadError t_error)
+{
+    if (t_error == DownloadError::ContentUnavailable)
+    {
+        m_didLastDownloadSucceed = false;
+        m_strategy.stop();
+    }
+    else
+    {
+        emit downloadError(t_error);
+    }
+}
+
 QByteArray Api::downloadInternal(const QString& t_resourceUrl)
 {
     QStringList totalUrlBases = QStringList(Config::mainApiUrl);
     totalUrlBases.append(Config::cacheApiUrls);
 
+    m_didLastDownloadSucceed = true;
+
     StringConcatUrlProvider urlProvider(totalUrlBases, t_resourceUrl);
 
-    DefaultDownloadStrategy strategy(Config::minConnectionTimeoutMsec, Config::maxConnectionTimeoutMsec);
-
     DownloaderOperator op(m_dataSource, urlProvider, m_cancellationToken);
-    connect(&strategy, &DefaultDownloadStrategy::error, this, &Api::downloadError);
 
-    connect(this, &Api::proceed, &strategy, &BaseDownloadStrategy::proceed);
-    connect(this, &Api::stop, &strategy, &BaseDownloadStrategy::stop);
+    connect(&m_strategy, &DefaultDownloadStrategy::error, this, &Api::downloadErrorRelay);
+    connect(this, &Api::proceed, &m_strategy, &BaseDownloadStrategy::proceed);
+    connect(this, &Api::stop, &m_strategy, &BaseDownloadStrategy::stop);
 
     QByteArray data;
-    data = op.download(&strategy);
+    data = op.download(&m_strategy);
 
     return data;
 }

@@ -14,7 +14,8 @@ typedef long long TByteCount;
 
 enum class DownloadError
 {
-    ConnectionIssues
+    ConnectionIssues,
+    ContentUnavailable
 };
 
 class Downloader : public QObject

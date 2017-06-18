@@ -93,7 +93,13 @@ void DefaultDownloadStrategy::onDownloaderStarted(Downloader* t_downloader)
 {
     int statusCode = t_downloader->getStatusCode();
 
-    if (!Downloader::doesStatusCodeIndicateSuccess(statusCode))
+    if (statusCode == 404)
+    {
+        m_operator->stopAll();
+
+        emit error(DownloadError::ContentUnavailable);
+    }
+    else if (!Downloader::doesStatusCodeIndicateSuccess(statusCode))
     {
         logInfo("Downloader failed to start, status code was: %1", .arg(statusCode));
 

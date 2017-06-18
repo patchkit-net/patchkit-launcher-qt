@@ -47,6 +47,7 @@ public slots:
 
 private slots:
     void setDownloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes);
+    void downloadErrorRelay(DownloadError t_error);
 
 private:
 #ifdef Q_OS_WIN
@@ -55,6 +56,8 @@ private:
     void runWithDataFromFile();
 
     void runWithData(Data& t_data);
+
+    void runWithInlineData();
 
     void setupPatcherSecret(Data& t_data);
 

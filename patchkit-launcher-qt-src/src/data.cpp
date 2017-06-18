@@ -6,13 +6,41 @@
 #include "data.h"
 
 #include <QFile>
+#include <QCryptographicHash>
 #include <memory>
 
 #include "logger.h"
 #include "executableresources.h"
+#include "config.h"
 
 Data::Data()
 {
+}
+
+bool Data::canLoadFromConfig()
+{
+    QByteArray hash = QCryptographicHash::hash(QByteArray::fromRawData(Config::inlineData, CONFIG_INLINE_DATA_PLACEHOLDER_LENGTH), QCryptographicHash::Md5);
+    return hash.toHex() != QString(CONFIG_INLINE_DATA_PLACEHOLDER_HASH);
+}
+
+Data Data::loadFromConfig()
+{
+    if (!canLoadFromConfig)
+    {
+        throw std::runtime_error("Can't load data from config.");
+    }
+
+    unsigned int dataSize = Config::inlineData[0] | (Config::inlineData[1] << 8);
+    const char* dataInConfig = Config::inlineData + 2;
+
+    logDebug("Data size: ", .arg(dataSize));
+
+    QByteArray dataArray(dataInConfig, dataSize);
+    QDataStream dataStream(dataArray);
+
+    Data data = loadFromDataStream(dataStream);
+
+    return data;
 }
 
 Data Data::loadFromFile(const QString& t_filePath)

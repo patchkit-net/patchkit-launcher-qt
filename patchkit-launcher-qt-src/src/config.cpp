@@ -38,6 +38,8 @@ const QStringList Config::cacheApiUrls = (QStringList() << "http://api-cache-1.p
 
 const QString Config::pingTarget = "8.8.8.8";
 
+const char Config::inlineData[CONFIG_INLINE_DATA_SIZE] = CONFIG_INLINE_DATA_PLACEHOLDER;
+
 #if defined(_WIN64) || defined(_WIN32)
 const QString Config::pingCountArg = "-n";
 #else

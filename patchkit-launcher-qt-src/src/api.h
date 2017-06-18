@@ -14,6 +14,8 @@
 #include "iapi.h"
 #include "downloader.h"
 
+#include "defaultdownloadstrategy.h"
+
 class Api : public QObject, public IApi
 {
     Q_OBJECT
@@ -22,6 +24,7 @@ public:
 
     ContentSummary  downloadContentSummary(const QString& t_resourceUrl) override;
     QString         downloadPatcherSecret(const QString& t_resourceUrl) override;
+    QString         downloadDefaultPatcherSecret() override;
     int             downloadPatcherVersion(const QString& t_resourceUrl) override;
     QStringList     downloadContentUrls(const QString& t_resourceUrl) override;
 
@@ -31,9 +34,14 @@ signals:
     void proceed();
     void stop();
 
+private slots:
+    void downloadErrorRelay(DownloadError t_error);
+
 private:
     QByteArray downloadInternal(const QString& t_resourceUrl);
-
+    DefaultDownloadStrategy m_strategy;
     CancellationToken m_cancellationToken;
     Downloader::TDataSource m_dataSource;
+
+    bool m_didLastDownloadSucceed;
 };

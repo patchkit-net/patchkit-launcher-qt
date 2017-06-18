@@ -7,6 +7,16 @@
 
 #include <QStringList>
 
+#ifndef CONFIG_INLINE_DATA
+#define CONFIG_INLINE_DATA_PLACEHOLDER "OnceUponAMidnightDreary"
+#define CONFIG_INLINE_DATA_PLACEHOLDER_HASH "23d361114b8f549eb681c6f9b582edb6"
+#define CONFIG_INLINE_DATA_PLACEHOLDER_LENGTH 23
+#endif
+
+#ifndef CONFIG_INLINE_DATA_SIZE
+#define CONFIG_INLINE_DATA_SIZE 1024
+#endif
+
 class Config
 {
 public:
@@ -36,4 +46,6 @@ public:
 
     const static QString pingTarget;
     const static QString pingCountArg;
+
+    const static char inlineData[];
 };

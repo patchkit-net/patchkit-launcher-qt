@@ -8,7 +8,7 @@
 #include "logger.h"
 #include "config.h"
 #include "timeoutexception.h"
-#include "staledownloadexception.h"
+#include "customexceptions.h"
 #include "chunkeddownloader.h"
 #include "contentsummary.h"
 
@@ -38,8 +38,23 @@ QString RemotePatcherData::getPatcherSecret(const Data& t_data, CancellationToke
     logInfo("Fetching newest patcher secret from 1/apps/%1", .arg(Logger::adjustSecretForLog(t_data.applicationSecret())));
 
     QString resourceUrl = QString("1/apps/%1").arg(t_data.applicationSecret());
+    QString data;
 
-    return m_api.downloadPatcherSecret(resourceUrl);
+    try
+    {
+        data = m_api.downloadPatcherSecret(resourceUrl);
+    }
+    catch(ContentUnavailableException& exception)
+    {
+        logWarning(exception.what());
+        data = m_api.downloadDefaultPatcherSecret();
+    }
+    catch(...)
+    {
+        throw;
+    }
+
+    return data;
 }
 
 void RemotePatcherData::download(QIODevice& t_dataTarget, const Data& t_data, int t_version, CancellationToken t_cancellationToken)

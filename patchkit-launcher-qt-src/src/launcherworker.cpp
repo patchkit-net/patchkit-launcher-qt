@@ -10,7 +10,7 @@
 
 #include "logger.h"
 #include "locations.h"
-#include "fatalexception.h"
+#include "customexceptions.h"
 #include "downloader.h"
 #include "config.h"
 
@@ -22,6 +22,16 @@ void LauncherWorker::run()
 {
     try
     {
+        if (Data::canLoadFromConfig())
+        {
+            logInfo("Detected inlined data.");
+            runWithInlineData();
+
+            m_result = SUCCESS;
+            logInfo("Launcher has succeeded.");
+            return;
+        }
+
 #ifdef Q_OS_WIN
         try
         {
@@ -75,7 +85,7 @@ LauncherWorker::LauncherWorker()
     m_remotePatcher.moveToThread(this);
     m_localPatcher.moveToThread(this);
 
-    connect(&m_remotePatcher, &RemotePatcherData::downloadError, this, &LauncherWorker::downloadError);
+    connect(&m_remotePatcher, &RemotePatcherData::downloadError, this, &LauncherWorker::downloadErrorRelay);
     connect(this, &LauncherWorker::workerContinue, &m_remotePatcher, &RemotePatcherData::proceed);
     connect(this, &LauncherWorker::workerStop, &m_remotePatcher, &RemotePatcherData::stop);
 }
@@ -111,6 +121,11 @@ void LauncherWorker::setDownloadProgress(const long long& t_bytesDownloaded, con
     emit progressChanged(qCeil((qreal(t_bytesDownloaded) / t_totalBytes) * 100.0));
 }
 
+void LauncherWorker::downloadErrorRelay(DownloadError t_error)
+{
+
+}
+
 #ifdef Q_OS_WIN
 
 void LauncherWorker::runWithDataFromResource()
@@ -131,6 +146,15 @@ void LauncherWorker::runWithDataFromFile()
     logInfo("Starting launcher with data from file.");
 
     Data data = Data::loadFromFile(Locations::getInstance().dataFilePath());
+
+    runWithData(data);
+}
+
+void LauncherWorker::runWithInlineData()
+{
+    logInfo("Starting launcher with inlined data.");
+
+    Data data = Data::loadFromConfig();
 
     runWithData(data);
 }
@@ -238,7 +262,20 @@ void LauncherWorker::updatePatcher(const Data& t_data)
 {
     logInfo("Updating patcher.");
 
-    int version = m_remotePatcher.getVersion(t_data, m_cancellationTokenSource);
+    int version = -1;
+    try
+    {
+        version = m_remotePatcher.getVersion(t_data, m_cancellationTokenSource);
+    }
+    catch(int)
+    {
+
+    }
+    catch(...)
+    {
+        throw;
+    }
+
     logDebug("Current remote patcher version - %1", .arg(QString::number(version)));
 
     if (!m_localPatcher.isInstalledSpecific(version, t_data))
