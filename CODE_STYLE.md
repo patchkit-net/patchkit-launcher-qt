@@ -25,7 +25,7 @@
 ### General
 * Every header file must contain a compilation guard `#pragma once` at the top of the file.
 * Curly brackets belong on separate lines
-* We use spaces for indentatino, 4 of them
+* We use spaces for indentation, 4 of them
 * Use descriptive names, avoid abbreviations
 
 ### Type modifiers
