@@ -41,7 +41,7 @@ void MainWindow::setProgress(int t_progress) const
 
 void MainWindow::showEvent(QShowEvent* t_event)
 {
-    logInfo("Setting launcher window position.");
+    qInfo("Setting launcher window position.");
 
     const QRect availableSize = QApplication::desktop()->availableGeometry(this);
     move((availableSize.width() - width()) / 2, (availableSize.height() - height()) / 2);
@@ -70,15 +70,15 @@ void MainWindow::mousePressEvent(QMouseEvent* t_event)
 
 void MainWindow::closeEvent(QCloseEvent* t_event)
 {
-    logInfo("Close window request.");
+    qInfo("Close window request.");
     if (m_launcherWorker->isFinished())
     {
-        logInfo("Allowing the window to be closed.");
+        qInfo("Allowing the window to be closed.");
         t_event->accept();
     }
     else
     {
-        logInfo("Not allowing window to be closed - launcher thread is still running. Cancelling launcher thread.");
+        qInfo("Not allowing window to be closed - launcher thread is still running. Cancelling launcher thread.");
         m_launcherWorker->cancel();
         t_event->ignore();
     }

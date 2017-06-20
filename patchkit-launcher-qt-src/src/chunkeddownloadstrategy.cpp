@@ -23,9 +23,9 @@ void ChunkedDownloadStrategy::finish()
 
 void ChunkedDownloadStrategy::onDownloaderFinished(Downloader* t_downloader)
 {
-    logInfo("Chunked download strategy - a downloader finished downloading, processing downloaded data.");
+    qInfo("Chunked download strategy - a downloader finished downloading, processing downloaded data.");
 
-    logDebug("Downloader name is: %1", .arg(t_downloader->debugName()));
+    qDebug() << "Downloader name is: " << t_downloader->debugName();
 
     QByteArray data = m_data + t_downloader->readData();
 
@@ -37,7 +37,7 @@ void ChunkedDownloadStrategy::onDownloaderFinished(Downloader* t_downloader)
 
     if (validChunkMap.size() == validChunkCount && !validChunkMap.contains(false))
     {
-        logInfo("Downloaded data is valid and complete.");
+        qInfo("Downloaded data is valid and complete.");
         m_data = data;
         emit done();
     }
@@ -47,7 +47,7 @@ void ChunkedDownloadStrategy::onDownloaderFinished(Downloader* t_downloader)
 
         if (firstInvalidChunkIndex == -1)
         {
-            logInfo("Downloaded data is valid but incomplete.");
+            qInfo("Downloaded data is valid but incomplete.");
             setRanges(m_parent.getChunkSize() * validChunkMap.size());
             m_data.clear();
 
@@ -58,7 +58,7 @@ void ChunkedDownloadStrategy::onDownloaderFinished(Downloader* t_downloader)
         }
         else if (firstInvalidChunkIndex != 0)
         {
-            logInfo("Downloaded data contains invalid chunks or is incomplete.");
+            qInfo("Downloaded data contains invalid chunks or is incomplete.");
             setRanges(m_parent.getChunkSize() * firstInvalidChunkIndex);
             m_data.clear();
 

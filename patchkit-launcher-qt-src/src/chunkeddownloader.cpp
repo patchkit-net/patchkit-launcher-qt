@@ -22,10 +22,10 @@ ChunkedDownloader::ChunkedDownloader(
         HashFunc t_hashingStrategy,
         CancellationToken t_cancellationToken
         )
-    : m_contentSummary(t_contentSummary)
-    , m_hashingStrategy(t_hashingStrategy)
-    , m_dataSource(t_dataSource)
+    : m_hashingStrategy(t_hashingStrategy)
+    , m_contentSummary(t_contentSummary)
     , m_cancellationToken(t_cancellationToken)
+    , m_dataSource(t_dataSource)
     , m_downloadStrategy(10000, 30000, *this)
 {
 }
@@ -92,7 +92,7 @@ QVector<bool> ChunkedDownloader::validateAllChunks(const QVector<QByteArray>& t_
     return validChunkMap;
 }
 
-const int ChunkedDownloader::getChunkSize() const
+int ChunkedDownloader::getChunkSize() const
 {
     return m_contentSummary.getChunkSize();
 }

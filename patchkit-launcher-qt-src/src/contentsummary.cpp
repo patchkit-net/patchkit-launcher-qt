@@ -124,17 +124,17 @@ ContentSummary::ContentSummary(const QJsonDocument& t_document)
     m_isValid = true;
 }
 
-const bool ContentSummary::isValid() const
+bool ContentSummary::isValid() const
 {
     return m_isValid;
 }
 
-const int ContentSummary::getChunkSize() const
+int ContentSummary::getChunkSize() const
 {
     return m_chunkSize;
 }
 
-const THash ContentSummary::getChunkHash(int t_index, bool& t_outOfBounds) const
+THash ContentSummary::getChunkHash(int t_index, bool& t_outOfBounds) const
 {
     t_outOfBounds = t_index < 0 || t_index >= m_chunkHashes.size();
 
@@ -148,7 +148,7 @@ const THash ContentSummary::getChunkHash(int t_index, bool& t_outOfBounds) const
     }
 }
 
-const THash ContentSummary::getChunkHash(int t_index) const
+THash ContentSummary::getChunkHash(int t_index) const
 {
     bool check;
     return getChunkHash(t_index, check);
@@ -189,17 +189,17 @@ const QString& ContentSummary::getHashingMethod() const
     return m_hashingMethod;
 }
 
-const THash ContentSummary::getHashCode() const
+THash ContentSummary::getHashCode() const
 {
     return m_hashCode;
 }
 
-const int ContentSummary::getChunksCount() const
+int ContentSummary::getChunksCount() const
 {
     return m_chunkHashes.size();
 }
 
-const int ContentSummary::getFilesCount() const
+int ContentSummary::getFilesCount() const
 {
     return m_filesSummary.size();
 }

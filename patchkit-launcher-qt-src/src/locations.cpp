@@ -53,7 +53,7 @@ void Locations::initializeWithData(const Data& t_data)
 {
 #if defined(Q_OS_OSX)
 
-    logDebug("OSX initializing path.");
+    qDebug("OSX initializing path.");
 
     QDir genericDataLocation = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
 
@@ -68,29 +68,29 @@ void Locations::initializeWithData(const Data& t_data)
 
     if (QDir::setCurrent(appPath.path()))
     {
-        logDebug("Path set to %1", .arg(appPath.path()));
+        qDebug("Path set to %1", .arg(appPath.path()));
 
     }
     else
     {
-        logDebug("Couldn't set path to %1", .arg(appPath.path()));
+        qDebug("Couldn't set path to %1", .arg(appPath.path()));
 
     }
 
 #else
 
-    logDebug("Initializing path.");
+    qDebug("Initializing path.");
 
     QDir appPath = applicationDirPath();
 
-    logDebug("Path set to %1", .arg(appPath.path()));
+    qDebug() << "Path set to " << appPath.path();
 
     QDir::setCurrent(appPath.path());
 
 #endif
 
 #if defined(QT_DEBUG)
-    logDebug("Evaulating all the paths:");
+    qDebug("Evaulating all the paths:");
     evalutatePaths();
 #endif
 }
@@ -153,20 +153,20 @@ QString Locations::applicationInstallationDirPath() const
 #if defined (QT_DEBUG)
 void Locations::evalutatePaths() const
 {
-    logDebug("Application file path %1", .arg(applicationFilePath()));
-    logDebug("Application dir path %1", .arg(applicationDirPath()));
+    qDebug() << "Application file path " << applicationFilePath();
+    qDebug() << "Application dir path " << applicationDirPath();
 
-    logDebug("Current dir path %1", .arg(currentDirPath()));
+    qDebug() << "Current dir path " << currentDirPath();
 
-    logDebug("Log file path %1", .arg(logFilePath()));
-    logDebug("Data file path %1", .arg(dataFilePath()));
+    qDebug() << "Log file path " << logFilePath();
+    qDebug() << "Data file path " << dataFilePath();
 
-    logDebug("Patcher directory path %1", .arg(patcherDirectoryPath()));
-    logDebug("Patcher installation info file path %1", .arg(patcherInstallationInfoFilePath()));
-    logDebug("Patcher version info file path %1", .arg(patcherVersionInfoFilePath()));
-    logDebug("Patcher if info file path %1", .arg(patcherIdInfoFilePath()));
-    logDebug("Patcher manifest file path %1", .arg(patcherManifestFilePath()));
+    qDebug() << "Patcher directory path " << patcherDirectoryPath();
+    qDebug() << "Patcher installation info file path " << patcherInstallationInfoFilePath();
+    qDebug() << "Patcher version info file path " << patcherVersionInfoFilePath();
+    qDebug() << "Patcher if info file path " << patcherIdInfoFilePath();
+    qDebug() << "Patcher manifest file path " << patcherManifestFilePath();
 
-    logDebug("Application installation dir path %1", .arg(applicationInstallationDirPath()));
+    qDebug() << "Application installation dir path " << applicationInstallationDirPath();
 }
 #endif

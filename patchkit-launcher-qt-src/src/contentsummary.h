@@ -77,8 +77,8 @@ public:
      *
      * @return
      */
-    const THash     getChunkHash(int t_index)                       const;
-    const THash     getChunkHash(int t_index, bool& t_outOfBounds)  const;
+    THash     getChunkHash(int t_index)                       const;
+    THash     getChunkHash(int t_index, bool& t_outOfBounds)  const;
 
     /**
      * @brief getFileData
@@ -93,14 +93,14 @@ public:
     const FileData& getFileData(int t_index)                        const;
     const FileData& getFileData(int t_index, bool& t_outOfBounds)   const;
 
-    const bool      isValid()                const;
-    const int       getChunkSize()           const;
+    bool            isValid()                const;
+    int             getChunkSize()           const;
+    THash           getHashCode()            const;
+    int             getChunksCount()         const;
+    int             getFilesCount()          const;
     const QString&  getEncryptionMethod()    const;
     const QString&  getCompressionMethod()   const;
     const QString&  getHashingMethod()       const;
-    const THash     getHashCode()            const;
-    const int       getChunksCount()         const;
-    const int       getFilesCount()          const;
 
     QJsonDocument   toJson() const;
 

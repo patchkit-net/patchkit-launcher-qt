@@ -37,7 +37,7 @@ Data Data::loadFromConfig()
 
     const char* dataInConfig = Config::inlineData + 2;
 
-    logDebug("Data size: ", .arg(dataSize));
+    qDebug("Data size: %d", dataSize);
 
     QByteArray dataArray(dataInConfig, dataSize);
     QDataStream dataStream(dataArray);
@@ -49,7 +49,7 @@ Data Data::loadFromConfig()
 
 Data Data::loadFromFile(const QString& t_filePath)
 {
-    logInfo("Loading launcher data from file %1", .arg(t_filePath));
+    qInfo() << "Loading launcher data from file " << t_filePath;
 
     QFile file(t_filePath);
 
@@ -71,7 +71,7 @@ Data Data::loadFromFile(const QString& t_filePath)
 
 Data Data::loadFromResources(const QString& t_applicationFilePath, int t_resourceId, int t_resourceTypeId)
 {
-    logInfo("Loading launcher data from resource of id %1 and type id %2 from file %3", .arg(QString::number(t_resourceId),
+    qInfo("Loading launcher data from resource of id %1 and type id %2 from file %3", .arg(QString::number(t_resourceId),
         QString::number(t_resourceTypeId),
         t_applicationFilePath));
 

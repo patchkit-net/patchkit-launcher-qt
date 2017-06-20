@@ -10,8 +10,8 @@
 
 MockedNetworkReply::MockedNetworkReply(int t_delayMsec, QByteArray t_data, int t_statusCode, QObject* t_parent)
     : QNetworkReply(t_parent)
-    , m_replyDelayMsec(t_delayMsec)
     , m_statusCode(t_statusCode)
+    , m_replyDelayMsec(t_delayMsec)
 {
     setContent(t_data);
 }

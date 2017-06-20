@@ -48,7 +48,7 @@ private:
     CancellationToken       m_cancellationToken;
     Downloader::TDataSource m_dataSource;
 
-    const int   getChunkSize() const;
+    int   getChunkSize() const;
 
     ChunkedDownloadStrategy m_downloadStrategy;
 

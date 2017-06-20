@@ -5,10 +5,10 @@
 #include "downloaderoperator.h"
 
 DefaultDownloadStrategy::DefaultDownloadStrategy(int t_minTimeout, int t_maxTimeout)
-    : m_minTimeout(t_minTimeout)
-    , m_maxTimeout(t_maxTimeout)
+    : m_timeoutCounter(0)
     , m_iterator(0)
-    , m_timeoutCounter(0)
+    , m_minTimeout(t_minTimeout)
+    , m_maxTimeout(t_maxTimeout)
 {
     connect(&m_timer, &QTimer::timeout, this, &DefaultDownloadStrategy::onTimeout);
 }
@@ -17,22 +17,22 @@ const int DefaultDownloadStrategy::maxStartingDownloadersCount = 3;
 
 void DefaultDownloadStrategy::init()
 {
-    logInfo("Download strategy started.");
+    qInfo("Download strategy started.");
 
     auto inactiveDownloaders = m_operator->getInactiveDownloaders();
     auto allDownloaders = m_operator->getDownloaders();
 
     if (inactiveDownloaders.size() == 0)
     {
-        logCritical("No inactive downloaders were available.");
+        qCritical("No inactive downloaders were available.");
 
-        logDebug("Starting count: %1", .arg(m_startingDownloaders.size()));
-        logDebug("Active count: %1", .arg(m_activeDownloaders.size()));
+        qDebug("Starting count: %i", m_startingDownloaders.size());
+        qDebug("Active count: %i", m_activeDownloaders.size());
 
-        logDebug("Downloaders debug info dump: ");
+        qDebug("Downloaders debug info dump: ");
         for (Downloader* d : allDownloaders)
         {
-            logDebug(d->debugInfo());
+            qDebug() << d->debugInfo();
         }
 
         emit error(DownloadError::ConnectionIssues);
@@ -41,7 +41,7 @@ void DefaultDownloadStrategy::init()
 
     if (allDownloaders.size() != inactiveDownloaders.size())
     {
-        logWarning("Some downloaders are still processing, errors may occur.");
+        qWarning("Some downloaders are still processing, errors may occur.");
     }
 
     inactiveDownloaders.at(m_iterator)->start();
@@ -67,12 +67,12 @@ void DefaultDownloadStrategy::onTimeout()
 
 void DefaultDownloadStrategy::finish()
 {
-    logInfo("Download strategy finished.");
+    qInfo("Download strategy finished.");
 }
 
 void DefaultDownloadStrategy::proceedInternal()
 {
-    logInfo("Proceed internal was requested.");
+    qInfo("Proceed internal was requested.");
     m_iterator += 1;
 
     if (m_iterator >= m_operator->getDownloaders().size())
@@ -85,7 +85,7 @@ void DefaultDownloadStrategy::proceedInternal()
 
 void DefaultDownloadStrategy::stopInternal()
 {
-    logInfo("Stop internal requested.");
+    qInfo("Stop internal requested.");
     emit done();
 }
 
@@ -101,7 +101,7 @@ void DefaultDownloadStrategy::onDownloaderStarted(Downloader* t_downloader)
     }
     else if (!Downloader::doesStatusCodeIndicateSuccess(statusCode))
     {
-        logInfo("Downloader failed to start, status code was: %1", .arg(statusCode));
+        qInfo("Downloader failed to start, status code was: %d", statusCode);
 
         discardDownloader(t_downloader);
         t_downloader->stop();
@@ -111,12 +111,12 @@ void DefaultDownloadStrategy::onDownloaderStarted(Downloader* t_downloader)
 
     if (!t_downloader->isRunning())
     {
-        logWarning("The downloader is supposed to have started, but it's status shows otherwise.");
+        qWarning("The downloader is supposed to have started, but it's status shows otherwise.");
     }
 
     acceptActiveDownloader(t_downloader);
 
-    logInfo("A downloader has started downloading.");
+    qInfo("A downloader has started downloading.");
     for (Downloader* d : m_startingDownloaders)
     {
         discardDownloader(d);
@@ -126,17 +126,17 @@ void DefaultDownloadStrategy::onDownloaderStarted(Downloader* t_downloader)
 
 void DefaultDownloadStrategy::onDownloaderFinished(Downloader* t_downloader)
 {
-    logInfo("A downloader finished downloading.");
+    qInfo("A downloader finished downloading.");
 
     int statusCode = t_downloader->getStatusCode();
 
     if (!Downloader::doesStatusCodeIndicateSuccess(statusCode))
     {
-        logWarning("A downloader has finished with a status code: %1", .arg(statusCode));
+        qWarning("A downloader has finished with a status code: %d", statusCode);
 
         if (m_operator->getStartingDownloaders().size() == 0 && m_operator->getActiveDownloaders().size() == 0)
         {
-            logWarning("No pending or active downloaders, disabling the timer and emitting connection issues error.");
+            qWarning("No pending or active downloaders, disabling the timer and emitting connection issues error.");
 
             m_timer.stop();
             emit error(DownloadError::ConnectionIssues);
@@ -145,7 +145,7 @@ void DefaultDownloadStrategy::onDownloaderFinished(Downloader* t_downloader)
         }
     }
 
-    logInfo("Download successful. Reseting and emitting done signal.");
+    qInfo("Download successful. Reseting and emitting done signal.");
 
     m_timer.stop();
     m_data = t_downloader->readData();
@@ -175,11 +175,11 @@ void DefaultDownloadStrategy::onFirstTimeout()
 {
     if (m_operator->getActiveDownloaders().size() == 0)
     {
-        logWarning("No active downloaders after %1 ms, starting additional downloaders.", .arg(m_minTimeout));
+        qWarning("No active downloaders after %d ms, starting additional downloaders.", m_minTimeout);
 
         auto downloaders = m_operator->getInactiveDownloaders();
 
-        for (int i = 0; i < (maxStartingDownloadersCount - 1) && i < downloaders.size(); i++)
+        for (uint i = 0; i < (maxStartingDownloadersCount - 1) && i < downloaders.size(); i++)
         {
             downloaders.at(i)->start();
             prepareDownloader(downloaders.at(i));
@@ -194,7 +194,7 @@ void DefaultDownloadStrategy::onSecondTimeout()
 {
     if (m_operator->getActiveDownloaders().size() == 0)
     {
-        logWarning("No active downloaders after %1 ms, will emit connection issues error.", .arg(m_maxTimeout + m_minTimeout));
+        qWarning("No active downloaders after %d ms, will emit connection issues error.", (m_maxTimeout + m_minTimeout));
 
         reset();
         emit error(DownloadError::ConnectionIssues);
@@ -205,7 +205,7 @@ void DefaultDownloadStrategy::prepareDownloader(Downloader* t_downloader)
 {
     if (m_startingDownloaders.contains(t_downloader))
     {
-        logWarning("Downloader already prepared.");
+        qWarning("Downloader already prepared.");
         return;
     }
 
@@ -218,7 +218,7 @@ void DefaultDownloadStrategy::discardDownloader(Downloader* t_downloader)
 {
     if (!m_startingDownloaders.contains(t_downloader))
     {
-        logWarning("Couldn't find the downloader in the starting downloaders list.");
+        qWarning("Couldn't find the downloader in the starting downloaders list.");
         return;
     }
 
@@ -233,7 +233,7 @@ void DefaultDownloadStrategy::acceptActiveDownloader(Downloader* t_downloader)
 {
     if (m_activeDownloaders.contains(t_downloader))
     {
-        logWarning("Downloader has already been accepted.");
+        qWarning("Downloader has already been accepted.");
         return;
     }
 
@@ -251,7 +251,7 @@ void DefaultDownloadStrategy::discardActiveDownloader(Downloader* t_downloader)
 {
     if (!m_activeDownloaders.contains(t_downloader))
     {
-        logWarning("Couldn't find the downloader in the active downloaders list.");
+        qWarning("Couldn't find the downloader in the active downloaders list.");
         return;
     }
 
@@ -290,6 +290,6 @@ void DefaultDownloadStrategy::printDebugInfo()
         base.append(d->debugInfo());
     }
 
-    logDebug(base);
-    logDebug("Download startegy debug info -- END");
+    qDebug() << base;
+    qDebug("Download startegy debug info -- END");
 }

@@ -18,15 +18,15 @@
 
 Api::Api(Downloader::TDataSource t_dataSource, CancellationToken t_cancellationToken, QObject* parent)
     : QObject(parent)
+    , m_strategy(Config::minConnectionTimeoutMsec, Config::maxConnectionTimeoutMsec)
     , m_cancellationToken(t_cancellationToken)
     , m_dataSource(t_dataSource)
-    , m_strategy(Config::minConnectionTimeoutMsec, Config::maxConnectionTimeoutMsec)
 {
 }
 
 ContentSummary Api::downloadContentSummary(const QString& t_resourceUrl)
 {
-    logInfo("Download content summary.");
+    qInfo("Download content summary.");
     QByteArray data;
     data = downloadInternal(t_resourceUrl);
 
@@ -36,7 +36,7 @@ ContentSummary Api::downloadContentSummary(const QString& t_resourceUrl)
 
 QString Api::downloadPatcherSecret(const QString& t_resourceUrl)
 {
-    logInfo("Downloading patcher secret.");
+    qInfo("Downloading patcher secret.");
     QByteArray data;
     data = downloadInternal(t_resourceUrl);
 
@@ -69,7 +69,7 @@ QString Api::downloadDefaultPatcherSecret()
 
 int Api::downloadPatcherVersion(const QString& t_resourceUrl)
 {
-    logInfo("Downloading patcher version.");
+    qInfo("Downloading patcher version.");
     QByteArray data;
     data = downloadInternal(t_resourceUrl);
 
@@ -104,7 +104,8 @@ int Api::downloadPatcherVersion(const QString& t_resourceUrl)
 
 QStringList Api::downloadContentUrls(const QString& t_resourceUrl)
 {
-    logInfo("Downloading content urls.");
+    qInfo("Downloading content urls.");
+
     QByteArray data;
     data = downloadInternal(t_resourceUrl);
 

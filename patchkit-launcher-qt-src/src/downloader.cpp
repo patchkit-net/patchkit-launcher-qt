@@ -11,15 +11,16 @@
 
 Q_DECLARE_METATYPE(DownloadError)
 int downloadErrorMetaTypeId = qRegisterMetaType<DownloadError>();
+int tByteCountMetaTypeId = qRegisterMetaType<TByteCount>();
 
 Downloader::Downloader
     (const QString& t_resourceUrl,
      TDataSource t_dataSource,
      CancellationToken& t_cancellationToken)
-    : m_remoteDataSource(t_dataSource)
-    , m_cancellationToken(t_cancellationToken)
+    : m_isActive(false)
     , m_resourceRequest(QUrl(t_resourceUrl))
-    , m_isActive(false)
+    , m_remoteDataSource(t_dataSource)
+    , m_cancellationToken(t_cancellationToken)
 {
 }
 
@@ -36,7 +37,7 @@ Downloader::~Downloader()
 
 void Downloader::start()
 {
-    logInfo("Downloader %1 - Start.", .arg(debugName()));
+    qInfo() << "Downloader " << debugName() << " - Start.";
 
     fetchReply(m_resourceRequest, m_remoteDataReply);
 
@@ -142,35 +143,40 @@ void Downloader::readyReadRelay()
 void Downloader::errorRelay(QNetworkReply::NetworkError t_errorCode)
 {
     QMetaEnum metaEnum = QMetaEnum::fromType<QNetworkReply::NetworkError>();
-    logWarning("Downloader %1 - Network reply encountered an error: %2",
-               .arg(debugName(), metaEnum.valueToKey(t_errorCode)));
+
+    qWarning()  << "Downloader "
+                << debugName()
+                << " - Network reply encountered an error: "
+                << metaEnum.valueToKey(t_errorCode);
 
     emit downloadError(t_errorCode);
 }
 
 void Downloader::finishedRelay()
 {
-    logInfo("Downloader %1 - Downloader is finishing...", .arg(debugName()));
+    qInfo()     << "Downloader "
+                << debugName()
+                << " - Downloader is finishing...";
 
     if (m_cancellationToken.isCancelled())
     {
-        logInfo("Finished by cancellation, will not emit finished signal.");
+        qInfo("Finished by cancellation, will not emit finished signal.");
         return;
     }
 
     if (m_remoteDataReply.isNull())
     {
-        logWarning("Finished but network reply is null, will not emit finished signal.");
+        qWarning("Finished but network reply is null, will not emit finished signal.");
         return;
     }
 
     if (!m_isActive)
     {
-        logInfo("Finished but is not active, will not emit finished signal.");
+        qInfo("Finished but is not active, will not emit finished signal.");
         return;
     }
 
-    logInfo("Emitting finished signal.");
+    qInfo("Emitting finished signal.");
     emit downloadFinished();
 }
 
@@ -198,9 +204,9 @@ bool Downloader::checkInternetConnection()
     }
     else
     {
-        logWarning("No internet connection.");
+        qWarning("No internet connection.");
         QString p_stdout = proc.readAllStandardOutput();
-        logInfo("Ping output was: %1", .arg(p_stdout));
+        qInfo() << "Ping output was: " << p_stdout;
 
         return false;
     }
@@ -208,7 +214,7 @@ bool Downloader::checkInternetConnection()
 
 void Downloader::stop()
 {
-    logDebug("Downloader %1 - Stopping.", .arg(debugName()));
+    qDebug() << "Downloader " << debugName() << " - Stopping.";
 
     m_isActive = false;
     if (m_remoteDataReply.isNull())
@@ -223,8 +229,10 @@ void Downloader::stop()
 
 void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataReply& t_reply) const
 {
-    logInfo("Downloader %1 - Fetching network reply - URL: %2.",
-            .arg(debugName(), t_urlRequest.url().toString()));
+    qInfo() << "Downloader "
+            << debugName()
+            << " - Fetching network reply - URL: "
+            << t_urlRequest.url().toString();
 
     if (!t_reply.isNull())
     {
@@ -239,7 +247,7 @@ void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataRepl
 
     if (!m_remoteDataSource)
     {
-        logCritical("No remote data source provided.");
+        qCritical("No remote data source provided.");
         return;
     }
 
@@ -247,7 +255,7 @@ void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataRepl
 
     if (!reply)
     {
-        logCritical("Reply was null");
+        qCritical("Reply was null");
         return;
     }
 
@@ -256,7 +264,7 @@ void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataRepl
 
 void Downloader::validateReply(TRemoteDataReply& t_reply) const
 {
-    logInfo("Validating network reply.");
+    qInfo("Validating network reply.");
 
     if (t_reply->error() != QNetworkReply::NoError)
     {
@@ -285,7 +293,7 @@ int Downloader::getReplyStatusCode(TRemoteDataReply& t_reply) const
 
 void Downloader::waitForDownloadToFinish(TRemoteDataReply& t_reply) const
 {
-    logInfo("Waiting for download to finish.");
+    qInfo("Waiting for download to finish.");
 
     if (t_reply->isFinished())
     {
@@ -304,7 +312,7 @@ void Downloader::waitForDownloadToFinish(TRemoteDataReply& t_reply) const
 
 void Downloader::waitForReadyRead(Downloader::TRemoteDataReply& t_reply) const
 {
-    logInfo("Waiting for download to be ready.");
+    qInfo("Waiting for download to be ready.");
 
     if (t_reply->isFinished())
     {

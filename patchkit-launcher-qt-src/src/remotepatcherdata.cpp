@@ -24,18 +24,20 @@ RemotePatcherData::RemotePatcherData(Api& t_api, QNetworkAccessManager* t_networ
     connect(this, &RemotePatcherData::stop, &m_api, &Api::stop);
 }
 
-int RemotePatcherData::getVersion(const Data& t_data, CancellationToken t_cancellationToken)
+int RemotePatcherData::getVersion(const Data& t_data, CancellationToken /*t_cancellationToken*/)
 {
-    logInfo("Fetching newest patcher version from 1/apps/%1/versions/latest/id", .arg(Logger::adjustSecretForLog(t_data.patcherSecret())));
+    qInfo() << "Fetching newest patcher version from 1/apps/"
+            << Logger::adjustSecretForLog(t_data.patcherSecret())
+            << "/versions/latest/id";
 
     QString resourceUrl = QString("1/apps/%1/versions/latest/id").arg(t_data.patcherSecret());
 
     return m_api.downloadPatcherVersion(resourceUrl);
 }
 
-QString RemotePatcherData::getPatcherSecret(const Data& t_data, CancellationToken t_cancellationToken)
+QString RemotePatcherData::getPatcherSecret(const Data& t_data, CancellationToken /*t_cancellationToken*/)
 {
-    logInfo("Fetching newest patcher secret from 1/apps/%1", .arg(Logger::adjustSecretForLog(t_data.applicationSecret())));
+    qInfo() << "Fetching newest patcher secret from 1/apps/" <<  Logger::adjustSecretForLog(t_data.applicationSecret());
 
     QString resourceUrl = QString("1/apps/%1").arg(t_data.applicationSecret());
     QString data;
@@ -46,7 +48,7 @@ QString RemotePatcherData::getPatcherSecret(const Data& t_data, CancellationToke
     }
     catch(ContentUnavailableException& exception)
     {
-        logWarning(exception.what());
+        qWarning() << exception.what();
         data = m_api.downloadDefaultPatcherSecret();
     }
     catch(...)
@@ -59,7 +61,7 @@ QString RemotePatcherData::getPatcherSecret(const Data& t_data, CancellationToke
 
 void RemotePatcherData::download(QIODevice& t_dataTarget, const Data& t_data, int t_version, CancellationToken t_cancellationToken)
 {
-    logInfo("Downloading patcher %1 version", .arg(QString::number(t_version)));
+    qInfo("Downloading patcher %d version", t_version);
 
     QStringList contentUrls = getContentUrls(t_data.patcherSecret(), t_version, t_cancellationToken);
 
@@ -68,19 +70,22 @@ void RemotePatcherData::download(QIODevice& t_dataTarget, const Data& t_data, in
 
     QString contentSummaryPath = QString("1/apps/%1/versions/%2/content_summary").arg(patcherSecret, version);
 
-    logInfo("Downloading content summary from 1/apps/%1/versions/%2/content_summary.",
-            .arg(Logger::adjustSecretForLog(patcherSecret), version));
+    qInfo() << "Downloading content summary from 1/apps/"
+            << Logger::adjustSecretForLog(patcherSecret)
+            << "/versions/"
+            << version
+            << "/content_summary.";
 
     ContentSummary summary;
 
     try
     {
         summary = m_api.downloadContentSummary(contentSummaryPath);
-        logInfo("Successfully downloaded the content summary.");
+        qInfo("Successfully downloaded the content summary.");
     }
     catch(std::runtime_error& err)
     {
-        logWarning(QString("Exception while downloading content summary: %1").arg(err.what()));
+        qWarning() << "Exception while downloading content summary: " << err.what();
     }
 
     if (summary.isValid())
@@ -101,16 +106,19 @@ void RemotePatcherData::download(QIODevice& t_dataTarget, const Data& t_data, in
     }
     else
     {
-        logCritical("INVALID CONTENT SUMMARY");
+        qCritical("INVALID CONTENT SUMMARY");
     }
 
     throw std::runtime_error("Unable to download patcher version - " + std::to_string(t_version));
 }
 
-QStringList RemotePatcherData::getContentUrls(const QString& t_patcherSecret, int t_version, CancellationToken t_cancellationToken)
+QStringList RemotePatcherData::getContentUrls(const QString& t_patcherSecret, int t_version, CancellationToken /*t_cancellationToken*/)
 {
-    logInfo("Fetching patcher content urls from 1/apps/%1/versions/%2/content_urls",
-            .arg(Logger::adjustSecretForLog(t_patcherSecret),QString::number(t_version)));
+    qInfo() << "Fetching patcher content urls from 1/apps/"
+            << Logger::adjustSecretForLog(t_patcherSecret)
+            << "/versions/"
+            << t_version
+            << "/content_urls";
 
     QString resourceUrl = QString("1/apps/%1/versions/%2/content_urls").arg(t_patcherSecret, QString::number(t_version));
 
@@ -121,11 +129,11 @@ bool RemotePatcherData::saveData(QByteArray& t_data, QIODevice& t_dataTarget)
 {
     if (!t_dataTarget.open(QIODevice::WriteOnly))
     {
-        logWarning("Couldn't open data target for writing.");
+        qWarning("Couldn't open data target for writing.");
         return false;
     }
 
-    logInfo("Saving downloaded data.");
+    qInfo("Saving downloaded data.");
 
     t_dataTarget.write(t_data);
 
@@ -136,8 +144,8 @@ bool RemotePatcherData::saveData(QByteArray& t_data, QIODevice& t_dataTarget)
 
 int RemotePatcherData::parseVersionJson(const QString& t_json)
 {
-    logInfo("Parsing version from json.");
-    logDebug(t_json);
+    qInfo("Parsing version from json.");
+    qDebug() << t_json;
 
     QJsonDocument jsonDocument = QJsonDocument::fromJson(t_json.toUtf8());
 
@@ -165,7 +173,7 @@ int RemotePatcherData::parseVersionJson(const QString& t_json)
 
 QString RemotePatcherData::parsePatcherSecret(const QString& t_json)
 {
-    logInfo("Parsing patcher secret from json.");
+    qInfo("Parsing patcher secret from json.");
 
     QJsonDocument jsonDocument = QJsonDocument::fromJson(t_json.toUtf8());
 
@@ -186,8 +194,8 @@ QString RemotePatcherData::parsePatcherSecret(const QString& t_json)
 
 QStringList RemotePatcherData::parseContentUrlsJson(const QString& t_json)
 {
-    logInfo("Parsing content urls from json.");
-    logDebug(t_json);
+    qInfo("Parsing content urls from json.");
+    qDebug() << t_json;
 
     QJsonDocument jsonDocument = QJsonDocument::fromJson(t_json.toUtf8());
 

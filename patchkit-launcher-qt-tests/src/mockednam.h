@@ -31,8 +31,8 @@ private:
         ReplyDefinition(QByteArray t_data, int t_delay, int t_statusCode = 200)
             : data(t_data)
             , delay(t_delay)
-            , timesAccesed(0)
             , statusCode(t_statusCode)
+            , timesAccesed(0)
         {
         }
 

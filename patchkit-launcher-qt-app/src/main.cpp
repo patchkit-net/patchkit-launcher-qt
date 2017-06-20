@@ -22,6 +22,6 @@ int main(int argc, char* argv[])
     Launcher launcher(application);
     launcher.start();
 
-    logInfo("Starting application loop.");
+    qInfo("Starting application loop.");
     return application.exec();
 }

@@ -15,14 +15,15 @@ class CancellationToken : public QObject
 {
     Q_OBJECT
 public:
-    CancellationToken(const CancellationToken& t_other) :
-        m_source(t_other.m_source)
+    CancellationToken(const CancellationToken& t_other)
+        : QObject(t_other.parent())
+        , m_source(t_other.m_source)
     {
         connect(m_source.get(), &CancellationTokenSource::cancelled, this, &CancellationToken::cancelled);
     }
 
-    CancellationToken(std::shared_ptr<CancellationTokenSource> t_source):
-        m_source(t_source)
+    CancellationToken(std::shared_ptr<CancellationTokenSource> t_source)
+        : m_source(t_source)
     {
         connect(m_source.get(), &CancellationTokenSource::cancelled, this, &CancellationToken::cancelled);
     }

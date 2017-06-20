@@ -45,9 +45,9 @@ private:
     QTimer m_timer;
     int m_timeoutCounter;
 
-    int m_iterator;
-    int m_minTimeout;
-    int m_maxTimeout;
+    unsigned int    m_iterator;
+    int             m_minTimeout;
+    int             m_maxTimeout;
 
     QVector<Downloader*> m_activeDownloaders;
     QVector<Downloader*> m_startingDownloaders;
