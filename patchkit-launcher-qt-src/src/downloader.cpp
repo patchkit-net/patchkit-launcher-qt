@@ -6,7 +6,7 @@
 #include "downloader.h"
 
 #include "logger.h"
-#include "timeoutexception.h"
+#include "customexceptions.h"
 #include "config.h"
 
 Q_DECLARE_METATYPE(DownloadError)

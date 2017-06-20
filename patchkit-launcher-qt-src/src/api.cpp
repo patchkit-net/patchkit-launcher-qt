@@ -5,7 +5,6 @@
 
 #include "api.h"
 
-#include "timeoutexception.h"
 #include "customexceptions.h"
 #include "config.h"
 

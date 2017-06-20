@@ -7,7 +7,6 @@
 
 #include "logger.h"
 #include "config.h"
-#include "timeoutexception.h"
 #include "customexceptions.h"
 #include "chunkeddownloader.h"
 #include "contentsummary.h"

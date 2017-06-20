@@ -7,7 +7,7 @@
 
 #include "chunkeddownloader.h"
 
-#include "timeoutexception.h"
+#include "customexceptions.h"
 #include "contentsummary.h"
 #include "downloader.h"
 #include "logger.h"

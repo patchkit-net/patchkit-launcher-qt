@@ -1,8 +1,13 @@
+/*
+* Copyright (C) Upsoft 2017
+* License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
+*/
+
 #pragma once
 
 #include <exception>
 
-#define CUSTOM_EXCEPTION(classname) \
+#define CUSTOM_RUNTIME_ERROR(classname) \
 class classname : public std::runtime_error \
 { \
 public: \
@@ -16,5 +21,23 @@ public: \
     } \
 }; \
 
-CUSTOM_EXCEPTION(FatalException)
-CUSTOM_EXCEPTION(ContentUnavailableException)
+#define CUSTOM_EXCEPTION(classname, msg) \
+class classname : public std::exception \
+{ \
+public: \
+    classname() \
+    { \
+    } \
+    virtual ~classname() throw () \
+    { \
+    } \
+    virtual const char* what() const throw () \
+    { \
+        return msg; \
+    } \
+}; \
+
+CUSTOM_RUNTIME_ERROR(FatalException)
+CUSTOM_RUNTIME_ERROR(ContentUnavailableException)
+CUSTOM_EXCEPTION(TimeoutException, "Timeout.")
+CUSTOM_EXCEPTION(CancelledException, "Operation has been cancelled.")
