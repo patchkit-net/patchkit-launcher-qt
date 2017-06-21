@@ -9,6 +9,7 @@ PatchKit launcher made in Qt.
 
 ## [Code Style](/CODE_STYLE.md)
 ## [Building](/BUILDING.md)
+## [Running Tests](/RUNNING_TESTS.md)
 
 ## Launcher data file
 

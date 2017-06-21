@@ -1,10 +1,10 @@
 # Building
 
-### Building from Qt Creator (recommended)
+## Building from Qt Creator (recommended)
 
 Open the `patchkit-launcher-qt.pro` project in Qt Creator and compile.
 
-### Building from command line
+## Building from command line
 
 #### Windows
 
@@ -39,6 +39,6 @@ nmake -f Makefile.Release
 nmake -f Makefile.Debug
 ```
 
-### Building statically linked Qt
+## Building statically linked Qt
 
 Refer to [PatchKit Development Kit](https://github.com/patchkit-net/patchkit-development-kit).
