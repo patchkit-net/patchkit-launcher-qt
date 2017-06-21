@@ -47,10 +47,9 @@ private:
     const ContentSummary&   m_contentSummary;
     CancellationToken       m_cancellationToken;
     Downloader::TDataSource m_dataSource;
+    ChunkedDownloadStrategy m_downloadStrategy;
 
     int   getChunkSize() const;
-
-    ChunkedDownloadStrategy m_downloadStrategy;
 
     friend class ChunkedDownloadStrategy;
 };

@@ -8,6 +8,6 @@
 class IDownloadStrategy
 {
 public:
-    virtual void init() = 0;
-    virtual void finish() = 0;
+    virtual void startInternal() = 0;
+    virtual void finishInternal() = 0;
 };

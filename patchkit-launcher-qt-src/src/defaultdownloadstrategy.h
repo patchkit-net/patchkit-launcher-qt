@@ -16,8 +16,8 @@ public:
     const static int maxStartingDownloadersCount;
 
 protected:
-    virtual void init() override;
-    virtual void finish() override;
+    virtual void startInternal() override;
+    virtual void finishInternal() override;
     virtual void proceedInternal() override;
     virtual void stopInternal() override;
 
@@ -38,8 +38,6 @@ protected slots:
     void onDownloaderStartedInternal();
     void onDownloaderFinishedInternal();
     void onTimeout();
-
-    void printDebugInfo();
 
 private:
     QTimer m_timer;

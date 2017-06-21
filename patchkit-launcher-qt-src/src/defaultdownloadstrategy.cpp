@@ -15,7 +15,7 @@ DefaultDownloadStrategy::DefaultDownloadStrategy(int t_minTimeout, int t_maxTime
 
 const int DefaultDownloadStrategy::maxStartingDownloadersCount = 3;
 
-void DefaultDownloadStrategy::init()
+void DefaultDownloadStrategy::startInternal()
 {
     qInfo("Download strategy started.");
 
@@ -28,12 +28,6 @@ void DefaultDownloadStrategy::init()
 
         qDebug("Starting count: %i", m_startingDownloaders.size());
         qDebug("Active count: %i", m_activeDownloaders.size());
-
-        qDebug("Downloaders debug info dump: ");
-        for (Downloader* d : allDownloaders)
-        {
-            qDebug() << d->debugInfo();
-        }
 
         emit error(DownloadError::ConnectionIssues);
         return;
@@ -65,7 +59,7 @@ void DefaultDownloadStrategy::onTimeout()
     m_timeoutCounter++;
 }
 
-void DefaultDownloadStrategy::finish()
+void DefaultDownloadStrategy::finishInternal()
 {
     qInfo("Download strategy finished.");
 }
@@ -80,7 +74,7 @@ void DefaultDownloadStrategy::proceedInternal()
         m_iterator = 0;
     }
 
-    init();
+    startInternal();
 }
 
 void DefaultDownloadStrategy::stopInternal()
@@ -278,18 +272,4 @@ void DefaultDownloadStrategy::reset()
     }
 
     m_startingDownloaders.clear();
-}
-
-void DefaultDownloadStrategy::printDebugInfo()
-{
-    QString base("Download startegy debug info -- START");
-
-    for (Downloader* d : m_operator->getDownloaders())
-    {
-        base.append("\n");
-        base.append(d->debugInfo());
-    }
-
-    qDebug() << base;
-    qDebug("Download startegy debug info -- END");
 }

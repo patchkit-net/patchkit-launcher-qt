@@ -14,8 +14,8 @@
 #include "api.h"
 
 RemotePatcherData::RemotePatcherData(Api& t_api, QNetworkAccessManager* t_networkAccessManager)
-    : m_api(t_api)
-    , m_networkAccessManager(t_networkAccessManager)
+    : m_networkAccessManager(t_networkAccessManager)
+    , m_api(t_api)
 {
     connect(&m_api, &Api::downloadError, this, &RemotePatcherData::downloadError);
 

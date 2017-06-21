@@ -11,7 +11,7 @@
 #include "src/downloader.h"
 
 #include "mockednam.h"
-#include "src/timeoutexception.h"
+#include "src/customexceptions.h"
 
 SCENARIO("Downloader life.")
 {

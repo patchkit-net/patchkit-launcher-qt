@@ -16,9 +16,9 @@ ChunkedDownloadStrategy::ChunkedDownloadStrategy(int t_minTimeout, int t_maxTime
 {
 }
 
-void ChunkedDownloadStrategy::finish()
+void ChunkedDownloadStrategy::finishInternal()
 {
-    DefaultDownloadStrategy::finish();
+    DefaultDownloadStrategy::finishInternal();
 }
 
 void ChunkedDownloadStrategy::onDownloaderFinished(Downloader* t_downloader)
@@ -69,7 +69,7 @@ void ChunkedDownloadStrategy::onDownloaderFinished(Downloader* t_downloader)
         }
 
         reset();
-        init();
+        startInternal();
     }
 }
 

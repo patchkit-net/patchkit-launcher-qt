@@ -267,10 +267,6 @@ void LauncherWorker::updatePatcher(const Data& t_data)
     {
         version = m_remotePatcher.getVersion(t_data, m_cancellationTokenSource);
     }
-    catch(int)
-    {
-
-    }
     catch(...)
     {
         throw;

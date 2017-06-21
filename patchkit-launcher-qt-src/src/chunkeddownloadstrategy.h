@@ -15,7 +15,7 @@ class ChunkedDownloadStrategy : public DefaultDownloadStrategy
 public:
     ChunkedDownloadStrategy(int t_minTimeout, int t_maxTimeout, const ChunkedDownloader& t_parent);
 
-    virtual void finish() override;
+    virtual void finishInternal() override;
 
 public slots:
     virtual void downloadProgressRelay(const long long& t_bytesDownloaded, const long long& t_totalBytes) override;

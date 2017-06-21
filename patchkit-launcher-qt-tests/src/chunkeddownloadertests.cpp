@@ -9,7 +9,7 @@
 #include <QApplication>
 
 #include "src/chunkeddownloader.h"
-#include "src/timeoutexception.h"
+#include "src/customexceptions.h"
 #include "src/contentsummary.h"
 
 #include "mockednam.h"

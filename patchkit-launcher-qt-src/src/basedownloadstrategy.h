@@ -17,7 +17,7 @@ class BaseDownloadStrategy : public QObject, public IDownloadStrategy
     Q_OBJECT
 public:
     void start(DownloaderOperator* t_operator);
-    void end();
+    void finish();
     QByteArray data();
 
 public slots:
@@ -31,8 +31,8 @@ signals:
     void downloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes);
 
 protected:
-    virtual void init() = 0;
-    virtual void finish() = 0;
+    virtual void startInternal() = 0;
+    virtual void finishInternal() = 0;
     virtual void proceedInternal() = 0;
     virtual void stopInternal() = 0;
 

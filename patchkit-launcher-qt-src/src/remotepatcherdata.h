@@ -34,6 +34,8 @@ signals:
     void stop();
 
 private:
+    QNetworkAccessManager* m_networkAccessManager;
+
     Api& m_api;
 
     QStringList getContentUrls(const QString& t_patcherSecret, int t_version, CancellationToken t_cancellationToken);
@@ -46,5 +48,4 @@ private:
 
     static QStringList parseContentUrlsJson(const QString& t_json);
 
-    QNetworkAccessManager* m_networkAccessManager;
 };

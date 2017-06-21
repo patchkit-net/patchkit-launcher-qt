@@ -13,12 +13,12 @@ void BaseDownloadStrategy::start(DownloaderOperator* t_operator)
 {
     m_operator = t_operator;
 
-    init();
+    startInternal();
 }
 
-void BaseDownloadStrategy::end()
+void BaseDownloadStrategy::finish()
 {
-    finish();
+    finishInternal();
 }
 
 QByteArray BaseDownloadStrategy::data()
