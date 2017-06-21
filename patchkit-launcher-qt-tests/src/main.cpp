@@ -4,21 +4,26 @@
 */
 
 #include <QCoreApplication>
-
 #include <QThread>
 
 #include <iostream>
+#include <sstream>
+
+#include "src/logger.h"
 
 namespace Catch
 {
+    std::stringstream testOutputStream;
+    std::stringstream testErrorStream;
+
     std::ostream& cout()
     {
-        return std::cerr;
+        return testOutputStream;
     }
 
     std::ostream& cerr()
     {
-        return std::cerr;
+        return testErrorStream;
     }
 }
 
@@ -41,8 +46,15 @@ int main (int argc, char * argv[])
 {
     QCoreApplication app(argc, argv);
 
+    Logger::getInstance().setSilent(true);
+
     Tester testerThread;
     testerThread.start();
 
-    return app.exec();
+    auto appExecResult = app.exec();
+
+    std::cout << Catch::testOutputStream.str();
+    std::cerr << Catch::testErrorStream.str();
+
+    return appExecResult;
 }

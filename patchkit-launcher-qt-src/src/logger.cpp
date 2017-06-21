@@ -11,14 +11,32 @@
 #include <QFileInfo>
 #include "locations.h"
 
-Logger::Logger() :
-    m_logFile(Locations::getInstance().logFilePath()),
-    m_logFileStream(&m_logFile),
-    m_stdoutStream(stdout)
+Logger::Logger()
+    : m_logFile(Locations::getInstance().logFilePath())
+    , m_logFileStream(&m_logFile)
+    , m_stdoutStream(stdout)
+    , m_isSilent(false)
 {
     m_logFile.open(QIODevice::WriteOnly | QIODevice::Truncate);
 
     qInstallMessageHandler(logHandler);
+}
+
+Logger &Logger::getInstance()
+{
+    static Logger instance;
+
+    return instance;
+}
+
+void Logger::initialize()
+{
+    getInstance();
+}
+
+void Logger::setSilent(bool t_silent)
+{
+    m_isSilent = t_silent;
 }
 
 QString Logger::adjustSecretForLog(const QString& t_secret)
@@ -68,6 +86,9 @@ const char* Logger::resolveMessageType(QtMsgType t_type)
 
 void Logger::logHandler(QtMsgType t_type, const QMessageLogContext& t_context, const QString& t_msg)
 {
+    if (getInstance().m_isSilent)
+        return;
+
     QString txt = t_msg;
     txt.prepend(" - ");
 

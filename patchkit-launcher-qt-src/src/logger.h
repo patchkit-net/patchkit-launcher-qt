@@ -16,17 +16,11 @@ public:
     Logger(Logger const&) = delete;
     void operator=(Logger const&) = delete;
 
-    static Logger& getInstance()
-    {
-        static Logger instance;
+    static Logger& getInstance();
 
-        return instance;
-    }
+    static void initialize();
 
-    static void initialize()
-    {
-        getInstance();
-    }
+    void setSilent(bool t_silent);
 
     static QString adjustSecretForLog(const QString& t_secret);
     static QString adjustSecretForLog(const char* t_secret);
@@ -34,6 +28,8 @@ private:
     QFile m_logFile;
     QTextStream m_logFileStream;
     QTextStream m_stdoutStream;
+
+    bool m_isSilent;
 
     static const char* resolveMessageType(QtMsgType t_type);
     static void logHandler(QtMsgType t_type, const QMessageLogContext& t_context, const QString& t_msg);

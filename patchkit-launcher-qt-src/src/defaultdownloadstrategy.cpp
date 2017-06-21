@@ -26,8 +26,8 @@ void DefaultDownloadStrategy::startInternal()
     {
         qCritical("No inactive downloaders were available.");
 
-        qDebug("Starting count: %i", m_startingDownloaders.size());
-        qDebug("Active count: %i", m_activeDownloaders.size());
+        qDebug("Starting count: %d", m_startingDownloaders.size());
+        qDebug("Active count: %d", m_activeDownloaders.size());
 
         emit error(DownloadError::ConnectionIssues);
         return;
