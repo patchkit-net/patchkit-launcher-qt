@@ -53,7 +53,7 @@ int main (int argc, char * argv[])
 
     auto appExecResult = app.exec();
 
-    std::cout << Catch::testOutputStream.str();
+    std::cerr << Catch::testOutputStream.str();
     std::cerr << Catch::testErrorStream.str();
 
     return appExecResult;
