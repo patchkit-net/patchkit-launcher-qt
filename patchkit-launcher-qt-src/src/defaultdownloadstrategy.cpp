@@ -43,7 +43,7 @@ void DefaultDownloadStrategy::startInternal()
     prepareDownloader(inactiveDownloaders.at(m_iterator));
 
     m_timer.setSingleShot(true);
-    m_timer.start(m_minTimeout);
+    emit m_timer.start(m_minTimeout);
 }
 
 void DefaultDownloadStrategy::onTimeout()
@@ -181,7 +181,7 @@ void DefaultDownloadStrategy::onFirstTimeout()
     }
 
     m_timer.setSingleShot(true);
-    m_timer.start(m_maxTimeout);
+    emit m_timer.start(m_maxTimeout);
 }
 
 void DefaultDownloadStrategy::onSecondTimeout()

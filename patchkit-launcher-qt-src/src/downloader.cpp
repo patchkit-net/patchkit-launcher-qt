@@ -21,18 +21,8 @@ Downloader::Downloader
     , m_resourceRequest(QUrl(t_resourceUrl))
     , m_remoteDataSource(t_dataSource)
     , m_cancellationToken(t_cancellationToken)
+    , m_remoteDataReply(nullptr)
 {
-}
-
-Downloader::~Downloader()
-{
-    if (!m_remoteDataReply.isNull())
-    {
-        if (m_remoteDataReply->isRunning())
-        {
-            m_remoteDataReply->abort();
-        }
-    }
 }
 
 void Downloader::start()
@@ -41,16 +31,16 @@ void Downloader::start()
 
     fetchReply(m_resourceRequest, m_remoteDataReply);
 
-    connect(m_remoteDataReply.data(), &QNetworkReply::readyRead, this, &Downloader::readyReadRelay);
-    connect(m_remoteDataReply.data(), &QNetworkReply::finished, this, &Downloader::finishedRelay);
+    connect(m_remoteDataReply, &QNetworkReply::readyRead, this, &Downloader::readyReadRelay);
+    connect(m_remoteDataReply, &QNetworkReply::finished, this, &Downloader::finishedRelay);
 
-    connect(m_remoteDataReply.data(),
+    connect(m_remoteDataReply,
             static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
             this, &Downloader::errorRelay);
 
-    connect(&m_cancellationToken, &CancellationToken::cancelled, m_remoteDataReply.data(), &QNetworkReply::abort);
+    connect(&m_cancellationToken, &CancellationToken::cancelled, m_remoteDataReply, &QNetworkReply::abort);
 
-    connect(m_remoteDataReply.data(), &QNetworkReply::downloadProgress, this, &Downloader::downloadProgressChanged);
+    connect(m_remoteDataReply, &QNetworkReply::downloadProgress, this, &Downloader::downloadProgressChanged);
 }
 
 int Downloader::getStatusCode()
@@ -77,7 +67,7 @@ void Downloader::waitUntilReadyRead()
 
 QByteArray Downloader::readData()
 {
-    if (m_remoteDataReply.isNull())
+    if (!m_remoteDataReply)
     {
         return QByteArray();
     }
@@ -102,17 +92,17 @@ void Downloader::waitUntilFinished()
 
 bool Downloader::wasStarted() const
 {
-    return !m_remoteDataReply.isNull();
+    return m_remoteDataReply != nullptr;
 }
 
 bool Downloader::isFinished() const
 {
-    return !m_remoteDataReply.isNull() && m_remoteDataReply->isFinished();
+    return m_remoteDataReply != nullptr && m_remoteDataReply->isFinished();
 }
 
 bool Downloader::isRunning() const
 {
-    return !m_remoteDataReply.isNull() && m_remoteDataReply->isRunning() && m_isActive;
+    return (m_remoteDataReply != nullptr) && m_remoteDataReply->isRunning(); // && m_isActive;
 }
 
 QString Downloader::debugName() const
@@ -125,7 +115,7 @@ QString Downloader::debugInfo() const
     QString sb;
     sb.append(QString("Memory address: %1 \n").arg((size_t) this));
     sb.append(QString("Url: %1 \n").arg(m_resourceRequest.url().toString()));
-    sb.append(QString("Reply status: %1 \n").arg(m_remoteDataReply.isNull() ? "Null" : "Exists"));
+    sb.append(QString("Reply status: %1 \n").arg(m_remoteDataReply ? "Null" : "Exists"));
     sb.append(QString("Active: %1 \n").arg(m_isActive ? "Yes" : "No"));
 
     return sb;
@@ -137,7 +127,7 @@ void Downloader::readyReadRelay()
 
     emit downloadStarted(getStatusCode());
 
-    disconnect(m_remoteDataReply.data(), &QNetworkReply::readyRead, this, &Downloader::readyReadRelay);
+    disconnect(m_remoteDataReply, &QNetworkReply::readyRead, this, &Downloader::readyReadRelay);
 }
 
 void Downloader::errorRelay(QNetworkReply::NetworkError t_errorCode)
@@ -164,9 +154,15 @@ void Downloader::finishedRelay()
         return;
     }
 
-    if (m_remoteDataReply.isNull())
+    if (!m_remoteDataReply)
     {
         qWarning("Finished but network reply is null, will not emit finished signal.");
+        return;
+    }
+
+    if (!m_remoteDataReply->isFinished())
+    {
+        qWarning("Finished but network reply is not finished, will not emit finished signal.");
         return;
     }
 
@@ -217,14 +213,14 @@ void Downloader::stop()
     qDebug() << "Downloader " << debugName() << " - Stopping.";
 
     m_isActive = false;
-    if (m_remoteDataReply.isNull())
+    if (!m_remoteDataReply)
+    {
         return;
+    }
 
     m_remoteDataReply->abort();
-
     m_remoteDataReply->deleteLater();
-
-    m_remoteDataReply.reset(nullptr);
+    m_remoteDataReply = nullptr;
 }
 
 void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataReply& t_reply) const
@@ -234,7 +230,7 @@ void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataRepl
             << " - Fetching network reply - URL: "
             << t_urlRequest.url().toString();
 
-    if (!t_reply.isNull())
+    if (t_reply)
     {
         if (!t_reply->isFinished())
         {
@@ -242,7 +238,7 @@ void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataRepl
         }
 
         t_reply->deleteLater();
-        t_reply.reset(nullptr);
+        t_reply = nullptr;
     }
 
     if (!m_remoteDataSource)
@@ -259,7 +255,7 @@ void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataRepl
         return;
     }
 
-    t_reply = TRemoteDataReply(reply);
+    t_reply = reply;
 }
 
 void Downloader::validateReply(TRemoteDataReply& t_reply) const
@@ -272,18 +268,13 @@ void Downloader::validateReply(TRemoteDataReply& t_reply) const
     }
 }
 
-int Downloader::getReplyStatusCode(TRemoteDataReply& t_reply)
+int Downloader::getReplyStatusCode(TRemoteDataReply t_reply)
 {
-    if (t_reply.isNull())
+    if (!t_reply)
     {
         return -1;
     }
 
-    return getReplyStatusCode(t_reply.data());
-}
-
-int Downloader::getReplyStatusCode(QNetworkReply* t_reply)
-{
     QVariant statusCode = t_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
 
     if (!statusCode.isValid())
@@ -307,7 +298,7 @@ void Downloader::waitForDownloadToFinish(TRemoteDataReply& t_reply) const
 
     QEventLoop finishedLoop;
 
-    connect(t_reply.data(), &QNetworkReply::finished, &finishedLoop, &QEventLoop::quit);
+    connect(t_reply, &QNetworkReply::finished, &finishedLoop, &QEventLoop::quit);
     connect(&m_cancellationToken, &CancellationToken::cancelled, &finishedLoop, &QEventLoop::quit);
 
     finishedLoop.exec();
@@ -326,7 +317,7 @@ void Downloader::waitForReadyRead(Downloader::TRemoteDataReply& t_reply) const
 
     QEventLoop readyReadLoop;
 
-    connect(t_reply.data(), &QNetworkReply::readyRead, &readyReadLoop, &QEventLoop::quit);
+    connect(t_reply, &QNetworkReply::readyRead, &readyReadLoop, &QEventLoop::quit);
     connect(&m_cancellationToken, &CancellationToken::cancelled, &readyReadLoop, &QEventLoop::quit);
 
     readyReadLoop.exec();

@@ -25,10 +25,9 @@ class Downloader : public QObject
 public:
     typedef QNetworkAccessManager* TDataSource;
 
-    typedef QSharedPointer<QNetworkReply> TRemoteDataReply;
+    typedef QNetworkReply* TRemoteDataReply;
 
     Downloader(const QString& t_resourceUrl, TDataSource t_dataSource, CancellationToken& t_cancellationToken);
-    ~Downloader();
 
     void start();
 
@@ -50,8 +49,7 @@ public:
 
     static bool doesStatusCodeIndicateSuccess(int t_statusCode);
     static bool checkInternetConnection();
-    static int  getReplyStatusCode(TRemoteDataReply& t_reply);
-    static int  getReplyStatusCode(QNetworkReply* t_reply);
+    static int  getReplyStatusCode(TRemoteDataReply t_reply);
 
 signals:
     void downloadProgressChanged(TByteCount t_bytesDownloaded, TByteCount t_totalBytes) const;
@@ -81,6 +79,6 @@ private:
 
     QNetworkRequest     m_resourceRequest;
     TDataSource         m_remoteDataSource;
-    TRemoteDataReply    m_remoteDataReply;
     CancellationToken   m_cancellationToken;
+    TRemoteDataReply    m_remoteDataReply;
 };
