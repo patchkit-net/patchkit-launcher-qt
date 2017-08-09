@@ -272,13 +272,18 @@ void Downloader::validateReply(TRemoteDataReply& t_reply) const
     }
 }
 
-int Downloader::getReplyStatusCode(TRemoteDataReply& t_reply) const
+int Downloader::getReplyStatusCode(TRemoteDataReply& t_reply)
 {
     if (t_reply.isNull())
     {
         return -1;
     }
 
+    return getReplyStatusCode(t_reply.data());
+}
+
+int Downloader::getReplyStatusCode(QNetworkReply* t_reply)
+{
     QVariant statusCode = t_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
 
     if (!statusCode.isValid())

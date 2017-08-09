@@ -89,7 +89,12 @@ void RemotePatcherData::download(QIODevice& t_dataTarget, const Data& t_data, in
 
     if (summary.isValid())
     {
-        ChunkedDownloader downloader(m_networkAccessManager, summary, HashingStrategy::xxHash, t_cancellationToken);
+        ChunkedDownloader downloader(
+                    m_networkAccessManager,
+                    summary,
+                    HashingStrategy::xxHash,
+                    t_cancellationToken,
+                    m_api);
 
         connect(&downloader, &ChunkedDownloader::downloadError, this, &RemotePatcherData::downloadError);
         connect(&downloader, &ChunkedDownloader::downloadProgress, this, &RemotePatcherData::downloadProgressChanged);

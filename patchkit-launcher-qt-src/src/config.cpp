@@ -36,6 +36,9 @@ const QStringList Config::cacheApiUrls = (QStringList() << "http://api-cache-1.p
     << "http://api-cache-2.patchkit.net"
     << "http://api-cache-3.patchkit.net");
 
+const QString Config::geolocationApiUrl = "https://ip2loc.patchkit.net/v1/country";
+const int Config::geolocationTimeout = 10000;
+
 const QString Config::pingTarget = "8.8.8.8";
 
 const char Config::inlineData[CONFIG_INLINE_DATA_SIZE] = CONFIG_INLINE_DATA_PLACEHOLDER;

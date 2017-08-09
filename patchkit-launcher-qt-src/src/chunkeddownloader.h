@@ -9,10 +9,9 @@
 #include <QVector>
 #include <QStack>
 
+#include "iapi.h"
 #include "downloader.h"
-
 #include "hashingstrategy.h"
-
 #include "chunkeddownloadstrategy.h"
 
 class ContentSummary;
@@ -26,7 +25,8 @@ public:
             Downloader::TDataSource t_dataSource,
             const ContentSummary& t_contentSummary,
             HashFunc t_hashingStrategy,
-            CancellationToken t_cancellationToken
+            CancellationToken t_cancellationToken,
+            const IApi& t_api
             );
 
     QByteArray downloadFile(const QStringList& t_contentUrls);
@@ -48,6 +48,8 @@ private:
     CancellationToken       m_cancellationToken;
     Downloader::TDataSource m_dataSource;
     ChunkedDownloadStrategy m_downloadStrategy;
+
+    const IApi&             m_api;
 
     int   getChunkSize() const;
 

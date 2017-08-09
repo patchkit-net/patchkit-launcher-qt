@@ -151,6 +151,67 @@ QStringList Api::downloadContentUrls(const QString& t_resourceUrl)
     return result;
 }
 
+bool Api::geolocate()
+{
+    QUrl url(Config::geolocationApiUrl);
+
+    QNetworkRequest request(url);
+
+    auto reply = m_dataSource->get(request);
+
+    QEventLoop waitLoop;
+
+    connect(reply, &QNetworkReply::finished, &waitLoop, &QEventLoop::quit);
+    QTimer::singleShot(Config::geolocationTimeout, &waitLoop, &QEventLoop::quit);
+
+    waitLoop.exec();
+
+    auto data = reply->readAll();
+
+    int replyStatusCode = Downloader::getReplyStatusCode(reply);
+
+    if (!Downloader::doesStatusCodeIndicateSuccess(replyStatusCode))
+    {
+        return false;
+    }
+
+    if (data == QByteArray())
+    {
+        return false;
+    }
+
+    auto jsonDocument = QJsonDocument::fromJson(data);
+
+    if (!jsonDocument.isObject())
+    {
+        return false;
+    }
+
+    auto root = jsonDocument.object();
+
+    if (!root.contains("country"))
+    {
+        return false;
+    }
+
+    auto countryValue = root.value("country");
+
+    if (!countryValue.isString())
+    {
+        return false;
+    }
+
+    auto stringValue = countryValue.toString();
+    m_countryCode = stringValue;
+
+    return true;
+}
+
+const QString& Api::getCountryCode() const
+{
+    return m_countryCode;
+}
+
 void Api::downloadErrorRelay(DownloadError t_error)
 {
     if (t_error == DownloadError::ContentUnavailable)
@@ -172,6 +233,10 @@ QByteArray Api::downloadInternal(const QString& t_resourceUrl)
     m_didLastDownloadSucceed = true;
 
     StringConcatUrlProvider urlProvider(totalUrlBases, t_resourceUrl);
+    if (m_countryCode != QString())
+    {
+        urlProvider.setCountryCode(m_countryCode);
+    }
 
     DownloaderOperator op(m_dataSource, urlProvider, m_cancellationToken);
 

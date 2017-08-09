@@ -20,13 +20,15 @@ ChunkedDownloader::ChunkedDownloader(
         Downloader::TDataSource t_dataSource,
         const ContentSummary& t_contentSummary,
         HashFunc t_hashingStrategy,
-        CancellationToken t_cancellationToken
+        CancellationToken t_cancellationToken,
+        const IApi& t_api
         )
     : m_hashingStrategy(t_hashingStrategy)
     , m_contentSummary(t_contentSummary)
     , m_cancellationToken(t_cancellationToken)
     , m_dataSource(t_dataSource)
     , m_downloadStrategy(10000, 30000, *this)
+    , m_api(t_api)
 {
 }
 
@@ -38,6 +40,11 @@ QByteArray ChunkedDownloader::downloadFile(const QStringList& t_contentUrls)
     }
 
     StringUrlProvider urlProvider(t_contentUrls);
+
+    if (m_api.getCountryCode() != QString())
+    {
+        urlProvider.setCountryCode(m_api.getCountryCode());
+    }
 
     DownloaderOperator op(m_dataSource, urlProvider, m_cancellationToken);
 

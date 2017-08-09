@@ -168,6 +168,16 @@ void LauncherWorker::runWithData(Data& t_data)
 
         qInfo("Starting launcher.");
 
+        qInfo("Trying to obtain location information...");
+        if (m_api.geolocate())
+        {
+            qInfo() << "Operation successful, country code resolved to: " << m_api.getCountryCode();
+        }
+        else
+        {
+            qWarning("Couldn't obtain the country code.");
+        }
+
         setupPatcherSecret(t_data);
 
         if (!m_shouldUpdate)

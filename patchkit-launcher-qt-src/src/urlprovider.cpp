@@ -15,23 +15,26 @@ int StringUrlProvider::getVariantCount() const
 
 QString StringUrlProvider::getVariant(int index) const
 {
-    return m_variants.at(index);
+    auto var = m_variants.at(index);
+
+    if (m_countryCode != QString())
+    {
+        var += "?country=" + m_countryCode;
+    }
+
+    return var;
+}
+
+void StringUrlProvider::setCountryCode(const QString& t_countryCode)
+{
+    m_countryCode = t_countryCode;
 }
 
 StringConcatUrlProvider::StringConcatUrlProvider(const QStringList& hosts, const QString& path)
+    : StringUrlProvider(QStringList())
 {
     for (QString host : hosts)
     {
         m_variants.push_back(host + "/" + path);
     }
-}
-
-int StringConcatUrlProvider::getVariantCount() const
-{
-    return (int) m_variants.size();
-}
-
-QString StringConcatUrlProvider::getVariant(int index) const
-{
-    return m_variants.at(index);
 }

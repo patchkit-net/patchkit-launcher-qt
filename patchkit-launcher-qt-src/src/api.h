@@ -22,11 +22,15 @@ class Api : public QObject, public IApi
 public:
     explicit Api(Downloader::TDataSource t_dataSource, CancellationToken t_cancellationToken, QObject* parent = nullptr);
 
-    ContentSummary  downloadContentSummary(const QString& t_resourceUrl) override;
-    QString         downloadPatcherSecret(const QString& t_resourceUrl) override;
-    QString         downloadDefaultPatcherSecret() override;
-    int             downloadPatcherVersion(const QString& t_resourceUrl) override;
-    QStringList     downloadContentUrls(const QString& t_resourceUrl) override;
+    ContentSummary  downloadContentSummary(const QString& t_resourceUrl);
+    QString         downloadPatcherSecret(const QString& t_resourceUrl);
+    QString         downloadDefaultPatcherSecret();
+    int             downloadPatcherVersion(const QString& t_resourceUrl);
+    QStringList     downloadContentUrls(const QString& t_resourceUrl);
+
+    bool            geolocate();
+
+    const QString&  getCountryCode() const override;
 
 signals:
     void downloadError(DownloadError t_error);
@@ -44,4 +48,6 @@ private:
     Downloader::TDataSource m_dataSource;
 
     bool m_didLastDownloadSucceed;
+
+    QString m_countryCode;
 };
