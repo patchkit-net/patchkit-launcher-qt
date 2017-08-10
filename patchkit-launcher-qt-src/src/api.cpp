@@ -63,7 +63,64 @@ QString Api::downloadPatcherSecret(const QString& t_resourceUrl)
 
 QString Api::downloadDefaultPatcherSecret()
 {
-    return "stub";
+    QString resourceUrl = "1/system/patchers";
+
+    auto data = downloadInternal(resourceUrl);
+
+    auto jsonDocument = QJsonDocument::fromJson(data);
+
+    if (!jsonDocument.isArray())
+    {
+        throw std::runtime_error("Couldn't read default patchers from JSON data.");
+    }
+
+    auto jsonArray = jsonDocument.array();
+
+    if (jsonArray.size() == 0)
+    {
+        throw std::runtime_error("Empty patcher list.");
+    }
+
+    std::vector<std::pair<QString, QString>> availableDefaultPatchers;
+
+    for (int i = 0; i < jsonArray.size(); i++)
+    {
+        if (!jsonArray[i].isObject())
+        {
+            throw std::runtime_error("Unexpected value in the array.");
+        }
+
+        auto object = jsonArray[i].toObject();
+
+        if (!(object.contains("platform") && object.contains("secret")))
+        {
+            throw std::runtime_error("Unexpected values in array object.");
+        }
+
+        if (!object["platform"].isString())
+        {
+            throw std::runtime_error("Platform value is not string.");
+        }
+
+        if (!object["secret"].isString())
+        {
+            throw std::runtime_error("Secret value is not string.");
+        }
+
+        auto defaultPatcher = std::make_pair(object["platform"].toString(), object["secret"].toString());
+        availableDefaultPatchers.push_back(defaultPatcher);
+    }
+
+    for (auto defaultPatcher : availableDefaultPatchers)
+    {
+        if (defaultPatcher.first == Globals::toString(Globals::currentPlatform()))
+        {
+            return defaultPatcher.second;
+        }
+    }
+
+    throw std::runtime_error("Couldn't resolve a default patcher for current platform.");
+    return "";
 }
 
 int Api::downloadPatcherVersion(const QString& t_resourceUrl)
@@ -149,6 +206,18 @@ QStringList Api::downloadContentUrls(const QString& t_resourceUrl)
     }
 
     return result;
+}
+
+QStringList Api::downloadContentUrls(const QString& t_patcherSecret, const QString& t_version)
+{
+    QString resourceUrl = QString("1/apps/%1/versions/%2/content_urls").arg(t_patcherSecret, t_version);
+
+    return downloadContentUrls(resourceUrl);
+}
+
+QStringList Api::downloadContentUrls(const QString& t_patcherSecret, int t_version)
+{
+    return downloadContentUrls(t_patcherSecret, QString::number(t_version));
 }
 
 bool Api::geolocate()

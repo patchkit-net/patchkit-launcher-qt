@@ -26,7 +26,10 @@ public:
     QString         downloadPatcherSecret(const QString& t_resourceUrl);
     QString         downloadDefaultPatcherSecret();
     int             downloadPatcherVersion(const QString& t_resourceUrl);
+
     QStringList     downloadContentUrls(const QString& t_resourceUrl);
+    QStringList     downloadContentUrls(const QString& t_patcherSecret, const QString& t_version);
+    QStringList     downloadContentUrls(const QString& t_patcherSecret, int version);
 
     bool            geolocate();
 

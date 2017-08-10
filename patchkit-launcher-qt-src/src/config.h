@@ -17,6 +17,24 @@
 #define CONFIG_INLINE_DATA_SIZE 1024
 #endif
 
+namespace Globals
+{
+    enum class Platform
+    {
+        windows_x86,
+        windows_x86_64,
+        mac_x86,
+        mac_x86_64,
+        linux_x86,
+        linux_x86_64
+    };
+
+    QString toString(Platform platform);
+
+    Platform currentPlatform();
+    const QString& currentPlatformString();
+}
+
 class Config
 {
 public:

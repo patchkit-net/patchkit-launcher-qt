@@ -48,3 +48,56 @@ const QString Config::pingCountArg = "-n";
 #else
 const QString Config::pingCountArg = "-c";
 #endif
+
+QString Globals::toString(Globals::Platform platform)
+{
+    switch (platform)
+    {
+    case Platform::windows_x86:
+        return "windows_x86";
+    case Platform::windows_x86_64:
+        return "windows_x86_64";
+    case Platform::mac_x86:
+        return "mac_x86";
+    case Platform::mac_x86_64:
+        return "mac_x86_64";
+    case Platform::linux_x86:
+        return "linux_x86";
+    case Platform::linux_x86_64:
+        return "linux_x86_64";
+    default:
+        return "";
+    }
+}
+
+Globals::Platform Globals::currentPlatform()
+{
+    static Platform currentPlatformValue;
+#if defined(Q_OS_OSX)
+    #if defined(Q_PROCESSOR_X86_64)
+        currentPlatformValue = Platform::mac_x86_64;
+    #else
+        currentPlatformValue = Platform::mac_x86;
+    #endif
+#elif defined (Q_OS_LINUX)
+    #if defined(Q_PROCESSOR_X86_64)
+        currentPlatformValue = Platform::linux_x86_64;
+    #else
+        currentPlatformValue = Platform::linux_x86;
+    #endif
+#else
+    #if defined(Q_PROCESSOR_X86_64)
+        currentPlatformValue = Platform::windows_x86_64;
+    #else
+        currentPlatformValue = Platform::windows_x86;
+    #endif
+#endif
+
+    return currentPlatformValue;
+}
+
+const QString& Globals::currentPlatformString()
+{
+    static QString currentPlatformString = Globals::toString(currentPlatform());
+    return currentPlatformString;
+}
