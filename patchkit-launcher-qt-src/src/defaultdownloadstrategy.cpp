@@ -103,12 +103,20 @@ void DefaultDownloadStrategy::onDownloaderStarted(Downloader* t_downloader)
         return;
     }
 
-    if (!t_downloader->isRunning())
+    if (!(t_downloader->isRunning() || t_downloader->isFinished()))
     {
         qWarning("The downloader is supposed to have started, but it's status shows otherwise.");
     }
 
-    acceptActiveDownloader(t_downloader);
+    if (t_downloader->isFinished())
+    {
+        qInfo("The downloader is finished, relaying.");
+        onDownloaderFinished(t_downloader);
+    }
+    else
+    {
+        acceptActiveDownloader(t_downloader);
+    }
 
     qInfo("A downloader has started downloading.");
     for (Downloader* d : m_startingDownloaders)
