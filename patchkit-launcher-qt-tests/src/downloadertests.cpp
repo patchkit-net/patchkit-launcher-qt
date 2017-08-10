@@ -27,21 +27,21 @@ SCENARIO("Downloader life.")
 
     REQUIRE(d.readData().toStdString() == QByteArray().toStdString());
 
-    REQUIRE_FALSE(d.wasStarted());
-    REQUIRE_FALSE(d.isRunning());
-    REQUIRE_FALSE(d.isFinished());
+    REQUIRE(d.wasStarted()  == false);
+    REQUIRE(d.isRunning()   == false);
+    REQUIRE(d.isFinished()  == false);
 
     d.start();
 
-    REQUIRE_FALSE(!d.wasStarted());
-    REQUIRE_FALSE(d.isRunning());
-    REQUIRE_FALSE(d.isFinished());
+    REQUIRE(d.wasStarted()  == true);
+    REQUIRE(d.isRunning()   == false);
+    REQUIRE(d.isFinished()  == false);
 
     d.waitUntilFinished();
 
-    REQUIRE_FALSE(!d.wasStarted());
-    REQUIRE_FALSE(d.isRunning());
-    REQUIRE_FALSE(!d.isFinished());
+    REQUIRE(d.wasStarted()  == true);
+    REQUIRE(d.isRunning()   == false);
+    REQUIRE(d.isFinished()  == true);
 
     QByteArray data = d.readData();
 

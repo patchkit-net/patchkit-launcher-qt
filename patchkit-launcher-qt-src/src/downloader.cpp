@@ -38,9 +38,8 @@ void Downloader::start()
             static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
             this, &Downloader::errorRelay);
 
-    connect(&m_cancellationToken, &CancellationToken::cancelled, m_remoteDataReply, &QNetworkReply::abort);
-
     connect(m_remoteDataReply, &QNetworkReply::downloadProgress, this, &Downloader::downloadProgressChanged);
+    connect(&m_cancellationToken, &CancellationToken::cancelled, m_remoteDataReply, &QNetworkReply::abort);
 }
 
 int Downloader::getStatusCode()
@@ -97,12 +96,12 @@ bool Downloader::wasStarted() const
 
 bool Downloader::isFinished() const
 {
-    return m_remoteDataReply != nullptr && m_remoteDataReply->isFinished();
+    return wasStarted() && m_remoteDataReply->isFinished();
 }
 
 bool Downloader::isRunning() const
 {
-    return (m_remoteDataReply != nullptr) && m_remoteDataReply->isRunning(); // && m_isActive;
+    return wasStarted() && m_remoteDataReply->isRunning() && m_isActive;
 }
 
 QString Downloader::debugName() const

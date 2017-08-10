@@ -124,9 +124,7 @@ QStringList RemotePatcherData::getContentUrls(const QString& t_patcherSecret, in
             << t_version
             << "/content_urls";
 
-    QString resourceUrl = QString("1/apps/%1/versions/%2/content_urls").arg(t_patcherSecret, QString::number(t_version));
-
-    return m_api.downloadContentUrls(resourceUrl);
+    return m_api.downloadContentUrls(t_patcherSecret, t_version);
 }
 
 bool RemotePatcherData::saveData(QByteArray& t_data, QIODevice& t_dataTarget)
