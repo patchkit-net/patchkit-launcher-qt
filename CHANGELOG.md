@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+
+## [v1.0.1-rc1] - 2017-08-11
 ### Added
 * BUILDING.md, CODE_STYLE.md and CHANGELOG.md
 * Feature #536
