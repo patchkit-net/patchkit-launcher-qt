@@ -86,13 +86,16 @@ QByteArray Data::encodedApplicationSecret() const
     return m_encodedApplicationSecret;
 }
 
-#ifdef Q_OS_WIN
+ #ifdef Q_OS_WIN
 
 Data Data::loadFromResources(const QString& t_applicationFilePath, int t_resourceId, int t_resourceTypeId)
 {
-    qInfo("Loading launcher data from resource of id %1 and type id %2 from file %3", .arg(QString::number(t_resourceId),
-        QString::number(t_resourceTypeId),
-        t_applicationFilePath));
+    qInfo() << "Loading launcher data from resource of id "
+            << t_resourceId
+            << " and type "
+            << t_resourceTypeId
+            << " from file "
+            << t_applicationFilePath;
 
     std::shared_ptr<QByteArray> resourceData = ExecutableResources::extract(t_applicationFilePath, t_resourceId, t_resourceTypeId);
 
