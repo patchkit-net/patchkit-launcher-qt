@@ -67,6 +67,25 @@ Data Data::loadFromFile(const QString& t_filePath)
     return data;
 }
 
+QString Data::patcherSecret() const
+{
+    if (overwritePatcherSecret.isEmpty())
+    {
+        return m_patcherSecret;
+    }
+    return overwritePatcherSecret;
+}
+
+QString Data::applicationSecret() const
+{
+    return m_applicationSecret;
+}
+
+QByteArray Data::encodedApplicationSecret() const
+{
+    return m_encodedApplicationSecret;
+}
+
 #ifdef Q_OS_WIN
 
 Data Data::loadFromResources(const QString& t_applicationFilePath, int t_resourceId, int t_resourceTypeId)

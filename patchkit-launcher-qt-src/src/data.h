@@ -23,24 +23,11 @@ struct Data
 
     QString overwritePatcherSecret;
 
-    virtual QString patcherSecret() const
-    {
-        if (overwritePatcherSecret.isEmpty())
-        {
-            return m_patcherSecret;
-        }
-        return overwritePatcherSecret;
-    }
+    virtual QString patcherSecret() const;
 
-    virtual QString applicationSecret() const
-    {
-        return m_applicationSecret;
-    }
+    virtual QString applicationSecret() const;
 
-    virtual QByteArray encodedApplicationSecret() const
-    {
-        return m_encodedApplicationSecret;
-    }
+    virtual QByteArray encodedApplicationSecret() const;
 
 private:
     static Data loadFromDataStream(QDataStream& t_dataStream);

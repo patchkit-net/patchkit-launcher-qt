@@ -47,7 +47,8 @@ QString RemotePatcherData::getPatcherSecret(const Data& t_data, CancellationToke
     }
     catch(ContentUnavailableException& exception)
     {
-        qWarning() << exception.what();
+        qWarning() << "Exception when downloading patcher secret: " << exception.what();
+        qInfo("Launcher will use a default patcher.");
         data = m_api.downloadDefaultPatcherSecret();
     }
     catch(...)
