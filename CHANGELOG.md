@@ -6,7 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## [v1.0.1-rc1] - 2017-08-11
+## [v1.0.2-rc2] - 2017-08-21
+### Fixed
+* OSX compilation
+
+## [v1.0.2-rc1] - 2017-08-11
 ### Added
 * BUILDING.md, CODE_STYLE.md and CHANGELOG.md
 * Feature #536
