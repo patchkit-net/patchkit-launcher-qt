@@ -121,9 +121,9 @@ void LauncherWorker::setDownloadProgress(const long long& t_bytesDownloaded, con
     emit progressChanged(qCeil((qreal(t_bytesDownloaded) / t_totalBytes) * 100.0));
 }
 
-void LauncherWorker::downloadErrorRelay(DownloadError /*t_error*/)
+void LauncherWorker::downloadErrorRelay(DownloadError t_error)
 {
-    // TODO: implement
+    emit downloadError(t_error);
 }
 
 #ifdef Q_OS_WIN
