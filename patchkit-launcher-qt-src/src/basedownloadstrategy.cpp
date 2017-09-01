@@ -13,27 +13,12 @@ void BaseDownloadStrategy::start(DownloaderOperator* t_operator)
 {
     m_operator = t_operator;
 
-    startInternal();
-}
-
-void BaseDownloadStrategy::finish()
-{
-    finishInternal();
+    execute();
 }
 
 QByteArray BaseDownloadStrategy::data()
 {
     return m_data;
-}
-
-void BaseDownloadStrategy::proceed()
-{
-    proceedInternal();
-}
-
-void BaseDownloadStrategy::stop()
-{
-    stopInternal();
 }
 
 void BaseDownloadStrategy::downloadProgressRelay(const long long& t_bytesDownloaded, const long long& t_totalBytes)

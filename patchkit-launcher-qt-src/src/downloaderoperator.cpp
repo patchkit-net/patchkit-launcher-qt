@@ -34,24 +34,12 @@ QByteArray DownloaderOperator::download(BaseDownloadStrategy* t_downloadStrategy
         return download(&baseDownloadStrategy);
     }
 
-    t_downloadStrategy->start(this);
-
+    connect(&m_cancellationToken, &CancellationToken::cancelled, &t_downloadStrategy, &BaseDownloadStrategy::stop);
     connect(t_downloadStrategy, &BaseDownloadStrategy::downloadProgress, this, &DownloaderOperator::downloadProgress);
 
-    QEventLoop loop;
-
-    connect(t_downloadStrategy, &BaseDownloadStrategy::done, &loop, &QEventLoop::quit);
-    connect(&m_cancellationToken, &CancellationToken::cancelled, &loop, &QEventLoop::quit);
-
-    loop.exec();
+    t_downloadStrategy->start(this);
 
     m_cancellationToken.throwIfCancelled();
-
-    t_downloadStrategy->stop();
-
-    disconnect(t_downloadStrategy, &BaseDownloadStrategy::downloadProgress, this, &DownloaderOperator::downloadProgress);
-    disconnect(t_downloadStrategy, &BaseDownloadStrategy::done, &loop, &QEventLoop::quit);
-    disconnect(&m_cancellationToken, &CancellationToken::cancelled, &loop, &QEventLoop::quit);
 
     return t_downloadStrategy->data();
 }

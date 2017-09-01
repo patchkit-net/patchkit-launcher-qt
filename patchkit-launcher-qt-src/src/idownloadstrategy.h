@@ -7,7 +7,6 @@
 
 class IDownloadStrategy
 {
-public:
-    virtual void startInternal() = 0;
-    virtual void finishInternal() = 0;
+protected:
+    virtual void execute() = 0;
 };
