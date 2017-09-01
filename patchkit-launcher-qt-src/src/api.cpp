@@ -15,10 +15,14 @@
 
 #include "logger.h"
 
-Api::Api(Downloader::TDataSource t_dataSource, CancellationToken t_cancellationToken, QObject* parent)
+Api::Api(
+        Downloader::TDataSource t_dataSource,
+        CancellationToken t_cancellationToken,
+        LauncherState& t_state,
+        QObject* parent)
     : QObject(parent)
-    , m_strategy(Config::minConnectionTimeoutMsec, Config::maxConnectionTimeoutMsec)
     , m_cancellationToken(t_cancellationToken)
+    , m_state(t_state)
     , m_dataSource(t_dataSource)
 {
 }
@@ -128,11 +132,6 @@ int Api::downloadPatcherVersion(const QString& t_resourceUrl)
     qInfo("Downloading patcher version.");
     QByteArray data;
     data = downloadInternal(t_resourceUrl);
-
-    if (!m_didLastDownloadSucceed)
-    {
-        throw ContentUnavailableException("Couldn't download patcher secret.");
-    }
 
     QJsonDocument doc = QJsonDocument::fromJson(data);
 
@@ -281,19 +280,6 @@ const QString& Api::getCountryCode() const
     return m_countryCode;
 }
 
-void Api::downloadErrorRelay(DownloadError t_error)
-{
-    if (t_error == DownloadError::ContentUnavailable)
-    {
-        m_didLastDownloadSucceed = false;
-        m_strategy.stop();
-    }
-    else
-    {
-        emit downloadError(t_error);
-    }
-}
-
 QByteArray Api::downloadInternal(const QString& t_resourceUrl)
 {
     QStringList totalUrlBases = QStringList(Config::mainApiUrl);
@@ -309,12 +295,14 @@ QByteArray Api::downloadInternal(const QString& t_resourceUrl)
 
     DownloaderOperator op(m_dataSource, urlProvider, m_cancellationToken);
 
-    connect(&m_strategy, &DefaultDownloadStrategy::error, this, &Api::downloadErrorRelay);
-    connect(this, &Api::proceed, &m_strategy, &BaseDownloadStrategy::proceed);
-    connect(this, &Api::stop, &m_strategy, &BaseDownloadStrategy::stop);
+    DefaultDownloadStrategy strategy(
+                op,
+                m_state,
+                Config::minConnectionTimeoutMsec,
+                Config::maxConnectionTimeoutMsec);
 
     QByteArray data;
-    data = op.download(&m_strategy);
+    data = op.download(strategy);
 
     return data;
 }

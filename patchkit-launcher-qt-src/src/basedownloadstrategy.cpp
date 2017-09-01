@@ -9,10 +9,14 @@
 
 #include <QMessageBox>
 
-void BaseDownloadStrategy::start(DownloaderOperator* t_operator)
+BaseDownloadStrategy::BaseDownloadStrategy(DownloaderOperator& t_operator, LauncherState& t_state)
+    : m_operator(t_operator)
+    , m_state(t_state)
 {
-    m_operator = t_operator;
+}
 
+void BaseDownloadStrategy::start()
+{
     execute();
 }
 

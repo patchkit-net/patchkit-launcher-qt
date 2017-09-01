@@ -4,8 +4,12 @@
 
 #include "downloaderoperator.h"
 
-DefaultDownloadStrategy::DefaultDownloadStrategy(int t_minTimeout, int t_maxTimeout)
-    : m_timeoutCounter(0)
+DefaultDownloadStrategy::DefaultDownloadStrategy(
+        DownloaderOperator& t_operator,
+        LauncherState& t_state,
+        int t_minTimeout, int t_maxTimeout)
+    : BaseDownloadStrategy(t_operator, t_state)
+    , m_timeoutCounter(0)
     , m_iterator(0)
     , m_minTimeout(t_minTimeout)
     , m_maxTimeout(t_maxTimeout)
@@ -20,7 +24,7 @@ void DefaultDownloadStrategy::execute()
 
     while (true)
     {
-        auto inactiveDownloaders = m_operator->getInactiveDownloaders();
+        auto inactiveDownloaders = m_operator.getInactiveDownloaders();
 
         Downloader* firstDownloader = inactiveDownloaders.at(0);
 
@@ -52,7 +56,7 @@ void DefaultDownloadStrategy::execute()
         }
         else // encountered an error
         {
-            m_operator->stopAll();
+            m_operator.stopAll();
             emit error(DownloadError::ConnectionIssues);
         }
     }

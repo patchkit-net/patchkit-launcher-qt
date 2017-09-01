@@ -73,10 +73,12 @@ void LauncherWorker::run()
     }
 }
 
-LauncherWorker::LauncherWorker()
-    : m_cancellationTokenSource(new CancellationTokenSource())
-    , m_api(&m_networkAccessManager, CancellationToken(m_cancellationTokenSource))
-    , m_remotePatcher(m_api, &m_networkAccessManager)
+LauncherWorker::LauncherWorker(LauncherState& t_launcherState, QObject* parent)
+    : QThread(parent)
+    , m_cancellationTokenSource(new CancellationTokenSource())
+    , m_launcherState(t_launcherState)
+    , m_api(&m_networkAccessManager, CancellationToken(m_cancellationTokenSource), m_launcherState)
+    , m_remotePatcher(m_launcherState, m_api, &m_networkAccessManager)
     , m_result(NONE)
     , m_shouldUpdate(true)
 {
@@ -84,10 +86,6 @@ LauncherWorker::LauncherWorker()
     m_networkAccessManager.moveToThread(this);
     m_remotePatcher.moveToThread(this);
     m_localPatcher.moveToThread(this);
-
-    connect(&m_remotePatcher, &RemotePatcherData::downloadError, this, &LauncherWorker::downloadErrorRelay);
-    connect(this, &LauncherWorker::workerContinue, &m_remotePatcher, &RemotePatcherData::proceed);
-    connect(this, &LauncherWorker::workerStop, &m_remotePatcher, &RemotePatcherData::stop);
 }
 
 void LauncherWorker::cancel()
@@ -119,11 +117,6 @@ void LauncherWorker::setDownloadProgress(const long long& t_bytesDownloaded, con
 
     emit statusChanged(QString("Downloading %1 / %2 KB").arg(QString::number(kilobytesDownloaded), QString::number(totalKilobytes)));
     emit progressChanged(qCeil((qreal(t_bytesDownloaded) / t_totalBytes) * 100.0));
-}
-
-void LauncherWorker::downloadErrorRelay(DownloadError t_error)
-{
-    emit downloadError(t_error);
 }
 
 #ifdef Q_OS_WIN
@@ -224,7 +217,8 @@ void LauncherWorker::runWithData(Data& t_data)
         }
     }
 
-    startPatcher(t_data);
+    qDebug("Yay stariting the patcher.");
+    // startPatcher(t_data);
 }
 
 void LauncherWorker::setupPatcherSecret(Data& t_data)

@@ -12,21 +12,21 @@
 
 #include <src/logger.h>
 
-MainWindow::MainWindow(std::shared_ptr<LauncherWorker> t_launcherThread, QWidget* t_parent) :
+MainWindow::MainWindow(LauncherWorker& t_launcherWorker, QWidget* t_parent) :
     QMainWindow(t_parent, Qt::FramelessWindowHint),
-    m_launcherWorker(t_launcherThread),
+    m_launcherWorker(t_launcherWorker),
     m_ui(new Ui::MainWindow)
 {
     m_ui->setupUi(this);
 
     // Thread --> UI
-    connect(m_launcherWorker.get(), &LauncherWorker::statusChanged, this, &MainWindow::setStatus);
-    connect(m_launcherWorker.get(), &LauncherWorker::progressChanged, this, &MainWindow::setProgress);
+    connect(&t_launcherWorker, &LauncherWorker::statusChanged, this, &MainWindow::setStatus);
+    connect(&t_launcherWorker, &LauncherWorker::progressChanged, this, &MainWindow::setProgress);
 
-    connect(m_launcherWorker.get(), &LauncherWorker::finished, this, &MainWindow::close);
+    connect(&t_launcherWorker, &LauncherWorker::finished, this, &MainWindow::close);
 
     // Thread <-- UI
-    connect(m_ui->cancelButton, &QPushButton::clicked, m_launcherWorker.get(), &LauncherWorker::cancel);
+    connect(m_ui->cancelButton, &QPushButton::clicked, &t_launcherWorker, &LauncherWorker::cancel);
 }
 
 void MainWindow::setStatus(const QString& t_status) const
@@ -71,7 +71,7 @@ void MainWindow::mousePressEvent(QMouseEvent* t_event)
 void MainWindow::closeEvent(QCloseEvent* t_event)
 {
     qInfo("Close window request.");
-    if (m_launcherWorker->isFinished())
+    if (m_launcherWorker.isFinished())
     {
         qInfo("Allowing the window to be closed.");
         t_event->accept();
@@ -79,7 +79,7 @@ void MainWindow::closeEvent(QCloseEvent* t_event)
     else
     {
         qInfo("Not allowing window to be closed - launcher thread is still running. Cancelling launcher thread.");
-        m_launcherWorker->cancel();
+        m_launcherWorker.cancel();
         t_event->ignore();
     }
 }

@@ -22,7 +22,7 @@ public:
     DownloaderOperator(Downloader::TDataSource t_dataSource, const IUrlProvider& t_urlProvider, CancellationToken t_cancellationToken, QObject* parent = nullptr);
     ~DownloaderOperator();
 
-    QByteArray download(BaseDownloadStrategy* t_downloadStrategy = nullptr);
+    QByteArray download(BaseDownloadStrategy& t_downloadStrategy);
 
     // Returns all downloaders that have been started and have successfully started downloading
     std::vector<Downloader*> getActiveDownloaders() const;

@@ -10,8 +10,13 @@
 
 #include "downloader.h"
 
-ChunkedDownloadStrategy::ChunkedDownloadStrategy(int t_minTimeout, int t_maxTimeout, const ChunkedDownloader& t_parent)
-    : DefaultDownloadStrategy(t_minTimeout, t_maxTimeout)
+ChunkedDownloadStrategy::ChunkedDownloadStrategy(
+        DownloaderOperator& t_operator,
+        LauncherState& t_state,
+        int t_minTimeout,
+        int t_maxTimeout,
+        const ChunkedDownloader& t_parent)
+    : DefaultDownloadStrategy(t_operator, t_state, t_minTimeout, t_maxTimeout)
     , m_parent(t_parent)
 {
 }
@@ -77,7 +82,7 @@ void ChunkedDownloadStrategy::downloadProgressRelay(const long long& t_bytesDown
 
 void ChunkedDownloadStrategy::setRanges(int t_from)
 {
-    for (auto downloader : m_operator->getDownloaders())
+    for (auto downloader : m_operator.getDownloaders())
     {
         downloader->setRange(t_from);
     }

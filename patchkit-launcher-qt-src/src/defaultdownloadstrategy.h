@@ -11,7 +11,10 @@ class DefaultDownloadStrategy : public BaseDownloadStrategy
 {
     Q_OBJECT
 public:
-    DefaultDownloadStrategy(int t_minTimeout, int t_maxTimeout);
+    DefaultDownloadStrategy(
+            DownloaderOperator& t_operator,
+            LauncherState& t_state,
+            int t_minTimeout, int t_maxTimeout);
 
     const static int maxStartingDownloadersCount;
 

@@ -7,6 +7,7 @@
 
 #include <QObject>
 
+#include "launcherstate.h"
 #include "idownloadstrategy.h"
 #include "downloader.h"
 
@@ -16,7 +17,10 @@ class BaseDownloadStrategy : public QObject, public IDownloadStrategy
 {
     Q_OBJECT
 public:
-    void start(DownloaderOperator* t_operator);
+    BaseDownloadStrategy(DownloaderOperator& t_operator, LauncherState& t_state);
+
+    void start();
+
     QByteArray data();
 
 public slots:
@@ -27,6 +31,8 @@ signals:
     void error(DownloadError t_error);
     void downloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes);
 
+protected:
     QByteArray m_data;
-    DownloaderOperator* m_operator;
+    DownloaderOperator& m_operator;
+    LauncherState& m_state;
 };

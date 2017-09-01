@@ -26,22 +26,16 @@ DownloaderOperator::~DownloaderOperator()
     }
 }
 
-QByteArray DownloaderOperator::download(BaseDownloadStrategy* t_downloadStrategy)
+QByteArray DownloaderOperator::download(BaseDownloadStrategy& t_downloadStrategy)
 {
-    if (!t_downloadStrategy)
-    {
-        DefaultDownloadStrategy baseDownloadStrategy(Config::minConnectionTimeoutMsec, Config::maxConnectionTimeoutMsec);
-        return download(&baseDownloadStrategy);
-    }
-
     connect(&m_cancellationToken, &CancellationToken::cancelled, &t_downloadStrategy, &BaseDownloadStrategy::stop);
-    connect(t_downloadStrategy, &BaseDownloadStrategy::downloadProgress, this, &DownloaderOperator::downloadProgress);
+    connect(&t_downloadStrategy, &BaseDownloadStrategy::downloadProgress, this, &DownloaderOperator::downloadProgress);
 
-    t_downloadStrategy->start(this);
+    t_downloadStrategy.start();
 
     m_cancellationToken.throwIfCancelled();
 
-    return t_downloadStrategy->data();
+    return t_downloadStrategy.data();
 }
 
 std::vector<Downloader*> DownloaderOperator::getActiveDownloaders() const
