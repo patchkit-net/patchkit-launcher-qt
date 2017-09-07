@@ -19,7 +19,7 @@ class BaseDownloadStrategy : public QObject, public IDownloadStrategy
 public:
     BaseDownloadStrategy(DownloaderOperator& t_operator, LauncherState& t_state);
 
-    void start();
+    void start(CancellationToken t_cancellationToken);
 
     QByteArray data();
 

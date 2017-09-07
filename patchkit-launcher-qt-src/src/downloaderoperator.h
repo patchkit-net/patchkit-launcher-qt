@@ -22,6 +22,11 @@ public:
 
     virtual std::vector<Downloader*> getDownloaders(TDownloaderPredicate t_predicate = nullptr) const = 0;
 
+    virtual void add(Downloader* t_downloader) = 0;
+    virtual void remove(Downloader* t_downloader) = 0;
+
+    void append(const std::vector<Downloader*>& t_downloaders);
+
     std::vector<Downloader*> getFinishedDownloaders() const;
     std::vector<Downloader*> getActiveDownloaders() const;
     std::vector<Downloader*> getStartingDownloaders() const;
@@ -30,19 +35,19 @@ public:
     int poolSize() const;
 };
 
-/**
- * @brief The DownloaderPool class
- */
 class DownloaderPool : public IDownloaderPool
 {
 public:
     DownloaderPool(const DownloaderPool& t_downloaderPool);
     DownloaderPool(Downloader::TDataSource t_dataSource, const IUrlProvider& t_urlProvider, CancellationToken t_cancellationToken);
     DownloaderPool(std::initializer_list<Downloader*> t_downloaders);
+    DownloaderPool(const std::vector<Downloader*>& t_downloaders);
 
     ~DownloaderPool();
 
     virtual std::vector<Downloader*> getDownloaders(TDownloaderPredicate t_predicate = nullptr) const override;
+    virtual void add(Downloader* t_downloader) override;
+    virtual void remove(Downloader* t_downloader) override;
 
 private:
     bool m_isIndependent;
@@ -61,9 +66,13 @@ public:
     DownloaderOperator(const DownloaderPool& t_downloaderPool, QObject* parent = nullptr);
 
     virtual std::vector<Downloader*> getDownloaders(TDownloaderPredicate t_predicate = nullptr) const override;
+    virtual void add(Downloader* t_downloader) override;
+    virtual void remove(Downloader* t_downloader) override;
 
     Downloader* waitForAnyToStart(CancellationToken t_cancellationToken, int t_timeoutMsec = -1);
     Downloader* waitForAnyToFinish(CancellationToken t_cancellationToken, int t_timeoutMsec = -1);
+
+    void startAll();
 
     void stopAllExcept(Downloader* t_downloader);
     void stopAll();

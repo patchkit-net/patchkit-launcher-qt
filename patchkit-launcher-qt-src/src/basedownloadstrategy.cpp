@@ -15,9 +15,9 @@ BaseDownloadStrategy::BaseDownloadStrategy(DownloaderOperator& t_operator, Launc
 {
 }
 
-void BaseDownloadStrategy::start()
+void BaseDownloadStrategy::start(CancellationToken t_cancellationToken)
 {
-    execute();
+    execute(t_cancellationToken);
 }
 
 QByteArray BaseDownloadStrategy::data()

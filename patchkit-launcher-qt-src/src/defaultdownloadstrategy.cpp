@@ -16,48 +16,89 @@ DefaultDownloadStrategy::DefaultDownloadStrategy(
 {
 }
 
-void DefaultDownloadStrategy::execute()
+void DefaultDownloadStrategy::execute(CancellationToken t_cancellationToken)
 {
-    QEventLoop loop;
-    QTimer timer;
-    connect(this, &BaseDownloadStrategy::stop, &loop, &QEventLoop::quit);
+    bool shouldStop = false;
+    uint iterator = 1;
+    Downloader* startedDownloader = nullptr;
+    Downloader* finishedDownloader = nullptr;
 
-    while (true)
+    if (m_operator.poolSize() == 0)
     {
-        auto inactiveDownloaders = m_operator.getInactiveDownloaders();
+        throw std::runtime_error("Downloader pool is empty.");
+    }
 
-        Downloader* firstDownloader = inactiveDownloaders.at(0);
+    auto startingPool = m_operator.getInactiveDownloaders();
 
-        connect(firstDownloader, &Downloader::downloadError, &loop, &QEventLoop::quit);
-        connect(firstDownloader, &Downloader::downloadFinished, &loop, &QEventLoop::quit);
-        connect(firstDownloader, &Downloader::downloadStarted, &loop, &QEventLoop::quit);
+    while (!shouldStop && !t_cancellationToken.isCancelled())
+    {
+        auto mainDownloader = startingPool.at(0);
 
-        timer.setSingleShot(true);
-        timer.start(m_minTimeout);
+        DownloaderOperator runningPool({mainDownloader});
 
-        connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+        runningPool.startAll();
 
-        firstDownloader->start();
+        startedDownloader = runningPool.waitForAnyToStart(t_cancellationToken, m_minTimeout);
 
-        loop.exec();
-
-        if (firstDownloader->isFinished())
+        if (startedDownloader)
         {
-            m_data = firstDownloader->readData();
-            return;
+            finishedDownloader = runningPool.waitForAnyToFinish(t_cancellationToken);
         }
-        else if (firstDownloader->wasStarted())
+        else
+        {
+            for (uint i = iterator; i < startingPool.size() && i < iterator + 2; i++)
+            {
+                runningPool.add(startingPool.at(i));
+            }
+
+            iterator += 2;
+
+            if (iterator >= startingPool.size())
+            {
+                iterator -= startingPool.size();
+            }
+
+            startedDownloader = runningPool.waitForAnyToStart(t_cancellationToken, m_maxTimeout);
+
+            if (startedDownloader)
+            {
+                runningPool.stopAllExcept(startedDownloader);
+                finishedDownloader = runningPool.waitForAnyToFinish(t_cancellationToken);
+
+                if (finishedDownloader)
+                {
+                    qInfo("Finished downloading.");
+                    m_data = finishedDownloader->readData();
+                    return;
+                }
+                else
+                {
+                    qWarning("Something went wrong.");
+                }
+            }
+            else
+            {
+                qWarning("No downloader has started. Querying user for action.");
+                auto response = m_state.awaitResponseTo(DownloadError::ConnectionIssues, t_cancellationToken);
+
+                if (response == LauncherState::Response::Stop)
+                {
+
+                }
+                else if (response == LauncherState::Response::Proceed)
+                {
+
+                }
+            }
+        }
+
+        if (finishedDownloader)
         {
 
         }
-        else if (firstDownloader->isRunning())
+        else
         {
-            // Still processing
-        }
-        else // encountered an error
-        {
-            m_operator.stopAll();
-            emit error(DownloadError::ConnectionIssues);
+
         }
     }
 }

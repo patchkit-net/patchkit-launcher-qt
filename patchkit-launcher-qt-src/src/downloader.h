@@ -30,6 +30,7 @@ public:
     Downloader(const QString& t_resourceUrl, TDataSource t_dataSource, CancellationToken& t_cancellationToken);
 
     void start();
+    void restart();
 
     int  getStatusCode();
 

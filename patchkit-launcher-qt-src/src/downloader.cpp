@@ -42,6 +42,12 @@ void Downloader::start()
     connect(&m_cancellationToken, &CancellationToken::cancelled, m_remoteDataReply, &QNetworkReply::abort);
 }
 
+void Downloader::restart()
+{
+    stop();
+    start();
+}
+
 int Downloader::getStatusCode()
 {
     return getReplyStatusCode(m_remoteDataReply);

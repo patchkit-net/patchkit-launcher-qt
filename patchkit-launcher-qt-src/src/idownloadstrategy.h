@@ -8,5 +8,5 @@
 class IDownloadStrategy
 {
 protected:
-    virtual void execute() = 0;
+    virtual void execute(CancellationToken t_cancellationToken) = 0;
 };

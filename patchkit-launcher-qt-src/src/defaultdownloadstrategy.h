@@ -19,7 +19,7 @@ public:
     const static int maxStartingDownloadersCount;
 
 protected:
-    virtual void execute();
+    virtual void execute(CancellationToken t_cancellationToken);
 
 private:
     int m_timeoutCounter;

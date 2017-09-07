@@ -33,6 +33,16 @@ std::vector<Downloader*> DownloaderOperator::getDownloaders(IDownloaderPool::TDo
     return m_pool.getDownloaders(t_predicate);
 }
 
+void DownloaderOperator::add(Downloader* t_downloader)
+{
+    m_pool.add(t_downloader);
+}
+
+void DownloaderOperator::remove(Downloader* t_downloader)
+{
+    m_pool.remove(t_downloader);
+}
+
 Downloader* DownloaderOperator::waitForAnyToStart(CancellationToken t_cancellationToken, int t_timeoutMsec)
 {
     if (getActiveDownloaders().size() > 0)
@@ -135,6 +145,14 @@ Downloader* DownloaderOperator::waitForAnyToFinish(CancellationToken t_cancellat
     }
 }
 
+void DownloaderOperator::startAll()
+{
+    for (auto downloader : getInactiveDownloaders())
+    {
+        downloader->start();
+    }
+}
+
 void DownloaderOperator::stopAllExcept(Downloader* t_downloader)
 {
     for (auto downloader : getDownloaders())
@@ -195,6 +213,12 @@ DownloaderPool::DownloaderPool(std::initializer_list<Downloader*> t_downloaders)
 
 }
 
+DownloaderPool::DownloaderPool(const std::vector<Downloader*>& t_downloaders)
+    : m_isIndependent(false)
+    , m_pool(t_downloaders)
+{
+}
+
 DownloaderPool::~DownloaderPool()
 {
     if (m_isIndependent)
@@ -203,6 +227,34 @@ DownloaderPool::~DownloaderPool()
         {
             delete d;
         }
+    }
+}
+
+void DownloaderPool::add(Downloader* t_downloader)
+{
+    if (m_isIndependent)
+    {
+        qWarning("Adding a downloader to an independent pool, changes it's ownership.");
+    }
+
+    m_pool.push_back(t_downloader);
+}
+
+void DownloaderPool::remove(Downloader* t_downloader)
+{
+    if (m_isIndependent)
+    {
+        qWarning("Removing a downloader from an independent pool, changes it's ownership.");
+    }
+
+    m_pool.erase(std::remove(m_pool.begin(), m_pool.end(), t_downloader), m_pool.end());
+}
+
+void IDownloaderPool::append(const std::vector<Downloader*>& t_downloaders)
+{
+    for (auto downloader : t_downloaders)
+    {
+        add(downloader);
     }
 }
 
