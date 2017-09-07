@@ -302,7 +302,7 @@ QByteArray Api::downloadInternal(const QString& t_resourceUrl)
                 Config::maxConnectionTimeoutMsec);
 
     QByteArray data;
-    data = op.download(strategy);
+    data = op.download(strategy, m_cancellationToken);
 
     return data;
 }

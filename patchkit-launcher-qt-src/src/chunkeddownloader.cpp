@@ -60,7 +60,7 @@ QByteArray ChunkedDownloader::downloadFile(const QStringList& t_contentUrls)
                 Config::maxConnectionTimeoutMsec,
                 *this);
 
-    QByteArray data = op.download(strategy);
+    QByteArray data = op.download(strategy, m_cancellationToken);
 
     return data;
 }

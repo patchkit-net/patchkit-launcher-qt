@@ -9,36 +9,76 @@
 
 #include "config.h"
 
-DownloaderOperator::DownloaderOperator(Downloader::TDataSource t_dataSource, const IUrlProvider& t_urlProvider, CancellationToken t_cancellationToken, QObject* /*parent*/)
-    : m_cancellationToken(t_cancellationToken)
+DownloaderOperator::DownloaderOperator(Downloader::TDataSource t_dataSource, const IUrlProvider& t_urlProvider, CancellationToken t_cancellationToken, QObject* parent)
+    : QObject(parent)
+    , m_pool(t_dataSource, t_urlProvider, t_cancellationToken)
 {
-    for (int i = 0; i < t_urlProvider.getVariantCount(); i++)
-    {
-        m_downloaders.push_back(new Downloader(t_urlProvider.getVariant(i), t_dataSource, t_cancellationToken));
-    }
 }
 
-DownloaderOperator::~DownloaderOperator()
+DownloaderOperator::DownloaderOperator(std::initializer_list<Downloader*> t_downloaders, QObject* parent)
+    : QObject(parent)
+    , m_pool(t_downloaders)
 {
-    for (Downloader* downloader : m_downloaders)
-    {
-        delete downloader;
-    }
+
 }
 
-QByteArray DownloaderOperator::download(BaseDownloadStrategy& t_downloadStrategy)
+DownloaderOperator::DownloaderOperator(const DownloaderPool& t_downloaderPool, QObject* parent)
+    : QObject(parent)
+    , m_pool(t_downloaderPool)
 {
-    connect(&m_cancellationToken, &CancellationToken::cancelled, &t_downloadStrategy, &BaseDownloadStrategy::stop);
+}
+
+std::vector<Downloader*> DownloaderOperator::getDownloaders(IDownloaderPool::TDownloaderPredicate t_predicate) const
+{
+    return m_pool.getDownloaders(t_predicate);
+}
+
+QByteArray DownloaderOperator::download(BaseDownloadStrategy& t_downloadStrategy, CancellationToken t_cancellationToken)
+{
+    connect(&t_cancellationToken, &CancellationToken::cancelled, &t_downloadStrategy, &BaseDownloadStrategy::stop);
     connect(&t_downloadStrategy, &BaseDownloadStrategy::downloadProgress, this, &DownloaderOperator::downloadProgress);
 
     t_downloadStrategy.start();
 
-    m_cancellationToken.throwIfCancelled();
+    t_cancellationToken.throwIfCancelled();
 
     return t_downloadStrategy.data();
 }
 
-std::vector<Downloader*> DownloaderOperator::getActiveDownloaders() const
+DownloaderPool::DownloaderPool(const DownloaderPool& t_downloaderPool)
+    : m_isIndependent(false)
+    , m_pool(t_downloaderPool.m_pool)
+{
+}
+
+DownloaderPool::DownloaderPool(Downloader::TDataSource t_dataSource, const IUrlProvider& t_urlProvider, CancellationToken t_cancellationToken)
+    : m_isIndependent(true)
+{
+    for (int i = 0; i < t_urlProvider.getVariantCount(); i++)
+    {
+        m_pool.push_back(new Downloader(t_urlProvider.getVariant(i), t_dataSource, t_cancellationToken));
+    }
+}
+
+DownloaderPool::DownloaderPool(std::initializer_list<Downloader*> t_downloaders)
+    : m_isIndependent(false)
+    , m_pool(t_downloaders)
+{
+
+}
+
+DownloaderPool::~DownloaderPool()
+{
+    if (m_isIndependent)
+    {
+        for (Downloader* d : m_pool)
+        {
+            delete d;
+        }
+    }
+}
+
+std::vector<Downloader*> IDownloaderPool::getActiveDownloaders() const
 {
     return getDownloaders([](Downloader* downloader)
     {
@@ -46,7 +86,7 @@ std::vector<Downloader*> DownloaderOperator::getActiveDownloaders() const
     });
 }
 
-std::vector<Downloader*> DownloaderOperator::getStartingDownloaders() const
+std::vector<Downloader*> IDownloaderPool::getStartingDownloaders() const
 {
     return getDownloaders([](Downloader* downloader)
     {
@@ -54,7 +94,7 @@ std::vector<Downloader*> DownloaderOperator::getStartingDownloaders() const
     });
 }
 
-std::vector<Downloader*> DownloaderOperator::getInactiveDownloaders() const
+std::vector<Downloader*> IDownloaderPool::getInactiveDownloaders() const
 {
     return getDownloaders([](Downloader* downloader)
     {
@@ -62,11 +102,11 @@ std::vector<Downloader*> DownloaderOperator::getInactiveDownloaders() const
     });
 }
 
-std::vector<Downloader*> DownloaderOperator::getDownloaders(bool (*t_predicate)(Downloader*)) const
+std::vector<Downloader*> DownloaderPool::getDownloaders(bool (*t_predicate)(Downloader*)) const
 {
     std::vector<Downloader*> downloaders;
 
-    for (Downloader* d : m_downloaders)
+    for (Downloader* d : m_pool)
     {
         if (!t_predicate || t_predicate(d))
         {
@@ -79,7 +119,7 @@ std::vector<Downloader*> DownloaderOperator::getDownloaders(bool (*t_predicate)(
 
 void DownloaderOperator::stopAll()
 {
-    for (Downloader* downloader : m_downloaders)
+    for (Downloader* downloader : getDownloaders())
     {
         downloader->stop();
     }
