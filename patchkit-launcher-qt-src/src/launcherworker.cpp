@@ -95,7 +95,7 @@ void LauncherWorker::resolveData()
         }
         catch(std::exception& e)
         {
-            qWarning(e.what());
+            qWarning() << e.what();
         }
     }
 

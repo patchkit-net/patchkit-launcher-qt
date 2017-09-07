@@ -36,17 +36,21 @@ void DefaultDownloadStrategy::execute(CancellationToken t_cancellationToken)
 
         DownloaderOperator runningPool({mainDownloader});
 
+        qDebug() << "Starting the first downloader.";
         runningPool.startAll();
 
+        qDebug("Waiting for the first downloader to start.");
         startedDownloader = runningPool.waitForAnyToStart(t_cancellationToken, m_minTimeout);
 
         if (startedDownloader)
         {
+            qDebug() << "The first downloader has started downloading, waiting for it to finish.";
             finishedDownloader = runningPool.waitForAnyToFinish(t_cancellationToken);
         }
         else
         {
-            for (uint i = iterator; i < startingPool.size() && i < iterator + 2; i++)
+            qDebug() << "The first downloader didn't start, trying up to 2 other nodes.";
+            for (uint i = iterator; i < startingPool.size() && i < (iterator + maxStartingDownloadersCount - 1); i++)
             {
                 runningPool.add(startingPool.at(i));
             }
@@ -58,10 +62,12 @@ void DefaultDownloadStrategy::execute(CancellationToken t_cancellationToken)
                 iterator -= startingPool.size();
             }
 
+            runningPool.startAll();
             startedDownloader = runningPool.waitForAnyToStart(t_cancellationToken, m_maxTimeout);
 
             if (startedDownloader)
             {
+                qDebug() << "A downloader has started, stopping all others and waiting for this one to finish.";
                 runningPool.stopAllExcept(startedDownloader);
                 finishedDownloader = runningPool.waitForAnyToFinish(t_cancellationToken);
 
@@ -74,31 +80,26 @@ void DefaultDownloadStrategy::execute(CancellationToken t_cancellationToken)
                 else
                 {
                     qWarning("Something went wrong.");
+                    m_state.awaitResponseTo(DownloadError::ConnectionIssues, t_cancellationToken);
                 }
             }
             else
             {
                 qWarning("No downloader has started. Querying user for action.");
-                auto response = m_state.awaitResponseTo(DownloadError::ConnectionIssues, t_cancellationToken);
-
-                if (response == LauncherState::Response::Stop)
-                {
-
-                }
-                else if (response == LauncherState::Response::Proceed)
-                {
-
-                }
+                m_state.awaitResponseTo(DownloadError::ConnectionIssues, t_cancellationToken);
             }
         }
 
         if (finishedDownloader)
         {
-
+            qInfo("Finished downloading.");
+            m_data = finishedDownloader->readData();
+            return;
         }
         else
         {
-
+            qWarning("Something went wrong.");
+            m_state.awaitResponseTo(DownloadError::ConnectionIssues, t_cancellationToken);
         }
     }
 }

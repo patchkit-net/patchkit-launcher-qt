@@ -15,12 +15,12 @@ Launcher::Launcher(const QApplication& t_application)
     , m_mainWindow(m_worker, nullptr)
 {
     connect(&t_application, &QApplication::aboutToQuit, this, &Launcher::cleanup);
+    connect(&m_state, &LauncherState::error, this, &Launcher::onError);
 }
 
 void Launcher::start()
 {
     qInfo("Starting launcher.");
-
     connect(&m_worker, &QThread::finished, this, &Launcher::finish);
 
     qInfo("Showing main window.");
