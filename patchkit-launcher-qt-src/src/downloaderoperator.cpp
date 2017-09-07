@@ -154,12 +154,19 @@ void DownloaderOperator::stopAll()
     }
 }
 
+void DownloaderOperator::setRange(int t_bytesStart, int t_bytesEnd)
+{
+    for (auto downloader : getDownloaders())
+    {
+        downloader->setRange(t_bytesStart, t_bytesEnd);
+    }
+}
+
 QByteArray DownloaderOperator::download(BaseDownloadStrategy& t_downloadStrategy, CancellationToken t_cancellationToken)
 {
-    connect(&t_cancellationToken, &CancellationToken::cancelled, &t_downloadStrategy, &BaseDownloadStrategy::stop);
     connect(&t_downloadStrategy, &BaseDownloadStrategy::downloadProgress, this, &DownloaderOperator::downloadProgress);
 
-    t_downloadStrategy.start();
+    t_downloadStrategy.start(t_cancellationToken);
 
     t_cancellationToken.throwIfCancelled();
 
@@ -229,6 +236,11 @@ std::vector<Downloader*> IDownloaderPool::getInactiveDownloaders() const
     {
         return !downloader->wasStarted();
     });
+}
+
+int IDownloaderPool::poolSize() const
+{
+    return getDownloaders().size();
 }
 
 std::vector<Downloader*> DownloaderPool::getDownloaders(bool (*t_predicate)(Downloader*)) const

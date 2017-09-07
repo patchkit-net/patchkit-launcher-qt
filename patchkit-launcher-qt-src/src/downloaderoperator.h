@@ -26,6 +26,8 @@ public:
     std::vector<Downloader*> getActiveDownloaders() const;
     std::vector<Downloader*> getStartingDownloaders() const;
     std::vector<Downloader*> getInactiveDownloaders() const;
+
+    int poolSize() const;
 };
 
 /**
@@ -65,6 +67,8 @@ public:
 
     void stopAllExcept(Downloader* t_downloader);
     void stopAll();
+
+    void setRange(int t_bytesStart, int t_bytesEnd = -1);
 
     QByteArray download(BaseDownloadStrategy& t_downloadStrategy, CancellationToken t_cancellationToken);
 
