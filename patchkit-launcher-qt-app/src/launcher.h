@@ -29,5 +29,5 @@ private slots:
 private:
     LauncherState m_state;
     LauncherWorker m_worker;
-    std::unique_ptr<MainWindow> m_mainWindow;
+    MainWindow m_mainWindow;
 };

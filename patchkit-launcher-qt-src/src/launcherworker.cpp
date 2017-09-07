@@ -22,31 +22,9 @@ void LauncherWorker::run()
 {
     try
     {
-        if (Data::canLoadFromConfig())
-        {
-            qInfo("Detected inlined data.");
-            runWithInlineData();
+        resolveData();
 
-            m_result = SUCCESS;
-            qInfo("Launcher has succeeded.");
-            return;
-        }
-
-#ifdef Q_OS_WIN
-        try
-        {
-            runWithDataFromResource();
-            return;
-        }
-        catch (std::exception& exception)
-        {
-            qWarning(exception.what());
-        }
-
-        qWarning("Running with data from resources has failed. Trying to run with data from file located in current directory.");
-#endif
-
-        runWithDataFromFile();
+        runWithData(m_data);
 
         m_result = SUCCESS;
         qInfo("Launcher has succeeded.");
@@ -80,7 +58,6 @@ LauncherWorker::LauncherWorker(LauncherState& t_launcherState, QObject* parent)
     , m_api(&m_networkAccessManager, CancellationToken(m_cancellationTokenSource), m_launcherState)
     , m_remotePatcher(m_launcherState, m_api, &m_networkAccessManager)
     , m_result(NONE)
-    , m_shouldUpdate(true)
 {
     m_api.moveToThread(this);
     m_networkAccessManager.moveToThread(this);
@@ -95,6 +72,54 @@ void LauncherWorker::cancel()
     m_cancellationTokenSource->cancel();
 }
 
+bool LauncherWorker::canStartPatcher() const
+{
+    return isLocalPatcherInstalled();
+}
+
+void LauncherWorker::startPatcher()
+{
+    startPatcher(m_data);
+}
+
+void LauncherWorker::resolveData()
+{
+    qInfo("Resolving data.");
+    if (Data::canLoadFromConfig())
+    {
+        try
+        {
+            m_data = Data::loadFromConfig();
+            qInfo("Loaded inline data.");
+            return;
+        }
+        catch(std::exception& e)
+        {
+            qWarning(e.what());
+        }
+    }
+
+#ifdef Q_OS_WIN
+    try
+    {
+        m_data = Data::loadFromResources(Locations::getInstance().applicationFilePath(),
+                                            Config::dataResourceId,
+                                            Config::dataResourceTypeId);
+        qInfo("Loaded data from resource.");
+        return;
+    }
+    catch(std::exception& e)
+    {
+        qWarning(e.what());
+    }
+
+#endif
+
+    m_data = Data::loadFromFile(Locations::getInstance().dataFilePath());
+    qInfo("Loaded data from file.");
+    return;
+}
+
 bool LauncherWorker::isLocalPatcherInstalled() const
 {
     return m_localPatcher.isInstalled();
@@ -105,9 +130,9 @@ LauncherWorker::Result LauncherWorker::result() const
     return m_result;
 }
 
-void LauncherWorker::stopUpdate()
+void LauncherWorker::stop()
 {
-    m_shouldUpdate = false;
+    m_cancellationTokenSource->cancel();
 }
 
 void LauncherWorker::setDownloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes)
@@ -172,11 +197,6 @@ void LauncherWorker::runWithData(Data& t_data)
         }
 
         setupPatcherSecret(t_data);
-
-        if (!m_shouldUpdate)
-        {
-            throw std::runtime_error("Offline mode was requested.");
-        }
 
         Locations::getInstance().initializeWithData(t_data);
 

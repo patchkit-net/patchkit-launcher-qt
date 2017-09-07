@@ -12,6 +12,7 @@
 
 Launcher::Launcher(const QApplication& t_application)
     : m_worker(m_state, this)
+    , m_mainWindow(m_worker, nullptr)
 {
     connect(&t_application, &QApplication::aboutToQuit, this, &Launcher::cleanup);
 }
@@ -20,12 +21,10 @@ void Launcher::start()
 {
     qInfo("Starting launcher.");
 
-    m_mainWindow = std::make_unique<MainWindow>(m_worker, nullptr);
-
     connect(&m_worker, &QThread::finished, this, &Launcher::finish);
 
     qInfo("Showing main window.");
-    m_mainWindow->show();
+    m_mainWindow.show();
 
     qInfo("Starting launcher worker.");
     m_worker.start();
@@ -38,7 +37,7 @@ void Launcher::onError(DownloadError t_error)
     if (t_error == DownloadError::ConnectionIssues)
     {
         qWarning("Connection issues.");
-        if (m_worker.isLocalPatcherInstalled())
+        if (m_worker.canStartPatcher())
         {
             qInfo("A version of patcher is installed, asking if launcher should go into offline mode.");
             int answer = QMessageBox::question(nullptr, "Connection issues!",
@@ -49,6 +48,10 @@ void Launcher::onError(DownloadError t_error)
             {
                 qInfo("User chose to go into offline mode.");
                 m_state.setState(LauncherState::Stopped);
+                emit m_state.respond(LauncherState::Response::Stop);
+
+                m_worker.stop();
+                m_worker.startPatcher();
             }
             else if (answer == QMessageBox::No)
             {

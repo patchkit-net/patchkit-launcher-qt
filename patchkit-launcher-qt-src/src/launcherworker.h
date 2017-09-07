@@ -30,7 +30,11 @@ public:
     LauncherWorker(LauncherState& t_launcherState, QObject* parent = nullptr);
 
     void cancel();
-    bool isLocalPatcherInstalled() const;
+
+    bool canStartPatcher() const;
+    void startPatcher();
+
+    void resolveData();
 
     Result result() const;
 signals:
@@ -38,7 +42,7 @@ signals:
     void progressChanged(int t_progress);
 
 public slots:
-    void stopUpdate();
+    void stop();
 
 private slots:
     void setDownloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes);
@@ -57,6 +61,7 @@ private:
 
     bool tryToFetchPatcherSecret(Data& t_data);
 
+    bool isLocalPatcherInstalled() const;
     void updatePatcher(const Data& t_data);
     void startPatcher(const Data& t_data);
 
@@ -73,5 +78,5 @@ private:
 
     Result m_result;
 
-    bool m_shouldUpdate;
+    Data m_data;
 };
