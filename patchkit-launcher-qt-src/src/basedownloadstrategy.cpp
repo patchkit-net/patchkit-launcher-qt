@@ -29,3 +29,13 @@ void BaseDownloadStrategy::downloadProgressRelay(const long long& t_bytesDownloa
 {
     emit downloadProgress(t_bytesDownloaded, t_totalBytes);
 }
+
+void BaseDownloadStrategy::watchProgressOf(Downloader* t_downloader)
+{
+    connect(t_downloader, &Downloader::downloadProgressChanged, this, &BaseDownloadStrategy::downloadProgress);
+}
+
+void BaseDownloadStrategy::stopWatchingProgressOf(Downloader* t_downloader)
+{
+    disconnect(t_downloader, &Downloader::downloadProgressChanged, this, &BaseDownloadStrategy::downloadProgress);
+}

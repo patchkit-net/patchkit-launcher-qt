@@ -3,7 +3,6 @@
 LauncherState::LauncherState(QObject* parent)
     : QObject(parent)
     , m_state(State::Running)
-    , m_response(Response::None)
 {
 }
 
@@ -17,7 +16,7 @@ void LauncherState::setState(LauncherState::State t_state)
     m_state = t_state;
 }
 
-LauncherState::Response LauncherState::awaitResponseTo(DownloadError t_error, CancellationToken t_cancellationToken)
+void LauncherState::awaitResponseTo(DownloadError t_error, CancellationToken t_cancellationToken)
 {
     QEventLoop loop;
 
@@ -29,11 +28,4 @@ LauncherState::Response LauncherState::awaitResponseTo(DownloadError t_error, Ca
     loop.exec();
 
     t_cancellationToken.throwIfCancelled();
-
-    return m_response;
-}
-
-void LauncherState::respondInternal(LauncherState::Response t_response)
-{
-    m_response = t_response;
 }

@@ -23,6 +23,9 @@ public:
 public slots:
     virtual void downloadProgressRelay(const long long& t_bytesDownloaded, const long long& t_totalBytes) override;
 
+protected:
+    virtual bool processFinishedDownloader(Downloader *t_downloader) override;
+
 private:
     const ChunkedDownloader& m_parent;
     void setRanges(int t_from);

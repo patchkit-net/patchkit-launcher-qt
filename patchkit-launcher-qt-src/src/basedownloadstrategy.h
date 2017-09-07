@@ -32,6 +32,9 @@ signals:
     void downloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes);
 
 protected:
+    void watchProgressOf(Downloader* t_downloader);
+    void stopWatchingProgressOf(Downloader* t_downloader);
+
     QByteArray m_data;
     DownloaderOperator& m_operator;
     LauncherState& m_state;

@@ -32,8 +32,6 @@ void Launcher::start()
 
 void Launcher::onError(DownloadError t_error)
 {
-    m_state.setState(LauncherState::Paused);
-
     if (t_error == DownloadError::ConnectionIssues)
     {
         qWarning("Connection issues.");
@@ -47,8 +45,7 @@ void Launcher::onError(DownloadError t_error)
             if (answer == QMessageBox::Yes)
             {
                 qInfo("User chose to go into offline mode.");
-                m_state.setState(LauncherState::Stopped);
-                emit m_state.respond(LauncherState::Response::Stop);
+                emit m_state.respond();
 
                 m_worker.stop();
                 m_worker.startPatcher();
@@ -56,17 +53,18 @@ void Launcher::onError(DownloadError t_error)
             else if (answer == QMessageBox::No)
             {
                 qInfo("User chose to continue trying to download the newest version of patcher.");
-                m_state.setState(LauncherState::Running);
+                emit m_state.respond();
             }
             else
             {
+                emit m_state.respond();
                 qWarning("Unexpected outcome.");
             }
         }
         else
         {
             qInfo("No version of patcher is installed, forcing to proceed.");
-            m_state.setState(LauncherState::Running);
+            emit m_state.respond();
         }
     }
 }

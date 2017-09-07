@@ -18,10 +18,7 @@ DefaultDownloadStrategy::DefaultDownloadStrategy(
 
 void DefaultDownloadStrategy::execute(CancellationToken t_cancellationToken)
 {
-    bool shouldStop = false;
     uint iterator = 1;
-    Downloader* startedDownloader = nullptr;
-    Downloader* finishedDownloader = nullptr;
 
     if (m_operator.poolSize() == 0)
     {
@@ -30,8 +27,11 @@ void DefaultDownloadStrategy::execute(CancellationToken t_cancellationToken)
 
     auto startingPool = m_operator.getInactiveDownloaders();
 
-    while (!shouldStop && !t_cancellationToken.isCancelled())
+    while (!t_cancellationToken.isCancelled())
     {
+        Downloader* startedDownloader = nullptr;
+        Downloader* finishedDownloader = nullptr;
+
         auto mainDownloader = startingPool.at(0);
 
         DownloaderOperator runningPool({mainDownloader});
@@ -45,7 +45,26 @@ void DefaultDownloadStrategy::execute(CancellationToken t_cancellationToken)
         if (startedDownloader)
         {
             qDebug() << "The first downloader has started downloading, waiting for it to finish.";
+            watchProgressOf(startedDownloader);
             finishedDownloader = runningPool.waitForAnyToFinish(t_cancellationToken);
+            stopWatchingProgressOf(startedDownloader);
+
+            if (finishedDownloader)
+            {
+                if (processFinishedDownloader(finishedDownloader))
+                {
+                    return;
+                }
+                else
+                {
+                    runningPool.stopAll();
+                }
+            }
+            else
+            {
+                qWarning("Connection issues.");
+                onConnectionIssues(t_cancellationToken);
+            }
         }
         else
         {
@@ -69,39 +88,47 @@ void DefaultDownloadStrategy::execute(CancellationToken t_cancellationToken)
             {
                 qDebug() << "A downloader has started, stopping all others and waiting for this one to finish.";
                 runningPool.stopAllExcept(startedDownloader);
+                watchProgressOf(startedDownloader);
                 finishedDownloader = runningPool.waitForAnyToFinish(t_cancellationToken);
+                stopWatchingProgressOf(startedDownloader);
 
                 if (finishedDownloader)
                 {
                     qInfo("Finished downloading.");
-                    m_data = finishedDownloader->readData();
-                    return;
+                    if (processFinishedDownloader(finishedDownloader))
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        runningPool.stopAll();
+                    }
                 }
                 else
                 {
-                    qWarning("Something went wrong.");
-                    m_state.awaitResponseTo(DownloadError::ConnectionIssues, t_cancellationToken);
+                    qWarning("Connection issues.");
+                    onConnectionIssues(t_cancellationToken);
                 }
             }
             else
             {
                 qWarning("No downloader has started. Querying user for action.");
-                m_state.awaitResponseTo(DownloadError::ConnectionIssues, t_cancellationToken);
+                onConnectionIssues(t_cancellationToken);
             }
         }
-
-        if (finishedDownloader)
-        {
-            qInfo("Finished downloading.");
-            m_data = finishedDownloader->readData();
-            return;
-        }
-        else
-        {
-            qWarning("Something went wrong.");
-            m_state.awaitResponseTo(DownloadError::ConnectionIssues, t_cancellationToken);
-        }
     }
+}
+
+bool DefaultDownloadStrategy::processFinishedDownloader(Downloader* t_downloader)
+{
+    m_data = t_downloader->readData();
+    return true;
+}
+
+void DefaultDownloadStrategy::onConnectionIssues(CancellationToken t_cancellationToken)
+{
+    m_state.awaitResponseTo(DownloadError::ConnectionIssues, t_cancellationToken);
+    m_operator.stopAll();
 }
 
 const int DefaultDownloadStrategy::maxStartingDownloadersCount = 3;

@@ -32,7 +32,7 @@ public:
     void start();
     void restart();
 
-    int  getStatusCode();
+    int  getStatusCode() const;
 
     void setRange(int t_bytesStart, int t_bytesEnd = -1);
 
@@ -50,7 +50,6 @@ public:
     QByteArray readData();
 
     static bool doesStatusCodeIndicateSuccess(int t_statusCode);
-    static bool checkInternetConnection();
     static int  getReplyStatusCode(TRemoteDataReply t_reply);
 
 signals:
@@ -83,4 +82,6 @@ private:
     TDataSource         m_remoteDataSource;
     CancellationToken   m_cancellationToken;
     TRemoteDataReply    m_remoteDataReply;
+
+    QNetworkReply::NetworkError m_lastError;
 };

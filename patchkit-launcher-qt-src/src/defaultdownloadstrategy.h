@@ -21,6 +21,9 @@ public:
 protected:
     virtual void execute(CancellationToken t_cancellationToken);
 
+    virtual bool processFinishedDownloader(Downloader* t_downloader);
+    virtual void onConnectionIssues(CancellationToken t_cancellationToken);
+
 private:
     int m_timeoutCounter;
 
