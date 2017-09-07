@@ -33,6 +33,127 @@ std::vector<Downloader*> DownloaderOperator::getDownloaders(IDownloaderPool::TDo
     return m_pool.getDownloaders(t_predicate);
 }
 
+Downloader* DownloaderOperator::waitForAnyToStart(CancellationToken t_cancellationToken, int t_timeoutMsec)
+{
+    if (getActiveDownloaders().size() > 0)
+    {
+        qInfo("Waiting for any downloader to start, but a downloader is already active.");
+        return getActiveDownloaders().at(0);
+    }
+
+    if (getStartingDownloaders().size() == 0)
+    {
+        qWarning("Waiting for any downloader to start, but no downloaders were activated.");
+        return nullptr;
+    }
+
+    auto startingDownloaders = getStartingDownloaders();
+
+    QEventLoop loop;
+    QTimer timeoutTimer;
+
+    for (auto downloader : startingDownloaders)
+    {
+        connect(downloader, &Downloader::downloadStarted, &loop, &QEventLoop::quit);
+    }
+
+    connect(&t_cancellationToken, &CancellationToken::cancelled, &loop, &QEventLoop::quit);
+
+    if (t_timeoutMsec != -1)
+    {
+        connect(&timeoutTimer, &QTimer::timeout, &loop, &QEventLoop::quit);
+
+        timeoutTimer.setSingleShot(true);
+        timeoutTimer.start(t_timeoutMsec);
+    }
+
+    loop.exec();
+
+    t_cancellationToken.throwIfCancelled();
+
+    auto activeDownloaders = getActiveDownloaders();
+
+    if (activeDownloaders.size() == 0)
+    {
+        qWarning("Waited for any downloader to start, but no downloaders started.");
+        return nullptr;
+    }
+    else
+    {
+        return activeDownloaders.at(0);
+    }
+}
+
+Downloader* DownloaderOperator::waitForAnyToFinish(CancellationToken t_cancellationToken, int t_timeoutMsec)
+{
+    if (getFinishedDownloaders().size() > 0)
+    {
+        qInfo("Waiting for any downloader to finish, but a downloader already finished.");
+        return getFinishedDownloaders().at(0);
+    }
+
+    if (getActiveDownloaders().size() == 0)
+    {
+        qWarning("Waiting for any downloader to finish but no downloaders are active. Returning null.");
+        return nullptr;
+    }
+
+    auto activeDownloaders = getActiveDownloaders();
+
+    QEventLoop loop;
+    QTimer timeoutTimer;
+
+    for (auto downloader : activeDownloaders)
+    {
+        connect(downloader, &Downloader::downloadFinished, &loop, &QEventLoop::quit);
+    }
+
+    connect(&t_cancellationToken, &CancellationToken::cancelled, &loop, &QEventLoop::quit);
+
+    if (t_timeoutMsec != -1)
+    {
+        connect(&timeoutTimer, &QTimer::timeout, &loop, &QEventLoop::quit);
+
+        timeoutTimer.setSingleShot(true);
+        timeoutTimer.start(t_timeoutMsec);
+    }
+
+    loop.exec();
+
+    t_cancellationToken.throwIfCancelled();
+
+    auto finishedDownloaders = getFinishedDownloaders();
+
+    if (finishedDownloaders.size() == 0)
+    {
+        qWarning("Waited for any downloader to finish, but no downloaders have finished.");
+        return nullptr;
+    }
+    else
+    {
+        return finishedDownloaders.at(0);
+    }
+}
+
+void DownloaderOperator::stopAllExcept(Downloader* t_downloader)
+{
+    for (auto downloader : getDownloaders())
+    {
+        if (downloader != t_downloader)
+        {
+            downloader->stop();
+        }
+    }
+}
+
+void DownloaderOperator::stopAll()
+{
+    for (auto downloader : getDownloaders())
+    {
+        downloader->stop();
+    }
+}
+
 QByteArray DownloaderOperator::download(BaseDownloadStrategy& t_downloadStrategy, CancellationToken t_cancellationToken)
 {
     connect(&t_cancellationToken, &CancellationToken::cancelled, &t_downloadStrategy, &BaseDownloadStrategy::stop);
@@ -78,11 +199,19 @@ DownloaderPool::~DownloaderPool()
     }
 }
 
+std::vector<Downloader*> IDownloaderPool::getFinishedDownloaders() const
+{
+    return getDownloaders([](Downloader* downloader)
+    {
+        return downloader->isFinished();
+    });
+}
+
 std::vector<Downloader*> IDownloaderPool::getActiveDownloaders() const
 {
     return getDownloaders([](Downloader* downloader)
     {
-        return downloader->isRunning();
+        return downloader->isRunning() || downloader->isFinished();
     });
 }
 
@@ -115,12 +244,4 @@ std::vector<Downloader*> DownloaderPool::getDownloaders(bool (*t_predicate)(Down
     }
 
     return downloaders;
-}
-
-void DownloaderOperator::stopAll()
-{
-    for (Downloader* downloader : getDownloaders())
-    {
-        downloader->stop();
-    }
 }

@@ -22,6 +22,7 @@ public:
 
     virtual std::vector<Downloader*> getDownloaders(TDownloaderPredicate t_predicate = nullptr) const = 0;
 
+    std::vector<Downloader*> getFinishedDownloaders() const;
     std::vector<Downloader*> getActiveDownloaders() const;
     std::vector<Downloader*> getStartingDownloaders() const;
     std::vector<Downloader*> getInactiveDownloaders() const;
@@ -59,8 +60,8 @@ public:
 
     virtual std::vector<Downloader*> getDownloaders(TDownloaderPredicate t_predicate = nullptr) const override;
 
-    Downloader* waitForAnyToStart();
-    Downloader* waitForAnyToFinish();
+    Downloader* waitForAnyToStart(CancellationToken t_cancellationToken, int t_timeoutMsec = -1);
+    Downloader* waitForAnyToFinish(CancellationToken t_cancellationToken, int t_timeoutMsec = -1);
 
     void stopAllExcept(Downloader* t_downloader);
     void stopAll();
