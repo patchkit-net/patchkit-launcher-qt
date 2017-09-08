@@ -32,7 +32,7 @@ public:
     std::vector<Downloader*> getStartingDownloaders() const;
     std::vector<Downloader*> getInactiveDownloaders() const;
 
-    int poolSize() const;
+    size_t poolSize() const;
 };
 
 class DownloaderPool : public IDownloaderPool

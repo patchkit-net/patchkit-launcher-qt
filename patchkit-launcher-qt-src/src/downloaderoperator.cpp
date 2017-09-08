@@ -59,14 +59,16 @@ Downloader* DownloaderOperator::waitForAnyToStart(CancellationToken t_cancellati
 
     auto startingDownloaders = getStartingDownloaders();
 
-    auto count = startingDownloaders.size();
+    auto downloadersCount = startingDownloaders.size();
+    size_t errorCount = 0;
 
     QEventLoop loop;
     QTimer timeoutTimer;
 
-    auto errorCatch = [&count, &loop](){
-        if (--count == 0)
+    auto errorCatch = [downloadersCount, &errorCount, &loop](){
+        if (++errorCount >= downloadersCount)
         {
+            qWarning("All downloaders ended with an error.");
             loop.quit();
         }
     };
@@ -302,7 +304,7 @@ std::vector<Downloader*> IDownloaderPool::getInactiveDownloaders() const
     });
 }
 
-int IDownloaderPool::poolSize() const
+size_t IDownloaderPool::poolSize() const
 {
     return getDownloaders().size();
 }

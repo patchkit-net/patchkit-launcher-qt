@@ -29,9 +29,6 @@ public:
 
     Downloader(const QString& t_resourceUrl, TDataSource t_dataSource, CancellationToken& t_cancellationToken);
 
-    void start();
-    void restart();
-
     int  getStatusCode() const;
 
     void setRange(int t_bytesStart, int t_bytesEnd = -1);
@@ -58,10 +55,10 @@ signals:
     void downloadFinished();
     void downloadError(QNetworkReply::NetworkError t_errorCode);
 
-    void timeout();
-
 public slots:
+    void start();
     void stop();
+    void restart();
 
 private slots:
     void readyReadRelay();

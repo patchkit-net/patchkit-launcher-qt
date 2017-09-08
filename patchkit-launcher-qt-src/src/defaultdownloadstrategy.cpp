@@ -18,7 +18,7 @@ DefaultDownloadStrategy::DefaultDownloadStrategy(
 
 void DefaultDownloadStrategy::execute(CancellationToken t_cancellationToken)
 {
-    uint iterator = 1;
+    size_t iterator = 1;
 
     if (m_operator.poolSize() == 0)
     {
@@ -69,7 +69,7 @@ void DefaultDownloadStrategy::execute(CancellationToken t_cancellationToken)
         else
         {
             qDebug() << "The first downloader didn't start, trying up to 2 other nodes.";
-            for (uint i = iterator; i < startingPool.size() && i < (iterator + maxStartingDownloadersCount - 1); i++)
+            for (size_t i = iterator; i < startingPool.size() && i < (iterator + maxStartingDownloadersCount - 1); i++)
             {
                 runningPool.add(startingPool.at(i));
             }
