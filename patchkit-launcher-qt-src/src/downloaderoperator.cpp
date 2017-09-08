@@ -73,10 +73,12 @@ Downloader* DownloaderOperator::waitForAnyToStart(CancellationToken t_cancellati
         }
     };
 
+    std::vector<QMetaObject::Connection> localConnections;
+
     for (auto downloader : startingDownloaders)
     {
         connect(downloader, &Downloader::downloadStarted, &loop, &QEventLoop::quit);
-        connect(downloader, &Downloader::downloadError, errorCatch);
+        localConnections.push_back(connect(downloader, &Downloader::downloadError, errorCatch));
     }
 
     connect(&t_cancellationToken, &CancellationToken::cancelled, &loop, &QEventLoop::quit);
@@ -90,6 +92,11 @@ Downloader* DownloaderOperator::waitForAnyToStart(CancellationToken t_cancellati
     }
 
     loop.exec();
+
+    for (auto connection : localConnections)
+    {
+        disconnect(connection);
+    }
 
     t_cancellationToken.throwIfCancelled();
 
