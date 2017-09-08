@@ -59,12 +59,22 @@ Downloader* DownloaderOperator::waitForAnyToStart(CancellationToken t_cancellati
 
     auto startingDownloaders = getStartingDownloaders();
 
+    auto count = startingDownloaders.size();
+
     QEventLoop loop;
     QTimer timeoutTimer;
+
+    auto errorCatch = [&count, &loop](){
+        if (--count == 0)
+        {
+            loop.quit();
+        }
+    };
 
     for (auto downloader : startingDownloaders)
     {
         connect(downloader, &Downloader::downloadStarted, &loop, &QEventLoop::quit);
+        connect(downloader, &Downloader::downloadError, errorCatch);
     }
 
     connect(&t_cancellationToken, &CancellationToken::cancelled, &loop, &QEventLoop::quit);
