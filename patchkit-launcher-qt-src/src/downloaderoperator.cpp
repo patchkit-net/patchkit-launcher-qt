@@ -104,14 +104,24 @@ Downloader* DownloaderOperator::waitForAnyToFinish(CancellationToken t_cancellat
 
     if (getActiveDownloaders().size() == 0)
     {
-        qWarning("Waiting for any downloader to finish but no downloaders are active. Returning null.");
-        return nullptr;
+        qInfo("Waiting for any downloader to finish, but none are active. Waiting for any to start.");
+
+        auto startedDownloader = waitForAnyToStart(t_cancellationToken, t_timeoutMsec);
+
+        if (startedDownloader)
+        {
+            qInfo("Successful start.");
+        }
+        else
+        {
+            qWarning("Failed to start within given timeout. Returning null.");
+            return nullptr;
+        }
     }
 
     auto activeDownloaders = getActiveDownloaders();
 
     QEventLoop loop;
-    QTimer timeoutTimer;
 
     for (auto downloader : activeDownloaders)
     {
@@ -119,14 +129,6 @@ Downloader* DownloaderOperator::waitForAnyToFinish(CancellationToken t_cancellat
     }
 
     connect(&t_cancellationToken, &CancellationToken::cancelled, &loop, &QEventLoop::quit);
-
-    if (t_timeoutMsec != -1)
-    {
-        connect(&timeoutTimer, &QTimer::timeout, &loop, &QEventLoop::quit);
-
-        timeoutTimer.setSingleShot(true);
-        timeoutTimer.start(t_timeoutMsec);
-    }
 
     loop.exec();
 
