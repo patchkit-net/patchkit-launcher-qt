@@ -221,30 +221,32 @@ QStringList Api::downloadContentUrls(const QString& t_patcherSecret, int t_versi
 
 bool Api::geolocate()
 {
-    QUrl url(Config::geolocationApiUrl);
+    Downloader downloader(Config::geolocationApiUrl, m_dataSource, m_cancellationToken);
+    DownloaderOperator op({&downloader});
 
-    QNetworkRequest request(url);
+    op.startAll();
 
-    auto reply = m_dataSource->get(request);
+    auto finishedDownloader = op.waitForAnyToFinish(m_cancellationToken, Config::geolocationTimeout);
 
-    QEventLoop waitLoop;
-
-    connect(reply, &QNetworkReply::finished, &waitLoop, &QEventLoop::quit);
-    QTimer::singleShot(Config::geolocationTimeout, &waitLoop, &QEventLoop::quit);
-
-    waitLoop.exec();
-
-    auto data = reply->readAll();
-
-    int replyStatusCode = Downloader::getReplyStatusCode(reply);
-
-    if (!Downloader::doesStatusCodeIndicateSuccess(replyStatusCode))
+    if (!finishedDownloader)
     {
+        qWarning("Geolocation download process failed.");
         return false;
     }
 
+    int replyStatusCode = finishedDownloader->getStatusCode();
+
+    if (!Downloader::doesStatusCodeIndicateSuccess(replyStatusCode))
+    {
+        qWarning() << "Geolocation failed, reply status code was " << replyStatusCode;
+        return false;
+    }
+
+    auto data = finishedDownloader->readData();
+
     if (data == QByteArray())
     {
+        qWarning("Geolocation failed, reply data was empty.");
         return false;
     }
 
@@ -252,6 +254,7 @@ bool Api::geolocate()
 
     if (!jsonDocument.isObject())
     {
+        qWarning("Geolocation failed, couldn't create a json document from data.");
         return false;
     }
 
@@ -259,6 +262,7 @@ bool Api::geolocate()
 
     if (!root.contains("country"))
     {
+        qWarning("Geolocation failed, no field named country in the root json object.");
         return false;
     }
 
@@ -266,6 +270,7 @@ bool Api::geolocate()
 
     if (!countryValue.isString())
     {
+        qWarning("Geolocation failed, country field value was not a string.");
         return false;
     }
 
