@@ -104,15 +104,15 @@ void IOUtils::extractZip(const QString& t_zipPath, const QString& t_extractPath,
 
 void IOUtils::copyIODeviceData(QIODevice& t_readDevice, QIODevice& t_writeDevice)
 {
-    qint64 bufferSize = 4096;
-    std::unique_ptr<char> buffer(new char[bufferSize]);
+    const qint64 bufferSize = 4096;
+    char buffer[bufferSize];
 
     while (!t_readDevice.atEnd())
     {
-        qint64 readSize = t_readDevice.read(buffer.get(), bufferSize);
+        qint64 readSize = t_readDevice.read(buffer, bufferSize);
         if (readSize > 0)
         {
-            t_writeDevice.write(buffer.get(), readSize);
+            t_writeDevice.write(buffer, readSize);
         }
     }
 }

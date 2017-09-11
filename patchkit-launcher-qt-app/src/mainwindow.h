@@ -30,5 +30,5 @@ private:
 
     QPoint m_dragPosition;
 
-    std::unique_ptr<Ui::MainWindow> m_ui;
+    Ui::MainWindow m_ui;
 };

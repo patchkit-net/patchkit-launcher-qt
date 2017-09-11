@@ -12,31 +12,29 @@
 
 #include <src/logger.h>
 
-MainWindow::MainWindow(LauncherWorker& t_launcherWorker, QWidget* t_parent) :
-    QMainWindow(t_parent, Qt::FramelessWindowHint),
-    m_launcherWorker(t_launcherWorker),
-    m_ui(new Ui::MainWindow)
+MainWindow::MainWindow(LauncherWorker& t_launcherWorker, QWidget* t_parent)
+    : QMainWindow(t_parent, Qt::FramelessWindowHint)
+    , m_launcherWorker(t_launcherWorker)
 {
-    m_ui->setupUi(this);
+    m_ui.setupUi(this);
 
     // Thread --> UI
     connect(&t_launcherWorker, &LauncherWorker::statusChanged, this, &MainWindow::setStatus);
     connect(&t_launcherWorker, &LauncherWorker::progressChanged, this, &MainWindow::setProgress);
-
     connect(&t_launcherWorker, &LauncherWorker::finished, this, &MainWindow::close);
 
     // Thread <-- UI
-    connect(m_ui->cancelButton, &QPushButton::clicked, &t_launcherWorker, &LauncherWorker::cancel);
+    connect(m_ui.cancelButton, &QPushButton::clicked, &t_launcherWorker, &LauncherWorker::cancel);
 }
 
 void MainWindow::setStatus(const QString& t_status) const
 {
-    m_ui->status->setText(t_status);
+    m_ui.status->setText(t_status);
 }
 
 void MainWindow::setProgress(int t_progress) const
 {
-    m_ui->progressBar->setValue(t_progress);
+    m_ui.progressBar->setValue(t_progress);
 }
 
 void MainWindow::showEvent(QShowEvent* t_event)
@@ -51,7 +49,7 @@ void MainWindow::showEvent(QShowEvent* t_event)
 
 void MainWindow::mouseMoveEvent(QMouseEvent* t_event)
 {
-    if (t_event->buttons() & Qt::LeftButton && !m_ui->cancelButton->underMouse())
+    if (t_event->buttons() & Qt::LeftButton && !m_ui.cancelButton->underMouse())
     {
         move(t_event->globalPos() - m_dragPosition);
         t_event->accept();
@@ -61,7 +59,7 @@ void MainWindow::mouseMoveEvent(QMouseEvent* t_event)
 
 void MainWindow::mousePressEvent(QMouseEvent* t_event)
 {
-    if (t_event->button() == Qt::LeftButton && !m_ui->cancelButton->underMouse())
+    if (t_event->button() == Qt::LeftButton && !m_ui.cancelButton->underMouse())
     {
         m_dragPosition = t_event->globalPos() - frameGeometry().topLeft();
         t_event->accept();

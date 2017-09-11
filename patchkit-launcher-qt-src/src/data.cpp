@@ -25,7 +25,7 @@ bool Data::canLoadFromConfig()
 
 Data Data::loadFromConfig()
 {
-    if (!canLoadFromConfig)
+    if (!canLoadFromConfig())
     {
         throw std::runtime_error("Can't load data from config.");
     }
@@ -144,18 +144,18 @@ QByteArray Data::readStringBytes(QDataStream& t_dataStream)
 
 QString Data::decodeString(const QByteArray& t_encodedSecret)
 {
-    std::unique_ptr<char> temp(new char[t_encodedSecret.size()]);
-    memcpy(temp.get(), t_encodedSecret.data(), t_encodedSecret.size());
+    char temp[t_encodedSecret.size()];
+    memcpy(temp, t_encodedSecret.data(), t_encodedSecret.size());
 
     for (int i = 0; i < t_encodedSecret.size(); i++)
     {
-        char b = temp.get()[i];
+        char b = temp[i];
         bool lsb = (b & 1) > 0;
         b = b >> 1;
         b = b | (lsb ? 128 : 0);
         b = static_cast<char>(~b);
-        temp.get()[i] = b;
+        temp[i] = b;
     }
 
-    return QString::fromUtf16(reinterpret_cast<const ushort*>(temp.get()), t_encodedSecret.size() / 2);
+    return QString::fromUtf16(reinterpret_cast<const ushort*>(temp), t_encodedSecret.size() / 2);
 }
