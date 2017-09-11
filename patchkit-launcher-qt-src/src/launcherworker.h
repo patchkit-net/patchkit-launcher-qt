@@ -67,7 +67,7 @@ private:
 
     void checkIfCurrentDirectoryIsWritable();
 
-    std::shared_ptr<CancellationTokenSource> m_cancellationTokenSource;
+    CancellationTokenSource m_cancellationTokenSource;
     LauncherState& m_launcherState;
 
     QNetworkAccessManager m_networkAccessManager;

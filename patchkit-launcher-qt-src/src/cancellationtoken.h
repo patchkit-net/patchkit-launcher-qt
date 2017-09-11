@@ -19,18 +19,18 @@ public:
         : QObject(t_other.parent())
         , m_source(t_other.m_source)
     {
-        connect(m_source.get(), &CancellationTokenSource::cancelled, this, &CancellationToken::cancelled);
+        connect(&m_source, &CancellationTokenSource::cancelled, this, &CancellationToken::cancelled);
     }
 
-    CancellationToken(std::shared_ptr<CancellationTokenSource> t_source)
+    CancellationToken(CancellationTokenSource& t_source)
         : m_source(t_source)
     {
-        connect(m_source.get(), &CancellationTokenSource::cancelled, this, &CancellationToken::cancelled);
+        connect(&m_source, &CancellationTokenSource::cancelled, this, &CancellationToken::cancelled);
     }
 
     bool isCancelled() const
     {
-        return m_source->isCancelled();
+        return m_source.isCancelled();
     }
 
     void throwIfCancelled() const
@@ -45,5 +45,5 @@ signals:
     void cancelled();
 
 private:
-    std::shared_ptr<CancellationTokenSource> m_source;
+    CancellationTokenSource& m_source;
 };

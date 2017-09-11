@@ -53,7 +53,6 @@ void LauncherWorker::run()
 
 LauncherWorker::LauncherWorker(LauncherState& t_launcherState, QObject* parent)
     : QThread(parent)
-    , m_cancellationTokenSource(new CancellationTokenSource())
     , m_launcherState(t_launcherState)
     , m_api(&m_networkAccessManager, CancellationToken(m_cancellationTokenSource), m_launcherState)
     , m_remotePatcher(m_launcherState, m_api, &m_networkAccessManager)
@@ -69,7 +68,7 @@ void LauncherWorker::cancel()
 {
     qInfo("Cancelling launcher thread.");
 
-    m_cancellationTokenSource->cancel();
+    m_cancellationTokenSource.cancel();
 }
 
 bool LauncherWorker::canStartPatcher() const
@@ -132,7 +131,7 @@ LauncherWorker::Result LauncherWorker::result() const
 
 void LauncherWorker::stop()
 {
-    m_cancellationTokenSource->cancel();
+    m_cancellationTokenSource.cancel();
 }
 
 void LauncherWorker::setDownloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes)
