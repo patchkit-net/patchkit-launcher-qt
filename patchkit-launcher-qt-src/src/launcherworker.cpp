@@ -236,8 +236,7 @@ void LauncherWorker::runWithData(Data& t_data)
         }
     }
 
-    qDebug("Yay stariting the patcher.");
-    // startPatcher(t_data);
+    startPatcher(t_data);
 }
 
 void LauncherWorker::setupPatcherSecret(Data& t_data)
