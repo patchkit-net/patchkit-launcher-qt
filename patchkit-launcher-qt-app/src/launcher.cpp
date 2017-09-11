@@ -63,8 +63,22 @@ void Launcher::onError(DownloadError t_error)
         }
         else
         {
-            qInfo("No version of patcher is installed, forcing to proceed.");
-            emit m_state.respond();
+            qInfo("No version of patcher is installed.");
+            int answer = QMessageBox::warning(nullptr, "Connection issues!",
+                                  "Launcher is experiencing connection issues, would you like to keep trying?",
+                                  QMessageBox::Yes, QMessageBox::No);
+
+            if (answer == QMessageBox::Yes)
+            {
+                qInfo("User chose to keep trying.");
+                emit m_state.respond();
+            }
+            else if (answer == QMessageBox::No)
+            {
+                qInfo("User chose to stop.");
+                emit m_state.respond();
+                m_worker.stop();
+            }
         }
     }
 }
