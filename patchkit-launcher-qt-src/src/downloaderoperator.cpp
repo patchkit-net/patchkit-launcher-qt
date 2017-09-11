@@ -115,12 +115,6 @@ Downloader* DownloaderOperator::waitForAnyToStart(CancellationToken t_cancellati
 
 Downloader* DownloaderOperator::waitForAnyToFinish(CancellationToken t_cancellationToken, int t_timeoutMsec)
 {
-    if (getFinishedDownloaders().size() > 0)
-    {
-        qInfo("Waiting for any downloader to finish, but a downloader already finished.");
-        return getFinishedDownloaders().at(0);
-    }
-
     if (getActiveDownloaders().size() == 0)
     {
         qInfo("Waiting for any downloader to finish, but none are active. Waiting for any to start.");
@@ -136,6 +130,12 @@ Downloader* DownloaderOperator::waitForAnyToFinish(CancellationToken t_cancellat
             qWarning("Failed to start within given timeout. Returning null.");
             return nullptr;
         }
+    }
+
+    if (getFinishedDownloaders().size() > 0)
+    {
+        qInfo("Waiting for any downloader to finish, but a downloader already finished.");
+        return getFinishedDownloaders().at(0);
     }
 
     auto activeDownloaders = getActiveDownloaders();
