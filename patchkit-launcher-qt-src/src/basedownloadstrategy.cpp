@@ -32,10 +32,12 @@ void BaseDownloadStrategy::downloadProgressRelay(const long long& t_bytesDownloa
 
 void BaseDownloadStrategy::watchProgressOf(Downloader* t_downloader)
 {
-    connect(t_downloader, &Downloader::downloadProgressChanged, this, &BaseDownloadStrategy::downloadProgress);
+    connect(t_downloader, &Downloader::downloadProgressChanged,
+            this, &BaseDownloadStrategy::downloadProgressRelay);
 }
 
 void BaseDownloadStrategy::stopWatchingProgressOf(Downloader* t_downloader)
 {
-    disconnect(t_downloader, &Downloader::downloadProgressChanged, this, &BaseDownloadStrategy::downloadProgress);
+    disconnect(t_downloader, &Downloader::downloadProgressChanged,
+               this, &BaseDownloadStrategy::downloadProgressRelay);
 }
