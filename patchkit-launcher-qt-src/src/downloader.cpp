@@ -26,6 +26,14 @@ Downloader::Downloader
 {
 }
 
+Downloader::~Downloader()
+{
+    if (m_remoteDataReply)
+    {
+        stop();
+    }
+}
+
 void Downloader::start()
 {
     if (m_remoteDataReply)
