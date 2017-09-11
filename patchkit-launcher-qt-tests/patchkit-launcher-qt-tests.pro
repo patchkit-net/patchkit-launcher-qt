@@ -7,7 +7,18 @@ TEMPLATE = app
 
 INCLUDEPATH += $$PWD/src
 
-SOURCES     += $$PWD/src/*.cpp
+SOURCES     += \
+    $$PWD/src/chunkeddownloadertests.cpp \
+    $$PWD/src/contentsummarytests.cpp \
+    $$PWD/src/downloaderpooltests.cpp \
+    $$PWD/src/downloadertests.cpp \
+    $$PWD/src/downloadoperatortests.cpp \
+    $$PWD/src/hashingstrategiestests.cpp \
+    $$PWD/src/mockednam.cpp \
+    $$PWD/src/mockedreply.cpp\
+    $$PWD/src/main.cpp
+
+
 HEADERS     += $$PWD/src/*.h
 
 include(../link_static.pri)
