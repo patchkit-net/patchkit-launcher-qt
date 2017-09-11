@@ -49,8 +49,10 @@ public:
     virtual void add(Downloader* t_downloader) override;
     virtual void remove(Downloader* t_downloader) override;
 
+    bool hasOwnership() const;
+
 private:
-    bool m_isIndependent;
+    bool m_isOwner;
     std::vector<Downloader*> m_pool;
 };
 

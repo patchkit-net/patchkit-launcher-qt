@@ -213,13 +213,13 @@ QByteArray DownloaderOperator::download(BaseDownloadStrategy& t_downloadStrategy
 }
 
 DownloaderPool::DownloaderPool(const DownloaderPool& t_downloaderPool)
-    : m_isIndependent(false)
+    : m_isOwner(false)
     , m_pool(t_downloaderPool.m_pool)
 {
 }
 
 DownloaderPool::DownloaderPool(Downloader::TDataSource t_dataSource, const IUrlProvider& t_urlProvider, CancellationToken t_cancellationToken)
-    : m_isIndependent(true)
+    : m_isOwner(true)
 {
     for (int i = 0; i < t_urlProvider.getVariantCount(); i++)
     {
@@ -228,21 +228,21 @@ DownloaderPool::DownloaderPool(Downloader::TDataSource t_dataSource, const IUrlP
 }
 
 DownloaderPool::DownloaderPool(std::initializer_list<Downloader*> t_downloaders)
-    : m_isIndependent(false)
+    : m_isOwner(false)
     , m_pool(t_downloaders)
 {
 
 }
 
 DownloaderPool::DownloaderPool(const std::vector<Downloader*>& t_downloaders)
-    : m_isIndependent(false)
+    : m_isOwner(false)
     , m_pool(t_downloaders)
 {
 }
 
 DownloaderPool::~DownloaderPool()
 {
-    if (m_isIndependent)
+    if (m_isOwner)
     {
         for (Downloader* d : m_pool)
         {
@@ -253,7 +253,7 @@ DownloaderPool::~DownloaderPool()
 
 void DownloaderPool::add(Downloader* t_downloader)
 {
-    if (m_isIndependent)
+    if (m_isOwner)
     {
         qWarning("Adding a downloader to an independent pool, changes it's ownership.");
     }
@@ -263,12 +263,17 @@ void DownloaderPool::add(Downloader* t_downloader)
 
 void DownloaderPool::remove(Downloader* t_downloader)
 {
-    if (m_isIndependent)
+    if (m_isOwner)
     {
         qWarning("Removing a downloader from an independent pool, changes it's ownership.");
     }
 
     m_pool.erase(std::remove(m_pool.begin(), m_pool.end(), t_downloader), m_pool.end());
+}
+
+bool DownloaderPool::hasOwnership() const
+{
+    return m_isOwner;
 }
 
 void IDownloaderPool::append(const std::vector<Downloader*>& t_downloaders)
