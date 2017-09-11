@@ -42,6 +42,7 @@ SCENARIO("Downloader life.")
     REQUIRE(d.wasStarted()  == true);
     REQUIRE(d.isRunning()   == false);
     REQUIRE(d.isFinished()  == true);
+    REQUIRE(d.encounteredAnError() == false);
 
     QByteArray data = d.readData();
 

@@ -53,7 +53,7 @@ void Downloader::start()
             static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
             this, &Downloader::errorRelay);
 
-    connect(m_remoteDataReply, &QNetworkReply::downloadProgress, this, &Downloader::downloadProgressChanged);
+    connect(m_remoteDataReply, &QNetworkReply::downloadProgress, this, &Downloader::progressChanged);
     connect(&m_cancellationToken, &CancellationToken::cancelled, m_remoteDataReply, &QNetworkReply::abort);
 }
 
@@ -104,8 +104,8 @@ void Downloader::waitUntilFinished()
 
     QEventLoop waitUntilFinishedLoop;
 
-    connect(this, &Downloader::downloadFinished, &waitUntilFinishedLoop, &QEventLoop::quit);
-    connect(this, &Downloader::downloadError, &waitUntilFinishedLoop, &QEventLoop::quit);
+    connect(this, &Downloader::finished, &waitUntilFinishedLoop, &QEventLoop::quit);
+    connect(this, &Downloader::error, &waitUntilFinishedLoop, &QEventLoop::quit);
 
     waitUntilFinishedLoop.exec();
 }
@@ -157,7 +157,7 @@ void Downloader::readyReadRelay()
 {
     m_isActive = true;
 
-    emit downloadStarted(getStatusCode());
+    emit started(getStatusCode());
 
     disconnect(m_remoteDataReply, &QNetworkReply::readyRead, this, &Downloader::readyReadRelay);
 }
@@ -173,7 +173,7 @@ void Downloader::errorRelay(QNetworkReply::NetworkError t_errorCode)
 
     m_lastError = t_errorCode;
 
-    emit downloadError(t_errorCode);
+    emit error(t_errorCode);
 }
 
 void Downloader::finishedRelay()
@@ -207,7 +207,7 @@ void Downloader::finishedRelay()
     }
 
     qInfo("Emitting finished signal.");
-    emit downloadFinished();
+    emit finished();
 }
 
 bool Downloader::doesStatusCodeIndicateSuccess(int t_statusCode)

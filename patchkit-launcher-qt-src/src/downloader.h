@@ -21,10 +21,8 @@ enum class DownloadError
 class Downloader : public QObject
 {
     Q_OBJECT
-
 public:
     typedef QNetworkAccessManager* TDataSource;
-
     typedef QNetworkReply* TRemoteDataReply;
 
     Downloader(const QString& t_resourceUrl, TDataSource t_dataSource, CancellationToken& t_cancellationToken);
@@ -51,10 +49,10 @@ public:
     static int  getReplyStatusCode(TRemoteDataReply t_reply);
 
 signals:
-    void downloadProgressChanged(TByteCount t_bytesDownloaded, TByteCount t_totalBytes) const;
-    void downloadStarted(int t_statusCode);
-    void downloadFinished();
-    void downloadError(QNetworkReply::NetworkError t_errorCode);
+    void progressChanged(TByteCount t_bytesDownloaded, TByteCount t_totalBytes) const;
+    void started(int t_statusCode);
+    void finished();
+    void error(QNetworkReply::NetworkError t_errorCode);
 
 public slots:
     void start();

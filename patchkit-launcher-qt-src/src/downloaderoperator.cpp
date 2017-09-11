@@ -77,8 +77,8 @@ Downloader* DownloaderOperator::waitForAnyToStart(CancellationToken t_cancellati
 
     for (auto downloader : startingDownloaders)
     {
-        connect(downloader, &Downloader::downloadStarted, &loop, &QEventLoop::quit);
-        localConnections.push_back(connect(downloader, &Downloader::downloadError, errorCatch));
+        connect(downloader, &Downloader::started, &loop, &QEventLoop::quit);
+        localConnections.push_back(connect(downloader, &Downloader::error, errorCatch));
     }
 
     connect(&t_cancellationToken, &CancellationToken::cancelled, &loop, &QEventLoop::quit);
@@ -144,7 +144,7 @@ Downloader* DownloaderOperator::waitForAnyToFinish(CancellationToken t_cancellat
 
     for (auto downloader : activeDownloaders)
     {
-        connect(downloader, &Downloader::downloadFinished, &loop, &QEventLoop::quit);
+        connect(downloader, &Downloader::finished, &loop, &QEventLoop::quit);
     }
 
     connect(&t_cancellationToken, &CancellationToken::cancelled, &loop, &QEventLoop::quit);
