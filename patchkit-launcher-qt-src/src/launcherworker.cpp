@@ -182,7 +182,7 @@ void LauncherWorker::runWithData(Data& t_data)
     try
     {
         emit progressChanged(0);
-        emit statusChanged("Waiting...");
+        emit statusChanged("Initializing...");
 
         qInfo("Starting launcher.");
 
