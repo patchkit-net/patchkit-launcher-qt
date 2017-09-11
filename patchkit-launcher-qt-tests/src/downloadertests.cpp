@@ -20,7 +20,7 @@ SCENARIO("Downloader life.")
     QByteArray originalData = "somedata";
     nam.push("link", originalData, 300);
 
-    std::shared_ptr<CancellationTokenSource> tokenSource(new CancellationTokenSource());
+    CancellationTokenSource tokenSource;
     CancellationToken token(tokenSource);
 
     Downloader d("link", &nam, token);
@@ -58,7 +58,7 @@ SCENARIO("Downloading partial data.")
 
     nam.push("link", originalData, 300);
 
-    std::shared_ptr<CancellationTokenSource> tokenSource(new CancellationTokenSource());
+    CancellationTokenSource tokenSource;
     CancellationToken token(tokenSource);
 
     Downloader d("link", &nam, token);

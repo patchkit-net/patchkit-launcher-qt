@@ -7,9 +7,7 @@ TEMPLATE = app
 
 INCLUDEPATH += $$PWD/src
 
-#SOURCES     += $$PWD/src/*.cpp
-#HEADERS     += $$PWD/src/*.h
-
-SOURCES     += $$PWD/src/main.cpp
+SOURCES     += $$PWD/src/*.cpp
+HEADERS     += $$PWD/src/*.h
 
 include(../link_static.pri)
