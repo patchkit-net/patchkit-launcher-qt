@@ -5,6 +5,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+### Added
+- A few test cases regarding new changes
+
+### Changed
+- A significant part of codebase responsible for downloading
+
+### Fixed
+- The "Launcher is stuck on 'Waiting...'" bug
+- Crashes caused by unmanaged signal calls
 
 ## [v1.0.2-rc2] - 2017-08-21
 ### Fixed
