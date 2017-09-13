@@ -14,6 +14,8 @@
 
 #include "idownloadstrategy.h"
 
+#include "config.h"
+
 #include "downloaderoperator.h"
 
 ChunkedDownloader::ChunkedDownloader(
@@ -21,13 +23,14 @@ ChunkedDownloader::ChunkedDownloader(
         const ContentSummary& t_contentSummary,
         HashFunc t_hashingStrategy,
         CancellationToken t_cancellationToken,
+        LauncherState& t_state,
         const IApi& t_api
         )
     : m_hashingStrategy(t_hashingStrategy)
     , m_contentSummary(t_contentSummary)
     , m_cancellationToken(t_cancellationToken)
+    , m_state(t_state)
     , m_dataSource(t_dataSource)
-    , m_downloadStrategy(10000, 30000, *this)
     , m_api(t_api)
 {
 }
@@ -49,12 +52,15 @@ QByteArray ChunkedDownloader::downloadFile(const QStringList& t_contentUrls)
     DownloaderOperator op(m_dataSource, urlProvider, m_cancellationToken);
 
     connect(&op, &DownloaderOperator::downloadProgress, this, &ChunkedDownloader::downloadProgress);
-    connect(&m_downloadStrategy, &ChunkedDownloadStrategy::error, this, &ChunkedDownloader::downloadError);
 
-    connect(this, &ChunkedDownloader::proceed, &m_downloadStrategy, &BaseDownloadStrategy::proceed);
-    connect(this, &ChunkedDownloader::stop, &m_downloadStrategy, &BaseDownloadStrategy::stop);
+    ChunkedDownloadStrategy strategy(
+                op,
+                m_state,
+                Config::minConnectionTimeoutMsec,
+                Config::maxConnectionTimeoutMsec,
+                *this);
 
-    QByteArray data = op.download(&m_downloadStrategy);
+    QByteArray data = op.download(strategy, m_cancellationToken);
 
     return data;
 }

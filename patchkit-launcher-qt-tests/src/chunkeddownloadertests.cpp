@@ -29,8 +29,9 @@ private:
 
 SCENARIO("Testing chunk verification.")
 {
-    std::shared_ptr<CancellationTokenSource> tokenSource(new CancellationTokenSource());
+    CancellationTokenSource tokenSource;
     CancellationToken token(tokenSource);
+    LauncherState state;
     MockedNAM nam;
     MockApi api;
 
@@ -40,7 +41,7 @@ SCENARIO("Testing chunk verification.")
         QByteArray data = "veryrandomstringofdata";
         ContentSummary contentSummary = ContentSummary::fromData(data, chunkSize, &HashingStrategy::xxHash);
 
-        ChunkedDownloader chunkedDownloader(&nam, contentSummary, &HashingStrategy::xxHash, token, api);
+        ChunkedDownloader chunkedDownloader(&nam, contentSummary, &HashingStrategy::xxHash, token, state, api);
 
         THEN("Given valid data, verification should complete without issues.")
         {

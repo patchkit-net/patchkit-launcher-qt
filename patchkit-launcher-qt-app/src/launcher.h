@@ -9,6 +9,7 @@
 
 #include "mainwindow.h"
 #include <src/launcherworker.h>
+#include "src/launcherstate.h"
 
 class Launcher : public QObject
 {
@@ -25,11 +26,8 @@ private slots:
 
     void onError(DownloadError t_error);
 
-signals:
-    void requestContinue();
-    void requestStop();
-
 private:
-    std::unique_ptr<MainWindow> m_mainWindow;
-    std::shared_ptr<LauncherWorker> m_worker;
+    LauncherState m_state;
+    LauncherWorker m_worker;
+    MainWindow m_mainWindow;
 };

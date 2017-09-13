@@ -15,10 +15,14 @@
 
 #include "logger.h"
 
-Api::Api(Downloader::TDataSource t_dataSource, CancellationToken t_cancellationToken, QObject* parent)
+Api::Api(
+        Downloader::TDataSource t_dataSource,
+        CancellationToken t_cancellationToken,
+        LauncherState& t_state,
+        QObject* parent)
     : QObject(parent)
-    , m_strategy(Config::minConnectionTimeoutMsec, Config::maxConnectionTimeoutMsec)
     , m_cancellationToken(t_cancellationToken)
+    , m_state(t_state)
     , m_dataSource(t_dataSource)
 {
 }
@@ -129,11 +133,6 @@ int Api::downloadPatcherVersion(const QString& t_resourceUrl)
     QByteArray data;
     data = downloadInternal(t_resourceUrl);
 
-    if (!m_didLastDownloadSucceed)
-    {
-        throw ContentUnavailableException("Couldn't download patcher secret.");
-    }
-
     QJsonDocument doc = QJsonDocument::fromJson(data);
 
     if (!doc.isObject())
@@ -222,30 +221,32 @@ QStringList Api::downloadContentUrls(const QString& t_patcherSecret, int t_versi
 
 bool Api::geolocate()
 {
-    QUrl url(Config::geolocationApiUrl);
+    Downloader downloader(Config::geolocationApiUrl, m_dataSource, m_cancellationToken);
+    DownloaderOperator op({&downloader});
 
-    QNetworkRequest request(url);
+    op.startAll();
 
-    auto reply = m_dataSource->get(request);
+    auto finishedDownloader = op.waitForAnyToFinish(m_cancellationToken, Config::geolocationTimeout);
 
-    QEventLoop waitLoop;
-
-    connect(reply, &QNetworkReply::finished, &waitLoop, &QEventLoop::quit);
-    QTimer::singleShot(Config::geolocationTimeout, &waitLoop, &QEventLoop::quit);
-
-    waitLoop.exec();
-
-    auto data = reply->readAll();
-
-    int replyStatusCode = Downloader::getReplyStatusCode(reply);
-
-    if (!Downloader::doesStatusCodeIndicateSuccess(replyStatusCode))
+    if (!finishedDownloader)
     {
+        qWarning("Geolocation download process failed.");
         return false;
     }
 
+    int replyStatusCode = finishedDownloader->getStatusCode();
+
+    if (!Downloader::doesStatusCodeIndicateSuccess(replyStatusCode))
+    {
+        qWarning() << "Geolocation failed, reply status code was " << replyStatusCode;
+        return false;
+    }
+
+    auto data = finishedDownloader->readData();
+
     if (data == QByteArray())
     {
+        qWarning("Geolocation failed, reply data was empty.");
         return false;
     }
 
@@ -253,6 +254,7 @@ bool Api::geolocate()
 
     if (!jsonDocument.isObject())
     {
+        qWarning("Geolocation failed, couldn't create a json document from data.");
         return false;
     }
 
@@ -260,6 +262,7 @@ bool Api::geolocate()
 
     if (!root.contains("country"))
     {
+        qWarning("Geolocation failed, no field named country in the root json object.");
         return false;
     }
 
@@ -267,6 +270,7 @@ bool Api::geolocate()
 
     if (!countryValue.isString())
     {
+        qWarning("Geolocation failed, country field value was not a string.");
         return false;
     }
 
@@ -279,19 +283,6 @@ bool Api::geolocate()
 const QString& Api::getCountryCode() const
 {
     return m_countryCode;
-}
-
-void Api::downloadErrorRelay(DownloadError t_error)
-{
-    if (t_error == DownloadError::ContentUnavailable)
-    {
-        m_didLastDownloadSucceed = false;
-        m_strategy.stop();
-    }
-    else
-    {
-        emit downloadError(t_error);
-    }
 }
 
 QByteArray Api::downloadInternal(const QString& t_resourceUrl)
@@ -309,12 +300,14 @@ QByteArray Api::downloadInternal(const QString& t_resourceUrl)
 
     DownloaderOperator op(m_dataSource, urlProvider, m_cancellationToken);
 
-    connect(&m_strategy, &DefaultDownloadStrategy::error, this, &Api::downloadErrorRelay);
-    connect(this, &Api::proceed, &m_strategy, &BaseDownloadStrategy::proceed);
-    connect(this, &Api::stop, &m_strategy, &BaseDownloadStrategy::stop);
+    DefaultDownloadStrategy strategy(
+                op,
+                m_state,
+                Config::minConnectionTimeoutMsec,
+                Config::maxConnectionTimeoutMsec);
 
     QByteArray data;
-    data = op.download(&m_strategy);
+    data = op.download(strategy, m_cancellationToken);
 
     return data;
 }

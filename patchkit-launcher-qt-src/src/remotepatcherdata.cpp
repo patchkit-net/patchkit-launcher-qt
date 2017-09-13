@@ -13,14 +13,11 @@
 
 #include "api.h"
 
-RemotePatcherData::RemotePatcherData(Api& t_api, QNetworkAccessManager* t_networkAccessManager)
+RemotePatcherData::RemotePatcherData(LauncherState& t_launcherState, Api& t_api, QNetworkAccessManager* t_networkAccessManager)
     : m_networkAccessManager(t_networkAccessManager)
+    , m_launcherState(t_launcherState)
     , m_api(t_api)
 {
-    connect(&m_api, &Api::downloadError, this, &RemotePatcherData::downloadError);
-
-    connect(this, &RemotePatcherData::proceed, &m_api, &Api::proceed);
-    connect(this, &RemotePatcherData::stop, &m_api, &Api::stop);
 }
 
 int RemotePatcherData::getVersion(const Data& t_data, CancellationToken /*t_cancellationToken*/)
@@ -95,13 +92,10 @@ void RemotePatcherData::download(QIODevice& t_dataTarget, const Data& t_data, in
                     summary,
                     HashingStrategy::xxHash,
                     t_cancellationToken,
+                    m_launcherState,
                     m_api);
 
-        connect(&downloader, &ChunkedDownloader::downloadError, this, &RemotePatcherData::downloadError);
         connect(&downloader, &ChunkedDownloader::downloadProgress, this, &RemotePatcherData::downloadProgressChanged);
-
-        connect(this, &RemotePatcherData::proceed, &downloader, &ChunkedDownloader::proceed);
-        connect(this, &RemotePatcherData::stop, &downloader, &ChunkedDownloader::stop);
 
         QByteArray data = downloader.downloadFile(contentUrls);
 

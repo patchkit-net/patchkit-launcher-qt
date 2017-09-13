@@ -27,27 +27,25 @@ public:
         FATAL_ERROR
     };
 
-    LauncherWorker();
+    LauncherWorker(LauncherState& t_launcherState, QObject* parent = nullptr);
 
     void cancel();
-    bool isLocalPatcherInstalled() const;
+
+    bool canStartPatcher() const;
+    void startPatcher();
+
+    void resolveData();
 
     Result result() const;
 signals:
     void statusChanged(const QString& t_status);
     void progressChanged(int t_progress);
-    void downloadError(DownloadError t_error);
-
-    // Control signals
-    void workerContinue();
-    void workerStop();
 
 public slots:
-    void stopUpdate();
+    void stop();
 
 private slots:
     void setDownloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes);
-    void downloadErrorRelay(DownloadError t_error);
 
 private:
 #ifdef Q_OS_WIN
@@ -63,12 +61,14 @@ private:
 
     bool tryToFetchPatcherSecret(Data& t_data);
 
+    bool isLocalPatcherInstalled() const;
     void updatePatcher(const Data& t_data);
     void startPatcher(const Data& t_data);
 
     void checkIfCurrentDirectoryIsWritable();
 
-    std::shared_ptr<CancellationTokenSource> m_cancellationTokenSource;
+    CancellationTokenSource m_cancellationTokenSource;
+    LauncherState& m_launcherState;
 
     QNetworkAccessManager m_networkAccessManager;
 
@@ -78,5 +78,5 @@ private:
 
     Result m_result;
 
-    bool m_shouldUpdate;
+    Data m_data;
 };

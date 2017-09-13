@@ -25,7 +25,7 @@ bool Data::canLoadFromConfig()
 
 Data Data::loadFromConfig()
 {
-    if (!canLoadFromConfig)
+    if (!canLoadFromConfig())
     {
         throw std::runtime_error("Can't load data from config.");
     }

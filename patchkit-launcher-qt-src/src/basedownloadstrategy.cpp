@@ -9,16 +9,15 @@
 
 #include <QMessageBox>
 
-void BaseDownloadStrategy::start(DownloaderOperator* t_operator)
+BaseDownloadStrategy::BaseDownloadStrategy(DownloaderOperator& t_operator, LauncherState& t_state)
+    : m_operator(t_operator)
+    , m_state(t_state)
 {
-    m_operator = t_operator;
-
-    startInternal();
 }
 
-void BaseDownloadStrategy::finish()
+void BaseDownloadStrategy::start(CancellationToken t_cancellationToken)
 {
-    finishInternal();
+    execute(t_cancellationToken);
 }
 
 QByteArray BaseDownloadStrategy::data()
@@ -26,17 +25,19 @@ QByteArray BaseDownloadStrategy::data()
     return m_data;
 }
 
-void BaseDownloadStrategy::proceed()
-{
-    proceedInternal();
-}
-
-void BaseDownloadStrategy::stop()
-{
-    stopInternal();
-}
-
 void BaseDownloadStrategy::downloadProgressRelay(const long long& t_bytesDownloaded, const long long& t_totalBytes)
 {
     emit downloadProgress(t_bytesDownloaded, t_totalBytes);
+}
+
+void BaseDownloadStrategy::watchProgressOf(Downloader* t_downloader)
+{
+    connect(t_downloader, &Downloader::progressChanged,
+            this, &BaseDownloadStrategy::downloadProgressRelay);
+}
+
+void BaseDownloadStrategy::stopWatchingProgressOf(Downloader* t_downloader)
+{
+    disconnect(t_downloader, &Downloader::progressChanged,
+               this, &BaseDownloadStrategy::downloadProgressRelay);
 }

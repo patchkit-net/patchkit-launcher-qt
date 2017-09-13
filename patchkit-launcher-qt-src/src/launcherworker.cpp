@@ -22,31 +22,9 @@ void LauncherWorker::run()
 {
     try
     {
-        if (Data::canLoadFromConfig())
-        {
-            qInfo("Detected inlined data.");
-            runWithInlineData();
+        resolveData();
 
-            m_result = SUCCESS;
-            qInfo("Launcher has succeeded.");
-            return;
-        }
-
-#ifdef Q_OS_WIN
-        try
-        {
-            runWithDataFromResource();
-            return;
-        }
-        catch (std::exception& exception)
-        {
-            qWarning(exception.what());
-        }
-
-        qWarning("Running with data from resources has failed. Trying to run with data from file located in current directory.");
-#endif
-
-        runWithDataFromFile();
+        runWithData(m_data);
 
         m_result = SUCCESS;
         qInfo("Launcher has succeeded.");
@@ -73,28 +51,72 @@ void LauncherWorker::run()
     }
 }
 
-LauncherWorker::LauncherWorker()
-    : m_cancellationTokenSource(new CancellationTokenSource())
-    , m_api(&m_networkAccessManager, CancellationToken(m_cancellationTokenSource))
-    , m_remotePatcher(m_api, &m_networkAccessManager)
+LauncherWorker::LauncherWorker(LauncherState& t_launcherState, QObject* parent)
+    : QThread(parent)
+    , m_launcherState(t_launcherState)
+    , m_api(&m_networkAccessManager, CancellationToken(m_cancellationTokenSource), m_launcherState)
+    , m_remotePatcher(m_launcherState, m_api, &m_networkAccessManager)
     , m_result(NONE)
-    , m_shouldUpdate(true)
 {
     m_api.moveToThread(this);
     m_networkAccessManager.moveToThread(this);
     m_remotePatcher.moveToThread(this);
     m_localPatcher.moveToThread(this);
-
-    connect(&m_remotePatcher, &RemotePatcherData::downloadError, this, &LauncherWorker::downloadErrorRelay);
-    connect(this, &LauncherWorker::workerContinue, &m_remotePatcher, &RemotePatcherData::proceed);
-    connect(this, &LauncherWorker::workerStop, &m_remotePatcher, &RemotePatcherData::stop);
 }
 
 void LauncherWorker::cancel()
 {
     qInfo("Cancelling launcher thread.");
 
-    m_cancellationTokenSource->cancel();
+    m_cancellationTokenSource.cancel();
+}
+
+bool LauncherWorker::canStartPatcher() const
+{
+    return isLocalPatcherInstalled();
+}
+
+void LauncherWorker::startPatcher()
+{
+    startPatcher(m_data);
+}
+
+void LauncherWorker::resolveData()
+{
+    qInfo("Resolving data.");
+    if (Data::canLoadFromConfig())
+    {
+        try
+        {
+            m_data = Data::loadFromConfig();
+            qInfo("Loaded inline data.");
+            return;
+        }
+        catch(std::exception& e)
+        {
+            qWarning() << e.what();
+        }
+    }
+
+#ifdef Q_OS_WIN
+    try
+    {
+        m_data = Data::loadFromResources(Locations::getInstance().applicationFilePath(),
+                                            Config::dataResourceId,
+                                            Config::dataResourceTypeId);
+        qInfo("Loaded data from resource.");
+        return;
+    }
+    catch(std::exception& e)
+    {
+        qWarning(e.what());
+    }
+
+#endif
+
+    m_data = Data::loadFromFile(Locations::getInstance().dataFilePath());
+    qInfo("Loaded data from file.");
+    return;
 }
 
 bool LauncherWorker::isLocalPatcherInstalled() const
@@ -107,9 +129,9 @@ LauncherWorker::Result LauncherWorker::result() const
     return m_result;
 }
 
-void LauncherWorker::stopUpdate()
+void LauncherWorker::stop()
 {
-    m_shouldUpdate = false;
+    m_cancellationTokenSource.cancel();
 }
 
 void LauncherWorker::setDownloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes)
@@ -119,11 +141,6 @@ void LauncherWorker::setDownloadProgress(const long long& t_bytesDownloaded, con
 
     emit statusChanged(QString("Downloading %1 / %2 KB").arg(QString::number(kilobytesDownloaded), QString::number(totalKilobytes)));
     emit progressChanged(qCeil((qreal(t_bytesDownloaded) / t_totalBytes) * 100.0));
-}
-
-void LauncherWorker::downloadErrorRelay(DownloadError /*t_error*/)
-{
-    // TODO: implement
 }
 
 #ifdef Q_OS_WIN
@@ -164,7 +181,7 @@ void LauncherWorker::runWithData(Data& t_data)
     try
     {
         emit progressChanged(0);
-        emit statusChanged("Waiting...");
+        emit statusChanged("Initializing...");
 
         qInfo("Starting launcher.");
 
@@ -179,11 +196,6 @@ void LauncherWorker::runWithData(Data& t_data)
         }
 
         setupPatcherSecret(t_data);
-
-        if (!m_shouldUpdate)
-        {
-            throw std::runtime_error("Offline mode was requested.");
-        }
 
         Locations::getInstance().initializeWithData(t_data);
 

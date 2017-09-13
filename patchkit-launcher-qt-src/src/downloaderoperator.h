@@ -15,32 +15,78 @@
 
 #include "urlprovider.h"
 
-class DownloaderOperator : public QObject
+class IDownloaderPool
+{
+public:
+    typedef bool (*TDownloaderPredicate)(Downloader*);
+
+    virtual std::vector<Downloader*> getDownloaders(TDownloaderPredicate t_predicate = nullptr) const = 0;
+
+    virtual void add(Downloader* t_downloader) = 0;
+    virtual void remove(Downloader* t_downloader) = 0;
+
+    void append(const std::vector<Downloader*>& t_downloaders);
+
+    std::vector<Downloader*> getFinishedDownloaders() const;
+    std::vector<Downloader*> getActiveDownloaders() const;
+    std::vector<Downloader*> getStartingDownloaders() const;
+    std::vector<Downloader*> getInactiveDownloaders() const;
+
+    size_t poolSize() const;
+};
+
+class DownloaderPool : public IDownloaderPool
+{
+public:
+    DownloaderPool(const DownloaderPool& t_downloaderPool);
+    DownloaderPool(Downloader::TDataSource t_dataSource, const IUrlProvider& t_urlProvider, CancellationToken t_cancellationToken);
+    DownloaderPool(std::initializer_list<Downloader*> t_downloaders);
+    DownloaderPool(const std::vector<Downloader*>& t_downloaders);
+
+    ~DownloaderPool();
+
+    virtual std::vector<Downloader*> getDownloaders(TDownloaderPredicate t_predicate = nullptr) const override;
+    virtual void add(Downloader* t_downloader) override;
+    virtual void remove(Downloader* t_downloader) override;
+
+    bool hasOwnership() const;
+
+private:
+    bool m_isOwner;
+    std::vector<Downloader*> m_pool;
+};
+
+/**
+ * @brief The DownloaderOperator class
+ */
+class DownloaderOperator : public QObject, public IDownloaderPool
 {
     Q_OBJECT
 public:
     DownloaderOperator(Downloader::TDataSource t_dataSource, const IUrlProvider& t_urlProvider, CancellationToken t_cancellationToken, QObject* parent = nullptr);
-    ~DownloaderOperator();
+    DownloaderOperator(std::initializer_list<Downloader*> t_downloaders, QObject* parent = nullptr);
+    DownloaderOperator(const DownloaderPool& t_downloaderPool, QObject* parent = nullptr);
 
-    QByteArray download(BaseDownloadStrategy* t_downloadStrategy = nullptr);
+    virtual std::vector<Downloader*> getDownloaders(TDownloaderPredicate t_predicate = nullptr) const override;
+    virtual void add(Downloader* t_downloader) override;
+    virtual void remove(Downloader* t_downloader) override;
 
-    // Returns all downloaders that have been started and have successfully started downloading
-    std::vector<Downloader*> getActiveDownloaders() const;
+    Downloader* waitForAnyToStart(CancellationToken t_cancellationToken, int t_timeoutMsec = -1);
+    Downloader* waitForAnyToFinish(CancellationToken t_cancellationToken, int t_timeoutMsec = -1);
 
-    // Returns all downloaders that have been started but haven't started downloading yet
-    std::vector<Downloader*> getStartingDownloaders() const;
+    void startAll();
 
-    // Returns all downloaders that haven't been started ( or aren't running )
-    std::vector<Downloader*> getInactiveDownloaders() const;
-
-    std::vector<Downloader*> getDownloaders(bool (*t_predicate)(Downloader*) = nullptr) const;
-
+    void stopAllExcept(Downloader* t_downloader);
     void stopAll();
+
+    void setRange(int t_bytesStart, int t_bytesEnd = -1);
+
+    QByteArray download(BaseDownloadStrategy& t_downloadStrategy, CancellationToken t_cancellationToken);
 
 signals:
     void downloadProgress(long long t_bytesDownloaded, long long t_totalBytes);
 
 private:
-    CancellationToken m_cancellationToken;
-    std::vector<Downloader*> m_downloaders;
+    DownloaderPool m_pool;
+
 };

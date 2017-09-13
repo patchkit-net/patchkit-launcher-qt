@@ -26,6 +26,7 @@ public:
             const ContentSummary& t_contentSummary,
             HashFunc t_hashingStrategy,
             CancellationToken t_cancellationToken,
+            LauncherState& t_state,
             const IApi& t_api
             );
 
@@ -37,17 +38,13 @@ public:
 
 signals:
     void downloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes);
-    void downloadError(DownloadError t_error);
-
-    void proceed();
-    void stop();
 
 private:
     HashFunc                m_hashingStrategy;
     const ContentSummary&   m_contentSummary;
     CancellationToken       m_cancellationToken;
+    LauncherState&          m_state;
     Downloader::TDataSource m_dataSource;
-    ChunkedDownloadStrategy m_downloadStrategy;
 
     const IApi&             m_api;
 
