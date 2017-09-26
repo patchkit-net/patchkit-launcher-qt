@@ -31,9 +31,9 @@ const QString Config::mainApiUrl = "https://api.patchkit.net";
 
 const QStringList Config::cacheApiUrls = {
     "https://api-cache.patchkit.net",
-    "https://api-cache-1.patchkit.net",
-    "https://api-cache-2.patchkit.net",
-    "https://api-cache-3.patchkit.net"
+    "http://api-cache-1.patchkit.net",
+    "http://api-cache-2.patchkit.net",
+    "http://api-cache-3.patchkit.net"
 };
 
 const QString Config::geolocationApiUrl = "https://ip2loc.patchkit.net/v1/country";
