@@ -27,7 +27,7 @@ const QString Config::applicationDirectoryName = "app";
 const int Config::minConnectionTimeoutMsec = 10000;
 const int Config::maxConnectionTimeoutMsec = 30000;
 
-const QString Config::mainApiUrl = "https://api.patchkit.net";
+const QString Config::mainApiUrl = "https://api2.patchkit.net";
 
 const QStringList Config::cacheApiUrls = {
     "https://api-cache.patchkit.net",
