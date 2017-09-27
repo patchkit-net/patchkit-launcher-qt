@@ -6,7 +6,9 @@
 #include "launcher.h"
 
 #include <QMessageBox>
+#include <QDebug>
 
+#include <src/config.h>
 #include <src/logger.h>
 #include <src/locations.h>
 
@@ -20,7 +22,7 @@ Launcher::Launcher(const QApplication& t_application)
 
 void Launcher::start()
 {
-    qInfo("Starting launcher.");
+    qInfo() << "Starting launcher, version: " << Globals::gitVersion();
     connect(&m_worker, &QThread::finished, this, &Launcher::finish);
 
     qInfo("Showing main window.");
