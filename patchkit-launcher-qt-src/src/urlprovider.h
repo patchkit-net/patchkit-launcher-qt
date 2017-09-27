@@ -16,6 +16,7 @@ public:
     virtual QString getVariant(int index) const = 0;
 
     virtual void setCountryCode(const QString& t_countryCode) = 0;
+    virtual void setIdentifier(const QString& t_version) = 0;
 };
 
 class StringUrlProvider : public IUrlProvider
@@ -27,12 +28,14 @@ public:
     virtual QString getVariant(int index) const override;
 
     virtual void setCountryCode(const QString& t_countryCode) override;
+    virtual void setIdentifier(const QString& t_version) override;
 
 protected:
     std::vector<QString> m_variants;
 
 private:
     QString m_countryCode;
+    QString m_identifierVersion;
 };
 
 class StringConcatUrlProvider : public StringUrlProvider

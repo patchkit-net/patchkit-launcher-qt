@@ -1,5 +1,7 @@
 #include "urlprovider.h"
 
+#include "config.h"
+
 StringUrlProvider::StringUrlProvider(const QStringList& urls)
 {
     for (QString url : urls)
@@ -22,12 +24,22 @@ QString StringUrlProvider::getVariant(int index) const
         var += "?country=" + m_countryCode;
     }
 
+    if (m_identifierVersion != QString())
+    {
+        var += "?caller=launcher:" + m_identifierVersion;
+    }
+
     return var;
 }
 
 void StringUrlProvider::setCountryCode(const QString& t_countryCode)
 {
     m_countryCode = t_countryCode;
+}
+
+void StringUrlProvider::setIdentifier(const QString& t_version)
+{
+    m_identifierVersion = t_version;
 }
 
 StringConcatUrlProvider::StringConcatUrlProvider(const QStringList& hosts, const QString& path)
