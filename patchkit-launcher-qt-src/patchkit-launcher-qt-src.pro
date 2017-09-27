@@ -6,7 +6,7 @@ TARGET = LauncherLib
 TEMPLATE = lib
 CONFIG += staticlib
 
-DEFINES += GIT_VERSION=\\\"$$system(git describe --always --tags)\\\"
+DEFINES += GIT_VERSION=\\\"$$str_member($$system(git describe --tags --abbrev=0), 1, -1)\\\"
 
 INCLUDEPATH += $$PWD/src
 
