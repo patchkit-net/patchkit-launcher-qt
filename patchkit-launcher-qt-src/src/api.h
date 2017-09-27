@@ -41,7 +41,7 @@ public:
     const QString&  getCountryCode() const override;
 
 private:
-    QByteArray downloadInternal(const QString& t_resourceUrl);
+    QByteArray downloadInternal(const QString& t_resourceUrl, bool t_withGeolocation = false);
     CancellationToken m_cancellationToken;
     LauncherState& m_state;
     Downloader::TDataSource m_dataSource;

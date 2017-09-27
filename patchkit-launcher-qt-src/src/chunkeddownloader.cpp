@@ -44,11 +44,6 @@ QByteArray ChunkedDownloader::downloadFile(const QStringList& t_contentUrls)
 
     StringUrlProvider urlProvider(t_contentUrls);
 
-    if (m_api.getCountryCode() != QString())
-    {
-        urlProvider.setCountryCode(m_api.getCountryCode());
-    }
-
     DownloaderOperator op(m_dataSource, urlProvider, m_cancellationToken);
 
     connect(&op, &DownloaderOperator::downloadProgress, this, &ChunkedDownloader::downloadProgress);

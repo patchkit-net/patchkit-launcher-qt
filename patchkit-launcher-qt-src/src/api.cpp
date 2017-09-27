@@ -164,7 +164,7 @@ QStringList Api::downloadContentUrls(const QString& t_resourceUrl)
     qInfo("Downloading content urls.");
 
     QByteArray data;
-    data = downloadInternal(t_resourceUrl);
+    data = downloadInternal(t_resourceUrl, true);
 
     QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
 
@@ -287,7 +287,7 @@ const QString& Api::getCountryCode() const
     return m_countryCode;
 }
 
-QByteArray Api::downloadInternal(const QString& t_resourceUrl)
+QByteArray Api::downloadInternal(const QString& t_resourceUrl, bool t_withGeolocation)
 {
     auto environment = QProcessEnvironment::systemEnvironment();
 
@@ -306,7 +306,7 @@ QByteArray Api::downloadInternal(const QString& t_resourceUrl)
     m_didLastDownloadSucceed = true;
 
     StringConcatUrlProvider urlProvider(totalUrlBases, t_resourceUrl);
-    if (m_countryCode != QString())
+    if (t_withGeolocation && m_countryCode != QString())
     {
         urlProvider.setCountryCode(m_countryCode);
     }
