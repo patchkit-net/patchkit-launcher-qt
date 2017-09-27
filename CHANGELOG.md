@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v1.1.0]
+### Added
+- Caller identification in API calls
+- Logging current launcher version
+
+### Changed
+- Launcher will use API Gateway (api2.patchkit.net) from now on
+
+### Fixed
+- Launcher now only includes country code in appropriate api calls
+
 ## [v1.0.3]
 ### Added
 - Additional api-cache server
