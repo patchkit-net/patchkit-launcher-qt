@@ -20,6 +20,7 @@
 
 void LauncherWorker::run()
 {
+    qInfo() << "Launcher version is: " << Globals::gitVersion();
     try
     {
         resolveData();
