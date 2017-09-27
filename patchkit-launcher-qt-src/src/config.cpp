@@ -36,6 +36,8 @@ const QStringList Config::cacheApiUrls = {
     "http://api-cache-3.patchkit.net"
 };
 
+const QString Config::apiUrlOverrideEnvironmentVariableName = "PK_LAUNCHER_API_URL";
+
 const QString Config::geolocationApiUrl = "https://ip2loc.patchkit.net/v1/country";
 const int Config::geolocationTimeout = 10000;
 

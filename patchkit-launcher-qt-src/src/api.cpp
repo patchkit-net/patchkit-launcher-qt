@@ -15,6 +15,8 @@
 
 #include "logger.h"
 
+#include <QProcessEnvironment>
+
 Api::Api(
         Downloader::TDataSource t_dataSource,
         CancellationToken t_cancellationToken,
@@ -287,7 +289,18 @@ const QString& Api::getCountryCode() const
 
 QByteArray Api::downloadInternal(const QString& t_resourceUrl)
 {
-    QStringList totalUrlBases = QStringList(Config::mainApiUrl);
+    auto environment = QProcessEnvironment::systemEnvironment();
+
+    QStringList totalUrlBases;
+    if (environment.contains(Config::apiUrlOverrideEnvironmentVariableName))
+    {
+        totalUrlBases.append(environment.value(Config::apiUrlOverrideEnvironmentVariableName));
+    }
+    else
+    {
+        totalUrlBases.append(Config::mainApiUrl);
+    }
+
     totalUrlBases.append(Config::cacheApiUrls);
 
     m_didLastDownloadSucceed = true;
