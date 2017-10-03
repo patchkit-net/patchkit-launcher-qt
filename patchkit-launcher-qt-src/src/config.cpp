@@ -16,6 +16,8 @@ const QString Config::patcherVersionInfoFileName = "version_info";
 const QString Config::patcherIdInfoFileName = "id_info";
 const QString Config::patcherManifestFileName = "patcher.manifest";
 
+const QString Config::lockFileName = ".lock";
+
 #if defined(Q_OS_OSX)
 const QString Config::patcherDirectoryName = "Patcher";
 const QString Config::applicationDirectoryName = "Data";

@@ -11,10 +11,12 @@ SOURCES     += \
     $$PWD/src/launcher.cpp \
     $$PWD/src/main.cpp \
     $$PWD/src/mainwindow.cpp \
+    $$PWD/src/lockfile.cpp
 
 HEADERS     += \
     $$PWD/src/launcher.h \
     $$PWD/src/mainwindow.h \
+    $$PWD/src/lockfile.h
 
 FORMS       += $$PWD/src/mainwindow.ui
 

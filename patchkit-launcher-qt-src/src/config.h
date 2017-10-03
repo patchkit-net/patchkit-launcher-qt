@@ -51,6 +51,8 @@ public:
     const static QString patcherIdInfoFileName;
     const static QString patcherManifestFileName;
 
+    const static QString lockFileName;
+
     const static QString applicationDirectoryName;
 
     const static int minConnectionTimeoutMsec;
