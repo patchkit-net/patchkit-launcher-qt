@@ -48,14 +48,7 @@ private slots:
     void setDownloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes);
 
 private:
-#ifdef Q_OS_WIN
-    void runWithDataFromResource();
-#endif
-    void runWithDataFromFile();
-
     void runWithData(Data& t_data);
-
-    void runWithInlineData();
 
     void setupPatcherSecret(Data& t_data);
 
@@ -64,8 +57,6 @@ private:
     bool isLocalPatcherInstalled() const;
     void updatePatcher(const Data& t_data);
     void startPatcher(const Data& t_data);
-
-    void checkIfCurrentDirectoryIsWritable();
 
     CancellationTokenSource m_cancellationTokenSource;
     LauncherState& m_launcherState;

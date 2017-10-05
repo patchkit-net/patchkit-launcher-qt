@@ -1,5 +1,5 @@
 /*
-* Copyright (C) Upsoft 2016
+* Copyright (C) Upsoft 2017
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
@@ -13,10 +13,8 @@
 #include "customexceptions.h"
 #include "downloader.h"
 #include "config.h"
-
-#if defined(Q_OS_WIN)
-#include <Windows.h>
-#endif
+#include "lockfile.h"
+#include "utilities.h"
 
 void LauncherWorker::run()
 {
@@ -28,6 +26,11 @@ void LauncherWorker::run()
 
         m_result = SUCCESS;
         qInfo("Launcher has succeeded.");
+    }
+    catch (LockException&)
+    {
+        m_result = CANCELLED;
+        qCritical("Lock file detected.");
     }
     catch (CancelledException&)
     {
@@ -143,45 +146,21 @@ void LauncherWorker::setDownloadProgress(const long long& t_bytesDownloaded, con
     emit progressChanged(qCeil((qreal(t_bytesDownloaded) / t_totalBytes) * 100.0));
 }
 
-#ifdef Q_OS_WIN
-
-void LauncherWorker::runWithDataFromResource()
-{
-    qInfo("Starting launcher with data from resource.");
-
-    Data data = Data::loadFromResources(Locations::getInstance().applicationFilePath(),
-                                        Config::dataResourceId,
-                                        Config::dataResourceTypeId);
-
-    runWithData(data);
-}
-
-#endif
-
-void LauncherWorker::runWithDataFromFile()
-{
-    qInfo("Starting launcher with data from file.");
-
-    Data data = Data::loadFromFile(Locations::getInstance().dataFilePath());
-
-    runWithData(data);
-}
-
-void LauncherWorker::runWithInlineData()
-{
-    qInfo("Starting launcher with inlined data.");
-
-    Data data = Data::loadFromConfig();
-
-    runWithData(data);
-}
-
 void LauncherWorker::runWithData(Data& t_data)
 {
     try
     {
         emit progressChanged(0);
         emit statusChanged("Initializing...");
+
+        Locations::getInstance().initializeWithData(t_data);
+
+        if (!Utilities::isCurrentDirectoryWritable())
+        {
+            Utilities::tryRestartWithHigherPermissions();
+        }
+
+        LockFile::singleton().lock();
 
         qInfo("Starting launcher.");
 
@@ -197,11 +176,13 @@ void LauncherWorker::runWithData(Data& t_data)
 
         setupPatcherSecret(t_data);
 
-        Locations::getInstance().initializeWithData(t_data);
-
         qInfo() << "Current directory set to - " << Locations::getInstance().currentDirPath();
 
         updatePatcher(t_data);
+    }
+    catch (LockException&)
+    {
+        throw;
     }
     catch (CancelledException&)
     {
@@ -298,10 +279,6 @@ void LauncherWorker::updatePatcher(const Data& t_data)
 
     if (!m_localPatcher.isInstalledSpecific(version, t_data))
     {
-        qInfo("Checking whether current directory is writable.");
-
-        checkIfCurrentDirectoryIsWritable();
-
         qInfo("The newest patcher is not installed. Downloading the newest version of patcher.");
 
         emit statusChanged("Downloading...");
@@ -336,18 +313,4 @@ void LauncherWorker::startPatcher(const Data& t_data)
     emit statusChanged("Starting...");
 
     m_localPatcher.start(t_data);
-}
-
-void LauncherWorker::checkIfCurrentDirectoryIsWritable()
-{
-    if (!Locations::getInstance().isCurrentDirWritable())
-    {
-#if defined(Q_OS_WIN)
-        ShellExecute(nullptr, L"runas", Locations::getInstance().applicationFilePath().toStdWString().c_str(), nullptr, nullptr, SW_SHOWNORMAL);
-
-        throw CancelledException();
-#else
-        throw FatalException("Current application directory isn't writable.");
-#endif
-    }
 }

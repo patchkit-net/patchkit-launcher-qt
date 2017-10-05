@@ -30,7 +30,9 @@ SOURCES += \
     $$PWD/src/executableresources.cpp \
     $$PWD/src/urlprovider.cpp \
     $$PWD/src/launcherstate.cpp \
+    $$PWD/src/lockfile.cpp \
     $$PWD/src/xxhash.c \
+    $$PWD/src/utilities.cpp
 
 HEADERS += \
     $$PWD/src/launcherstate.h \
@@ -60,5 +62,7 @@ HEADERS += \
     $$PWD/src/remotepatcherdata.h \
     $$PWD/src/customexceptions.h \
     $$PWD/src/executableresources.h \
+    $$PWD/src/lockfile.h \
+    $$PWD/src/utilities.h
 
 include(../gitversion.pri)

@@ -10,13 +10,11 @@ INCLUDEPATH += $$PWD/src
 SOURCES     += \
     $$PWD/src/launcher.cpp \
     $$PWD/src/main.cpp \
-    $$PWD/src/mainwindow.cpp \
-    $$PWD/src/lockfile.cpp
+    $$PWD/src/mainwindow.cpp
 
 HEADERS     += \
     $$PWD/src/launcher.h \
-    $$PWD/src/mainwindow.h \
-    $$PWD/src/lockfile.h
+    $$PWD/src/mainwindow.h
 
 FORMS       += $$PWD/src/mainwindow.ui
 

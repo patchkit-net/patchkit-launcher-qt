@@ -4,9 +4,9 @@
 */
 
 #include "launcher.h"
-#include "lockfile.h"
 
 #include <src/logger.h>
+#include <src/lockfile.h>
 
 #include <QMessageBox>
 #include <QNetworkProxyFactory>
@@ -15,15 +15,9 @@ int main(int argc, char* argv[])
 {
     QApplication application(argc, argv);
 
-    LockFile lockFile;
-
-    try
+    if (LockFile::singleton().isLocked())
     {
-        lockFile.lock();
-    }
-    catch(...)
-    {
-        QMessageBox::critical(nullptr, "Another instance detected.", "An instance of Launcher is already running.", QMessageBox::Ok);
+        QMessageBox::critical(nullptr, "Locked", "Another instance of Launcher is already running.");
         return -1;
     }
 
