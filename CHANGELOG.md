@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v1.2.0]
+### Added
+- .lock file creation to prevent multiple instances launching at the same time.
+
+### Fixed
+- Obtaining version number from git on Windows
+
 ## [v1.1.0]
 ### Added
 - Caller identification in API calls
