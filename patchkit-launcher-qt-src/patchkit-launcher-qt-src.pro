@@ -65,4 +65,4 @@ HEADERS += \
     $$PWD/src/lockfile.h \
     $$PWD/src/utilities.h
 
-include(../gitversion.pri)
+include(../version.pri)

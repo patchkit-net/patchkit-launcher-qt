@@ -33,7 +33,7 @@ namespace Globals
 
     Platform currentPlatform();
     const QString& currentPlatformString();
-    const QString& gitVersion();
+    const QString& version();
 }
 
 class Config

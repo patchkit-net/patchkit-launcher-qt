@@ -311,7 +311,7 @@ QByteArray Api::downloadInternal(const QString& t_resourceUrl, bool t_withGeoloc
         urlProvider.setCountryCode(m_countryCode);
     }
 
-    urlProvider.setIdentifier(Globals::gitVersion());
+    urlProvider.setIdentifier(Globals::version());
 
     DownloaderOperator op(m_dataSource, urlProvider, m_cancellationToken);
 

@@ -106,8 +106,8 @@ const QString& Globals::currentPlatformString()
     return currentPlatformString;
 }
 
-const QString& Globals::gitVersion()
+const QString& Globals::version()
 {
-    static QString gv(GIT_VERSION);
-    return gv;
+    static QString v(VERSION);
+    return v;
 }

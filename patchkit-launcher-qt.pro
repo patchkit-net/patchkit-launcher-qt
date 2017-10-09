@@ -10,4 +10,4 @@ SUBDIRS += \
 patchkit-launcher-qt-app.depends = patchkit-launcher-qt-src
 patchkit-launcher-qt-tests.depends = patchkit-launcher-qt-src
 
-OTHER_FILES += default.pri link_static.pri gitversion.pri
+OTHER_FILES += default.pri link_static.pri version.pri

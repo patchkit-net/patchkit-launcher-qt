@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Obtaining version number from git on Windows
 
+### Changed
+- Version number must now be wrtitten into the version.pri file
+
 ## [v1.1.0]
 ### Added
 - Caller identification in API calls

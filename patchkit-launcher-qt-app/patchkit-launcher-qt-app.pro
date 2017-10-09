@@ -18,5 +18,5 @@ HEADERS     += \
 
 FORMS       += $$PWD/src/mainwindow.ui
 
-include(../gitversion.pri)
+include(../version.pri)
 include(../link_static.pri)
