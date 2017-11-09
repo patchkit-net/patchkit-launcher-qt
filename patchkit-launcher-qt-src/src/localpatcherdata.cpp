@@ -94,19 +94,21 @@ void LocalPatcherData::install(const QString& t_downloadedPath, const Data& t_da
             << ") from downloaded zip - "
             << t_downloadedPath;
 
-    IOUtils::createDir(Locations::getInstance().patcherDirectoryPath());
+    const auto& locations = Locations::getInstance();
+
+    IOUtils::createDir(locations.patcherDirectoryPath());
 
     QStringList installationPatcherEntries;
 
-    IOUtils::extractZip(t_downloadedPath, Locations::getInstance().patcherDirectoryPath(), installationPatcherEntries);
+    IOUtils::extractZip(t_downloadedPath, locations.patcherDirectoryPath(), installationPatcherEntries);
 
-    IOUtils::writeTextToFile(Locations::getInstance().patcherVersionInfoFilePath(), QString::number(t_version));
+    IOUtils::writeTextToFile(locations.patcherVersionInfoFilePath(), QString::number(t_version));
 
     QString installationInfoFileContents = "";
 
     for (int i = 0; i < installationPatcherEntries.size(); i++)
     {
-        QString entryPath = QDir::cleanPath(Locations::getInstance().patcherDirectoryPath() + "/" + installationPatcherEntries[i]);
+        QString entryPath = QDir::cleanPath(locations.patcherDirectoryPath() + "/" + installationPatcherEntries[i]);
 
 #if defined(Q_OS_OSX) || defined(Q_OS_UNIX)
         system(QString("chmod +x \"%1\"").arg(entryPath).toStdString().c_str());
@@ -120,8 +122,12 @@ void LocalPatcherData::install(const QString& t_downloadedPath, const Data& t_da
         }
     }
 
-    IOUtils::writeTextToFile(Locations::getInstance().patcherInstallationInfoFilePath(), installationInfoFileContents);
-    IOUtils::writeTextToFile(Locations::getInstance().patcherIdInfoFilePath(), getPatcherId(t_data));
+    QDir patcherDir(locations.patcherDirectoryPath());
+    IOUtils::writeTextToFile(locations.patcherLauncherPathFilePath(),
+                patcherDir.relativeFilePath(locations.applicationFilePath()));
+
+    IOUtils::writeTextToFile(locations.patcherInstallationInfoFilePath(), installationInfoFileContents);
+    IOUtils::writeTextToFile(locations.patcherIdInfoFilePath(), getPatcherId(t_data));
 }
 
 void LocalPatcherData::start(const Data& data)

@@ -145,6 +145,11 @@ QString Locations::patcherManifestFilePath() const
     return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherManifestFileName);
 }
 
+QString Locations::patcherLauncherPathFilePath() const
+{
+    return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherLauncherPathFileName);
+}
+
 QString Locations::applicationInstallationDirPath() const
 {
     return QDir::cleanPath(currentDirPath() + "/" + Config::applicationDirectoryName);

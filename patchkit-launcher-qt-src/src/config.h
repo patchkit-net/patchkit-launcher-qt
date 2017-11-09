@@ -50,6 +50,7 @@ public:
     const static QString patcherVersionInfoFileName;
     const static QString patcherIdInfoFileName;
     const static QString patcherManifestFileName;
+    const static QString patcherLauncherPathFileName;
 
     const static QString lockFileName;
 
