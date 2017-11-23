@@ -11,9 +11,11 @@
 #include <QTextStream>
 #include <QDir>
 
+#include "config.h"
 #include "logger.h"
 #include "locations.h"
 #include "ioutils.h"
+#include "lockfile.h"
 
 bool LocalPatcherData::isInstalled() const
 {
@@ -143,6 +145,12 @@ void LocalPatcherData::start(const Data& data)
 
     exeFileName = formatPatcherManifestString(exeFileName, data.encodedApplicationSecret());
     exeArguments = formatPatcherManifestString(exeArguments, data.encodedApplicationSecret());
+
+    if (Config::isLockFilePassingEnabled)
+    {
+        exeArguments += " --lockfile \"" + QDir(Config::lockFileName).absolutePath() + "\"";
+        LockFile::singleton().cede();
+    }
 
     qDebug() << "Starting process with command - " << exeFileName << " " << exeArguments;
 

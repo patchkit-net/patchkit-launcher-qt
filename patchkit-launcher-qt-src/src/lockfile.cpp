@@ -6,21 +6,18 @@
 
 LockFile::LockFile()
     : m_lockFile(Config::lockFileName)
-    , m_locked(false)
+    , m_isLockFileLocal(false)
 {
 }
 
 LockFile::~LockFile()
 {
-    if (isLockedLocally())
-    {
-        unlock();
-    }
+    unlock();
 }
 
 void LockFile::lock()
 {
-    if (m_lockFile.exists())
+    if (isLocked())
     {
         throw LockException();
     }
@@ -31,17 +28,22 @@ void LockFile::lock()
             throw LockException();
         }
         m_lockFile.close();
-        m_locked = true;
+        m_isLockFileLocal = true;
     }
 }
 
 void LockFile::unlock()
 {
-    if (m_lockFile.exists())
+    if (isLockedLocally())
     {
         m_lockFile.remove();
+        m_isLockFileLocal = false;
     }
-    m_locked = false;
+}
+
+void LockFile::cede()
+{
+    m_isLockFileLocal = false;
 }
 
 bool LockFile::isLocked() const
@@ -51,7 +53,7 @@ bool LockFile::isLocked() const
 
 bool LockFile::isLockedLocally() const
 {
-    return isLocked() && m_locked;
+    return isLocked() && m_isLockFileLocal;
 }
 
 LockFile& LockFile::singleton()

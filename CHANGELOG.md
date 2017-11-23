@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v1.3.0]
+### Added
+- Passing the .lock file to Patcher through the --lockfile argument.
+- Creating the launcher_path file in the Patcher directory, the file contains a relative path to Launcher executable.
+
 ## [v1.2.0]
 ### Added
 - .lock file creation to prevent multiple instances launching at the same time.

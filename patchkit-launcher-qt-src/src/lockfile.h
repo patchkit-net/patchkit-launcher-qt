@@ -13,6 +13,8 @@ public:
     void lock();
     void unlock();
 
+    void cede();
+
     bool isLocked() const;
     bool isLockedLocally() const;
 
@@ -23,5 +25,5 @@ private:
     ~LockFile();
 
     QFile m_lockFile;
-    bool m_locked;
+    bool m_isLockFileLocal;
 };
