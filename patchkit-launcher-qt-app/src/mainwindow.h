@@ -13,7 +13,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(std::shared_ptr<LauncherWorker> t_launcherWorker, QWidget* t_parent);
+    MainWindow(LauncherWorker& t_launcherWorker, QWidget* t_parent);
 
 private slots:
     void setStatus(const QString& t_status) const;
@@ -26,9 +26,9 @@ protected:
     void closeEvent(QCloseEvent* t_event) override;
 
 private:
-    std::shared_ptr<LauncherWorker> m_launcherWorker;
+    LauncherWorker& m_launcherWorker;
 
     QPoint m_dragPosition;
 
-    std::unique_ptr<Ui::MainWindow> m_ui;
+    Ui::MainWindow m_ui;
 };

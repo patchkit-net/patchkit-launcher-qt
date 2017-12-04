@@ -21,17 +21,14 @@ enum class DownloadError
 class Downloader : public QObject
 {
     Q_OBJECT
-
 public:
     typedef QNetworkAccessManager* TDataSource;
-
     typedef QNetworkReply* TRemoteDataReply;
 
     Downloader(const QString& t_resourceUrl, TDataSource t_dataSource, CancellationToken& t_cancellationToken);
+    ~Downloader();
 
-    void start();
-
-    int  getStatusCode();
+    int  getStatusCode() const;
 
     void setRange(int t_bytesStart, int t_bytesEnd = -1);
 
@@ -41,6 +38,7 @@ public:
     bool wasStarted() const;
     bool isFinished() const;
     bool isRunning() const;
+    bool encounteredAnError() const;
 
     QString debugInfo() const;
     QString debugName() const;
@@ -48,19 +46,18 @@ public:
     QByteArray readData();
 
     static bool doesStatusCodeIndicateSuccess(int t_statusCode);
-    static bool checkInternetConnection();
     static int  getReplyStatusCode(TRemoteDataReply t_reply);
 
 signals:
-    void downloadProgressChanged(TByteCount t_bytesDownloaded, TByteCount t_totalBytes) const;
-    void downloadStarted(int t_statusCode);
-    void downloadFinished();
-    void downloadError(QNetworkReply::NetworkError t_errorCode);
-
-    void timeout();
+    void progressChanged(TByteCount t_bytesDownloaded, TByteCount t_totalBytes) const;
+    void started(int t_statusCode);
+    void finished();
+    void error(QNetworkReply::NetworkError t_errorCode);
 
 public slots:
+    void start();
     void stop();
+    void restart();
 
 private slots:
     void readyReadRelay();
@@ -81,4 +78,6 @@ private:
     TDataSource         m_remoteDataSource;
     CancellationToken   m_cancellationToken;
     TRemoteDataReply    m_remoteDataReply;
+
+    QNetworkReply::NetworkError m_lastError;
 };

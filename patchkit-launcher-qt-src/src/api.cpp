@@ -15,10 +15,16 @@
 
 #include "logger.h"
 
-Api::Api(Downloader::TDataSource t_dataSource, CancellationToken t_cancellationToken, QObject* parent)
+#include <QProcessEnvironment>
+
+Api::Api(
+        Downloader::TDataSource t_dataSource,
+        CancellationToken t_cancellationToken,
+        LauncherState& t_state,
+        QObject* parent)
     : QObject(parent)
-    , m_strategy(Config::minConnectionTimeoutMsec, Config::maxConnectionTimeoutMsec)
     , m_cancellationToken(t_cancellationToken)
+    , m_state(t_state)
     , m_dataSource(t_dataSource)
 {
 }
@@ -129,11 +135,6 @@ int Api::downloadPatcherVersion(const QString& t_resourceUrl)
     QByteArray data;
     data = downloadInternal(t_resourceUrl);
 
-    if (!m_didLastDownloadSucceed)
-    {
-        throw ContentUnavailableException("Couldn't download patcher secret.");
-    }
-
     QJsonDocument doc = QJsonDocument::fromJson(data);
 
     if (!doc.isObject())
@@ -163,7 +164,7 @@ QStringList Api::downloadContentUrls(const QString& t_resourceUrl)
     qInfo("Downloading content urls.");
 
     QByteArray data;
-    data = downloadInternal(t_resourceUrl);
+    data = downloadInternal(t_resourceUrl, true);
 
     QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
 
@@ -222,30 +223,32 @@ QStringList Api::downloadContentUrls(const QString& t_patcherSecret, int t_versi
 
 bool Api::geolocate()
 {
-    QUrl url(Config::geolocationApiUrl);
+    Downloader downloader(Config::geolocationApiUrl, m_dataSource, m_cancellationToken);
+    DownloaderOperator op({&downloader});
 
-    QNetworkRequest request(url);
+    op.startAll();
 
-    auto reply = m_dataSource->get(request);
+    auto finishedDownloader = op.waitForAnyToFinish(m_cancellationToken, Config::geolocationTimeout);
 
-    QEventLoop waitLoop;
-
-    connect(reply, &QNetworkReply::finished, &waitLoop, &QEventLoop::quit);
-    QTimer::singleShot(Config::geolocationTimeout, &waitLoop, &QEventLoop::quit);
-
-    waitLoop.exec();
-
-    auto data = reply->readAll();
-
-    int replyStatusCode = Downloader::getReplyStatusCode(reply);
-
-    if (!Downloader::doesStatusCodeIndicateSuccess(replyStatusCode))
+    if (!finishedDownloader)
     {
+        qWarning("Geolocation download process failed.");
         return false;
     }
 
+    int replyStatusCode = finishedDownloader->getStatusCode();
+
+    if (!Downloader::doesStatusCodeIndicateSuccess(replyStatusCode))
+    {
+        qWarning() << "Geolocation failed, reply status code was " << replyStatusCode;
+        return false;
+    }
+
+    auto data = finishedDownloader->readData();
+
     if (data == QByteArray())
     {
+        qWarning("Geolocation failed, reply data was empty.");
         return false;
     }
 
@@ -253,6 +256,7 @@ bool Api::geolocate()
 
     if (!jsonDocument.isObject())
     {
+        qWarning("Geolocation failed, couldn't create a json document from data.");
         return false;
     }
 
@@ -260,6 +264,7 @@ bool Api::geolocate()
 
     if (!root.contains("country"))
     {
+        qWarning("Geolocation failed, no field named country in the root json object.");
         return false;
     }
 
@@ -267,6 +272,7 @@ bool Api::geolocate()
 
     if (!countryValue.isString())
     {
+        qWarning("Geolocation failed, country field value was not a string.");
         return false;
     }
 
@@ -281,40 +287,42 @@ const QString& Api::getCountryCode() const
     return m_countryCode;
 }
 
-void Api::downloadErrorRelay(DownloadError t_error)
+QByteArray Api::downloadInternal(const QString& t_resourceUrl, bool t_withGeolocation)
 {
-    if (t_error == DownloadError::ContentUnavailable)
+    auto environment = QProcessEnvironment::systemEnvironment();
+
+    QStringList totalUrlBases;
+    if (environment.contains(Config::apiUrlOverrideEnvironmentVariableName))
     {
-        m_didLastDownloadSucceed = false;
-        m_strategy.stop();
+        totalUrlBases.append(environment.value(Config::apiUrlOverrideEnvironmentVariableName));
     }
     else
     {
-        emit downloadError(t_error);
+        totalUrlBases.append(Config::mainApiUrl);
     }
-}
 
-QByteArray Api::downloadInternal(const QString& t_resourceUrl)
-{
-    QStringList totalUrlBases = QStringList(Config::mainApiUrl);
     totalUrlBases.append(Config::cacheApiUrls);
 
     m_didLastDownloadSucceed = true;
 
     StringConcatUrlProvider urlProvider(totalUrlBases, t_resourceUrl);
-    if (m_countryCode != QString())
+    if (t_withGeolocation && m_countryCode != QString())
     {
         urlProvider.setCountryCode(m_countryCode);
     }
 
+    urlProvider.setIdentifier(Globals::version());
+
     DownloaderOperator op(m_dataSource, urlProvider, m_cancellationToken);
 
-    connect(&m_strategy, &DefaultDownloadStrategy::error, this, &Api::downloadErrorRelay);
-    connect(this, &Api::proceed, &m_strategy, &BaseDownloadStrategy::proceed);
-    connect(this, &Api::stop, &m_strategy, &BaseDownloadStrategy::stop);
+    DefaultDownloadStrategy strategy(
+                op,
+                m_state,
+                Config::minConnectionTimeoutMsec,
+                Config::maxConnectionTimeoutMsec);
 
     QByteArray data;
-    data = op.download(&m_strategy);
+    data = op.download(strategy, m_cancellationToken);
 
     return data;
 }

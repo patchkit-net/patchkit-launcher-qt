@@ -8,6 +8,7 @@
 #include <QObject>
 
 #include "cancellationtoken.h"
+#include "launcherstate.h"
 
 #include "contentsummary.h"
 
@@ -20,7 +21,11 @@ class Api : public QObject, public IApi
 {
     Q_OBJECT
 public:
-    explicit Api(Downloader::TDataSource t_dataSource, CancellationToken t_cancellationToken, QObject* parent = nullptr);
+    explicit Api(
+            Downloader::TDataSource t_dataSource,
+            CancellationToken t_cancellationToken,
+            LauncherState& t_state,
+            QObject* parent = nullptr);
 
     ContentSummary  downloadContentSummary(const QString& t_resourceUrl);
     QString         downloadPatcherSecret(const QString& t_resourceUrl);
@@ -35,19 +40,10 @@ public:
 
     const QString&  getCountryCode() const override;
 
-signals:
-    void downloadError(DownloadError t_error);
-
-    void proceed();
-    void stop();
-
-private slots:
-    void downloadErrorRelay(DownloadError t_error);
-
 private:
-    QByteArray downloadInternal(const QString& t_resourceUrl);
-    DefaultDownloadStrategy m_strategy;
+    QByteArray downloadInternal(const QString& t_resourceUrl, bool t_withGeolocation = false);
     CancellationToken m_cancellationToken;
+    LauncherState& m_state;
     Downloader::TDataSource m_dataSource;
 
     bool m_didLastDownloadSucceed;

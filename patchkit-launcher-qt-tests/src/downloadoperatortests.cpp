@@ -15,7 +15,7 @@
 
 SCENARIO("Operator state testing.")
 {
-    std::shared_ptr<CancellationTokenSource> tokenSource(new CancellationTokenSource());
+    CancellationTokenSource tokenSource;
     CancellationToken token(tokenSource);
     MockedNAM nam;
     GIVEN("URL provider with 3 links.")
@@ -57,8 +57,10 @@ SCENARIO("Operator state testing.")
 
 SCENARIO("Basic operator functionality with default download startegy.")
 {
-    std::shared_ptr<CancellationTokenSource> tokenSource(new CancellationTokenSource());
+    CancellationTokenSource tokenSource;
     CancellationToken token(tokenSource);
+
+    LauncherState state;
 
     QByteArray data = "123456789";
 
@@ -73,21 +75,12 @@ SCENARIO("Basic operator functionality with default download startegy.")
 
         THEN("A DefaultDownloadStrategy with min and max timeouts set to 300 and 400 should succeed.")
         {
-            DefaultDownloadStrategy strategy(300, 400);
             StringUrlProvider urlProvider({"link1", "link2", "link3"});
             DownloaderOperator op(&nam, (IUrlProvider&) urlProvider, token);
 
-            QByteArray downloadedData = op.download(&strategy);
+            DefaultDownloadStrategy strategy(op, state, 300, 400);
 
-            REQUIRE(data.toStdString() == downloadedData.toStdString());
-        }
-
-        THEN("A default configuration of the downloader operator should succeed as well.")
-        {
-            StringUrlProvider urlProvider({"link1", "link2", "link3"});
-            DownloaderOperator op(&nam, (IUrlProvider&) urlProvider, token);
-
-            QByteArray downloadedData = op.download();
+            QByteArray downloadedData = op.download(strategy, token);
 
             REQUIRE(data.toStdString() == downloadedData.toStdString());
         }
@@ -102,21 +95,12 @@ SCENARIO("Basic operator functionality with default download startegy.")
 
         THEN("A DefaultDownloadStrategy with min and max timeouts set to 300 and 400 should succeed.")
         {
-            DefaultDownloadStrategy strategy(300, 400);
             StringUrlProvider urlProvider({"link1", "link2", "link3"});
             DownloaderOperator op(&nam, (IUrlProvider&) urlProvider, token);
 
-            QByteArray downloadedData = op.download(&strategy);
+            DefaultDownloadStrategy strategy(op, state, 300, 400);
 
-            REQUIRE(data.toStdString() == downloadedData.toStdString());
-        }
-
-        THEN("A default configuration of the downloader operator should succeed as well.")
-        {
-            StringUrlProvider urlProvider({"link1", "link2", "link3"});
-            DownloaderOperator op(&nam, (IUrlProvider&) urlProvider, token);
-
-            QByteArray downloadedData = op.download();
+            QByteArray downloadedData = op.download(strategy, token);
 
             REQUIRE(data.toStdString() == downloadedData.toStdString());
         }

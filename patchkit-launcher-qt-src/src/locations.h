@@ -45,6 +45,8 @@ public:
 
     QString patcherManifestFilePath() const;
 
+    QString patcherLauncherPathFilePath() const;
+
     QString applicationInstallationDirPath() const;
 
     bool isCurrentDirWritable() const;

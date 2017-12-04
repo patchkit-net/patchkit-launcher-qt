@@ -13,15 +13,18 @@ class ChunkedDownloadStrategy : public DefaultDownloadStrategy
 {
     Q_OBJECT
 public:
-    ChunkedDownloadStrategy(int t_minTimeout, int t_maxTimeout, const ChunkedDownloader& t_parent);
-
-    virtual void finishInternal() override;
+    ChunkedDownloadStrategy(
+            DownloaderOperator& t_operator,
+            LauncherState& t_state,
+            int t_minTimeout,
+            int t_maxTimeout,
+            const ChunkedDownloader& t_parent);
 
 public slots:
     virtual void downloadProgressRelay(const long long& t_bytesDownloaded, const long long& t_totalBytes) override;
 
 protected:
-    virtual void onDownloaderFinished(Downloader* downloader) override;
+    virtual bool processFinishedDownloader(Downloader *t_downloader) override;
 
 private:
     const ChunkedDownloader& m_parent;

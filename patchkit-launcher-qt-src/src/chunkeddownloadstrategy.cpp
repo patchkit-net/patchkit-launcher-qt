@@ -10,26 +10,24 @@
 
 #include "downloader.h"
 
-ChunkedDownloadStrategy::ChunkedDownloadStrategy(int t_minTimeout, int t_maxTimeout, const ChunkedDownloader& t_parent)
-    : DefaultDownloadStrategy(t_minTimeout, t_maxTimeout)
+ChunkedDownloadStrategy::ChunkedDownloadStrategy(
+        DownloaderOperator& t_operator,
+        LauncherState& t_state,
+        int t_minTimeout,
+        int t_maxTimeout,
+        const ChunkedDownloader& t_parent)
+    : DefaultDownloadStrategy(t_operator, t_state, t_minTimeout, t_maxTimeout)
     , m_parent(t_parent)
 {
 }
 
-void ChunkedDownloadStrategy::finishInternal()
-{
-    DefaultDownloadStrategy::finishInternal();
-}
-
-void ChunkedDownloadStrategy::onDownloaderFinished(Downloader* t_downloader)
+bool ChunkedDownloadStrategy::processFinishedDownloader(Downloader* t_downloader)
 {
     qInfo("Chunked download strategy - a downloader finished downloading, processing downloaded data.");
 
     qDebug() << "Downloader name is: " << t_downloader->debugName();
 
     QByteArray data = m_data + t_downloader->readData();
-
-    discardActiveDownloader(t_downloader);
 
     QVector<QByteArray> chunks = m_parent.processChunks(data);
     QVector<bool> validChunkMap = m_parent.validateAllChunks(chunks);
@@ -39,7 +37,7 @@ void ChunkedDownloadStrategy::onDownloaderFinished(Downloader* t_downloader)
     {
         qInfo("Downloaded data is valid and complete.");
         m_data = data;
-        emit done();
+        return true;
     }
     else
     {
@@ -55,6 +53,8 @@ void ChunkedDownloadStrategy::onDownloaderFinished(Downloader* t_downloader)
             {
                 m_data += chunk;
             }
+
+            return false;
         }
         else if (firstInvalidChunkIndex != 0)
         {
@@ -66,10 +66,14 @@ void ChunkedDownloadStrategy::onDownloaderFinished(Downloader* t_downloader)
             {
                 m_data += chunks.at(i);
             }
-        }
 
-        reset();
-        startInternal();
+            return false;
+        }
+        else
+        {
+            qInfo("Downloaded data is completely invalid.");
+            return false;
+        }
     }
 }
 
@@ -82,8 +86,5 @@ void ChunkedDownloadStrategy::downloadProgressRelay(const long long& t_bytesDown
 
 void ChunkedDownloadStrategy::setRanges(int t_from)
 {
-    for (auto downloader : m_operator->getDownloaders())
-    {
-        downloader->setRange(t_from);
-    }
+    m_operator.setRange(t_from);
 }

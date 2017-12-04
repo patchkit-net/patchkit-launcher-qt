@@ -1,5 +1,5 @@
 /*
-* Copyright (C) Upsoft 2016
+* Copyright (C) Upsoft 2017
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
@@ -22,11 +22,26 @@ Downloader::Downloader
     , m_remoteDataSource(t_dataSource)
     , m_cancellationToken(t_cancellationToken)
     , m_remoteDataReply(nullptr)
+    , m_lastError(QNetworkReply::NoError)
 {
+}
+
+Downloader::~Downloader()
+{
+    if (m_remoteDataReply)
+    {
+        stop();
+    }
 }
 
 void Downloader::start()
 {
+    if (m_remoteDataReply)
+    {
+        qInfo() << "Downloader " << debugName() << " has already been started.";
+        return;
+    }
+
     qInfo() << "Downloader " << debugName() << " - Start.";
 
     fetchReply(m_resourceRequest, m_remoteDataReply);
@@ -38,11 +53,17 @@ void Downloader::start()
             static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
             this, &Downloader::errorRelay);
 
-    connect(m_remoteDataReply, &QNetworkReply::downloadProgress, this, &Downloader::downloadProgressChanged);
+    connect(m_remoteDataReply, &QNetworkReply::downloadProgress, this, &Downloader::progressChanged);
     connect(&m_cancellationToken, &CancellationToken::cancelled, m_remoteDataReply, &QNetworkReply::abort);
 }
 
-int Downloader::getStatusCode()
+void Downloader::restart()
+{
+    stop();
+    start();
+}
+
+int Downloader::getStatusCode() const
 {
     return getReplyStatusCode(m_remoteDataReply);
 }
@@ -83,25 +104,37 @@ void Downloader::waitUntilFinished()
 
     QEventLoop waitUntilFinishedLoop;
 
-    connect(this, &Downloader::downloadFinished, &waitUntilFinishedLoop, &QEventLoop::quit);
-    connect(this, &Downloader::downloadError, &waitUntilFinishedLoop, &QEventLoop::quit);
+    connect(this, &Downloader::finished, &waitUntilFinishedLoop, &QEventLoop::quit);
+    connect(this, &Downloader::error, &waitUntilFinishedLoop, &QEventLoop::quit);
 
     waitUntilFinishedLoop.exec();
 }
 
 bool Downloader::wasStarted() const
 {
-    return m_remoteDataReply != nullptr;
+    return m_remoteDataReply != nullptr && !encounteredAnError();
 }
 
 bool Downloader::isFinished() const
 {
-    return wasStarted() && m_remoteDataReply->isFinished();
+    return wasStarted() && m_remoteDataReply->isFinished() && !encounteredAnError();
 }
 
 bool Downloader::isRunning() const
 {
-    return wasStarted() && m_remoteDataReply->isRunning() && m_isActive;
+    return wasStarted() && m_remoteDataReply->isRunning() && m_isActive && !encounteredAnError();
+}
+
+bool Downloader::encounteredAnError() const
+{
+    auto statusCode = getStatusCode();
+
+    if (doesStatusCodeIndicateSuccess(statusCode))
+    {
+        return false;
+    }
+
+    return m_lastError != QNetworkReply::NoError;
 }
 
 QString Downloader::debugName() const
@@ -124,7 +157,7 @@ void Downloader::readyReadRelay()
 {
     m_isActive = true;
 
-    emit downloadStarted(getStatusCode());
+    emit started(getStatusCode());
 
     disconnect(m_remoteDataReply, &QNetworkReply::readyRead, this, &Downloader::readyReadRelay);
 }
@@ -138,7 +171,9 @@ void Downloader::errorRelay(QNetworkReply::NetworkError t_errorCode)
                 << " - Network reply encountered an error: "
                 << metaEnum.valueToKey(t_errorCode);
 
-    emit downloadError(t_errorCode);
+    m_lastError = t_errorCode;
+
+    emit error(t_errorCode);
 }
 
 void Downloader::finishedRelay()
@@ -172,39 +207,12 @@ void Downloader::finishedRelay()
     }
 
     qInfo("Emitting finished signal.");
-    emit downloadFinished();
+    emit finished();
 }
 
 bool Downloader::doesStatusCodeIndicateSuccess(int t_statusCode)
 {
     return t_statusCode >= 200 && t_statusCode < 300;
-}
-
-bool Downloader::checkInternetConnection()
-{
-    QProcess proc;
-    QString exec = "ping";
-    QStringList params = {Config::pingTarget, Config::pingCountArg, "1"};
-
-    proc.start(exec, params);
-
-    if (!proc.waitForFinished())
-    {
-        return false;
-    }
-
-    if (proc.exitCode() == 0)
-    {
-        return true;
-    }
-    else
-    {
-        qWarning("No internet connection.");
-        QString p_stdout = proc.readAllStandardOutput();
-        qInfo() << "Ping output was: " << p_stdout;
-
-        return false;
-    }
 }
 
 void Downloader::stop()
@@ -220,6 +228,8 @@ void Downloader::stop()
     m_remoteDataReply->abort();
     m_remoteDataReply->deleteLater();
     m_remoteDataReply = nullptr;
+
+    m_lastError = QNetworkReply::NoError;
 }
 
 void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataReply& t_reply) const
@@ -228,17 +238,6 @@ void Downloader::fetchReply(const QNetworkRequest& t_urlRequest, TRemoteDataRepl
             << debugName()
             << " - Fetching network reply - URL: "
             << t_urlRequest.url().toString();
-
-    if (t_reply)
-    {
-        if (!t_reply->isFinished())
-        {
-            t_reply->abort();
-        }
-
-        t_reply->deleteLater();
-        t_reply = nullptr;
-    }
 
     if (!m_remoteDataSource)
     {

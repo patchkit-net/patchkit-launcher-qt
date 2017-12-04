@@ -1,5 +1,5 @@
 /*
-* Copyright (C) Upsoft 2016
+* Copyright (C) Upsoft 2017
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
@@ -13,43 +13,24 @@
 #include "customexceptions.h"
 #include "downloader.h"
 #include "config.h"
-
-#if defined(Q_OS_WIN)
-#include <Windows.h>
-#endif
+#include "lockfile.h"
+#include "utilities.h"
 
 void LauncherWorker::run()
 {
     try
     {
-        if (Data::canLoadFromConfig())
-        {
-            qInfo("Detected inlined data.");
-            runWithInlineData();
+        resolveData();
 
-            m_result = SUCCESS;
-            qInfo("Launcher has succeeded.");
-            return;
-        }
-
-#ifdef Q_OS_WIN
-        try
-        {
-            runWithDataFromResource();
-            return;
-        }
-        catch (std::exception& exception)
-        {
-            qWarning(exception.what());
-        }
-
-        qWarning("Running with data from resources has failed. Trying to run with data from file located in current directory.");
-#endif
-
-        runWithDataFromFile();
+        runWithData(m_data);
 
         m_result = SUCCESS;
         qInfo("Launcher has succeeded.");
+    }
+    catch (LockException&)
+    {
+        m_result = CANCELLED;
+        qCritical("Lock file detected.");
     }
     catch (CancelledException&)
     {
@@ -73,28 +54,72 @@ void LauncherWorker::run()
     }
 }
 
-LauncherWorker::LauncherWorker()
-    : m_cancellationTokenSource(new CancellationTokenSource())
-    , m_api(&m_networkAccessManager, CancellationToken(m_cancellationTokenSource))
-    , m_remotePatcher(m_api, &m_networkAccessManager)
+LauncherWorker::LauncherWorker(LauncherState& t_launcherState, QObject* parent)
+    : QThread(parent)
+    , m_launcherState(t_launcherState)
+    , m_api(&m_networkAccessManager, CancellationToken(m_cancellationTokenSource), m_launcherState)
+    , m_remotePatcher(m_launcherState, m_api, &m_networkAccessManager)
     , m_result(NONE)
-    , m_shouldUpdate(true)
 {
     m_api.moveToThread(this);
     m_networkAccessManager.moveToThread(this);
     m_remotePatcher.moveToThread(this);
     m_localPatcher.moveToThread(this);
-
-    connect(&m_remotePatcher, &RemotePatcherData::downloadError, this, &LauncherWorker::downloadErrorRelay);
-    connect(this, &LauncherWorker::workerContinue, &m_remotePatcher, &RemotePatcherData::proceed);
-    connect(this, &LauncherWorker::workerStop, &m_remotePatcher, &RemotePatcherData::stop);
 }
 
 void LauncherWorker::cancel()
 {
     qInfo("Cancelling launcher thread.");
 
-    m_cancellationTokenSource->cancel();
+    m_cancellationTokenSource.cancel();
+}
+
+bool LauncherWorker::canStartPatcher() const
+{
+    return isLocalPatcherInstalled();
+}
+
+void LauncherWorker::startPatcher()
+{
+    startPatcher(m_data);
+}
+
+void LauncherWorker::resolveData()
+{
+    qInfo("Resolving data.");
+    if (Data::canLoadFromConfig())
+    {
+        try
+        {
+            m_data = Data::loadFromConfig();
+            qInfo("Loaded inline data.");
+            return;
+        }
+        catch(std::exception& e)
+        {
+            qWarning() << e.what();
+        }
+    }
+
+#ifdef Q_OS_WIN
+    try
+    {
+        m_data = Data::loadFromResources(Locations::getInstance().applicationFilePath(),
+                                            Config::dataResourceId,
+                                            Config::dataResourceTypeId);
+        qInfo("Loaded data from resource.");
+        return;
+    }
+    catch(std::exception& e)
+    {
+        qWarning(e.what());
+    }
+
+#endif
+
+    m_data = Data::loadFromFile(Locations::getInstance().dataFilePath());
+    qInfo("Loaded data from file.");
+    return;
 }
 
 bool LauncherWorker::isLocalPatcherInstalled() const
@@ -107,9 +132,9 @@ LauncherWorker::Result LauncherWorker::result() const
     return m_result;
 }
 
-void LauncherWorker::stopUpdate()
+void LauncherWorker::stop()
 {
-    m_shouldUpdate = false;
+    m_cancellationTokenSource.cancel();
 }
 
 void LauncherWorker::setDownloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes)
@@ -121,50 +146,21 @@ void LauncherWorker::setDownloadProgress(const long long& t_bytesDownloaded, con
     emit progressChanged(qCeil((qreal(t_bytesDownloaded) / t_totalBytes) * 100.0));
 }
 
-void LauncherWorker::downloadErrorRelay(DownloadError /*t_error*/)
-{
-    // TODO: implement
-}
-
-#ifdef Q_OS_WIN
-
-void LauncherWorker::runWithDataFromResource()
-{
-    qInfo("Starting launcher with data from resource.");
-
-    Data data = Data::loadFromResources(Locations::getInstance().applicationFilePath(),
-                                        Config::dataResourceId,
-                                        Config::dataResourceTypeId);
-
-    runWithData(data);
-}
-
-#endif
-
-void LauncherWorker::runWithDataFromFile()
-{
-    qInfo("Starting launcher with data from file.");
-
-    Data data = Data::loadFromFile(Locations::getInstance().dataFilePath());
-
-    runWithData(data);
-}
-
-void LauncherWorker::runWithInlineData()
-{
-    qInfo("Starting launcher with inlined data.");
-
-    Data data = Data::loadFromConfig();
-
-    runWithData(data);
-}
-
 void LauncherWorker::runWithData(Data& t_data)
 {
     try
     {
         emit progressChanged(0);
-        emit statusChanged("Waiting...");
+        emit statusChanged("Initializing...");
+
+        Locations::getInstance().initializeWithData(t_data);
+
+        if (!Utilities::isCurrentDirectoryWritable())
+        {
+            Utilities::tryRestartWithHigherPermissions();
+        }
+
+        LockFile::singleton().lock();
 
         qInfo("Starting launcher.");
 
@@ -180,16 +176,13 @@ void LauncherWorker::runWithData(Data& t_data)
 
         setupPatcherSecret(t_data);
 
-        if (!m_shouldUpdate)
-        {
-            throw std::runtime_error("Offline mode was requested.");
-        }
-
-        Locations::getInstance().initializeWithData(t_data);
-
         qInfo() << "Current directory set to - " << Locations::getInstance().currentDirPath();
 
         updatePatcher(t_data);
+    }
+    catch (LockException&)
+    {
+        throw;
     }
     catch (CancelledException&)
     {
@@ -286,10 +279,6 @@ void LauncherWorker::updatePatcher(const Data& t_data)
 
     if (!m_localPatcher.isInstalledSpecific(version, t_data))
     {
-        qInfo("Checking whether current directory is writable.");
-
-        checkIfCurrentDirectoryIsWritable();
-
         qInfo("The newest patcher is not installed. Downloading the newest version of patcher.");
 
         emit statusChanged("Downloading...");
@@ -324,18 +313,4 @@ void LauncherWorker::startPatcher(const Data& t_data)
     emit statusChanged("Starting...");
 
     m_localPatcher.start(t_data);
-}
-
-void LauncherWorker::checkIfCurrentDirectoryIsWritable()
-{
-    if (!Locations::getInstance().isCurrentDirWritable())
-    {
-#if defined(Q_OS_WIN)
-        ShellExecute(nullptr, L"runas", Locations::getInstance().applicationFilePath().toStdWString().c_str(), nullptr, nullptr, SW_SHOWNORMAL);
-
-        throw CancelledException();
-#else
-        throw FatalException("Current application directory isn't writable.");
-#endif
-    }
 }

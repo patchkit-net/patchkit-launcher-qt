@@ -33,6 +33,7 @@ namespace Globals
 
     Platform currentPlatform();
     const QString& currentPlatformString();
+    const QString& version();
 }
 
 class Config
@@ -49,24 +50,27 @@ public:
     const static QString patcherVersionInfoFileName;
     const static QString patcherIdInfoFileName;
     const static QString patcherManifestFileName;
+    const static QString patcherLauncherPathFileName;
+
+    const static QString lockFileName;
 
     const static QString applicationDirectoryName;
 
     const static int minConnectionTimeoutMsec;
     const static int maxConnectionTimeoutMsec;
 
-    const static int chunkedDownloadStaleTimeoutMsec;
-
-    const static int timeBetweenContentUrlsIterations;
-
     const static QString mainApiUrl;
     const static QStringList cacheApiUrls;
+
+    const static QString apiUrlOverrideEnvironmentVariableName;
 
     const static QString geolocationApiUrl;
     const static int geolocationTimeout;
 
     const static QString pingTarget;
     const static QString pingCountArg;
+
+    const static bool    isLockFilePassingEnabled;
 
     const static char inlineData[];
 };

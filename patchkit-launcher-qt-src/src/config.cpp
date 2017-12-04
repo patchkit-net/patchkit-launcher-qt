@@ -15,6 +15,9 @@ const QString Config::patcherInstallationInfoFileName = "install_info";
 const QString Config::patcherVersionInfoFileName = "version_info";
 const QString Config::patcherIdInfoFileName = "id_info";
 const QString Config::patcherManifestFileName = "patcher.manifest";
+const QString Config::patcherLauncherPathFileName = "launcher_path";
+
+const QString Config::lockFileName = ".lock";
 
 #if defined(Q_OS_OSX)
 const QString Config::patcherDirectoryName = "Patcher";
@@ -27,14 +30,16 @@ const QString Config::applicationDirectoryName = "app";
 const int Config::minConnectionTimeoutMsec = 10000;
 const int Config::maxConnectionTimeoutMsec = 30000;
 
-const int Config::chunkedDownloadStaleTimeoutMsec = 120000;
+const QString Config::mainApiUrl = "https://api2.patchkit.net";
 
-const int Config::timeBetweenContentUrlsIterations = 10000;
+const QStringList Config::cacheApiUrls = {
+    "https://api-cache.patchkit.net",
+    "http://api-cache-1.patchkit.net",
+    "http://api-cache-2.patchkit.net",
+    "http://api-cache-3.patchkit.net"
+};
 
-const QString Config::mainApiUrl = "http://api.patchkit.net";
-const QStringList Config::cacheApiUrls = (QStringList() << "http://api-cache-1.patchkit.net"
-    << "http://api-cache-2.patchkit.net"
-    << "http://api-cache-3.patchkit.net");
+const QString Config::apiUrlOverrideEnvironmentVariableName = "PK_LAUNCHER_API_URL";
 
 const QString Config::geolocationApiUrl = "https://ip2loc.patchkit.net/v1/country";
 const int Config::geolocationTimeout = 10000;
@@ -48,6 +53,8 @@ const QString Config::pingCountArg = "-n";
 #else
 const QString Config::pingCountArg = "-c";
 #endif
+
+const bool Config::isLockFilePassingEnabled = true;
 
 QString Globals::toString(Globals::Platform platform)
 {
@@ -100,4 +107,10 @@ const QString& Globals::currentPlatformString()
 {
     static QString currentPlatformString = Globals::toString(currentPlatform());
     return currentPlatformString;
+}
+
+const QString& Globals::version()
+{
+    static QString v(VERSION);
+    return v;
 }

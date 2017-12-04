@@ -7,9 +7,16 @@ TEMPLATE = app
 
 INCLUDEPATH += $$PWD/src
 
-SOURCES     += $$PWD/src/*.cpp
-HEADERS     += $$PWD/src/*.h
+SOURCES     += \
+    $$PWD/src/launcher.cpp \
+    $$PWD/src/main.cpp \
+    $$PWD/src/mainwindow.cpp
 
-FORMS       += $$PWD/src/*.ui
+HEADERS     += \
+    $$PWD/src/launcher.h \
+    $$PWD/src/mainwindow.h
 
+FORMS       += $$PWD/src/mainwindow.ui
+
+include(../version.pri)
 include(../link_static.pri)

@@ -68,12 +68,12 @@ void Locations::initializeWithData(const Data& t_data)
 
     if (QDir::setCurrent(appPath.path()))
     {
-        qDebug("Path set to %1", .arg(appPath.path()));
+        qDebug() << "Path set to " << appPath.path();
 
     }
     else
     {
-        qDebug("Couldn't set path to %1", .arg(appPath.path()));
+        qDebug() << "Couldn't set path to " << appPath.path();
 
     }
 
@@ -143,6 +143,11 @@ QString Locations::patcherIdInfoFilePath() const
 QString Locations::patcherManifestFilePath() const
 {
     return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherManifestFileName);
+}
+
+QString Locations::patcherLauncherPathFilePath() const
+{
+    return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherLauncherPathFileName);
 }
 
 QString Locations::applicationInstallationDirPath() const
