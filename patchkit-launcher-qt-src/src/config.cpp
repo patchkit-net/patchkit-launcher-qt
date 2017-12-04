@@ -11,6 +11,8 @@ const QString Config::dataFileName = "launcher.dat";
 const int Config::dataResourceId = 3151;
 const int Config::dataResourceTypeId = 10;
 
+const QString Config::patcherDownloadFileName = "patcher.zip";
+
 const QString Config::patcherInstallationInfoFileName = "install_info";
 const QString Config::patcherVersionInfoFileName = "version_info";
 const QString Config::patcherIdInfoFileName = "id_info";

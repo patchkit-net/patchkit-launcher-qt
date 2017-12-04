@@ -286,7 +286,7 @@ void LauncherWorker::updatePatcher(const Data& t_data)
         qDebug("Connecting downloadProgressChanged signal from remote patcher to slot from launcher thread.");
         connect(&m_remotePatcher, &RemotePatcherData::downloadProgressChanged, this, &LauncherWorker::setDownloadProgress);
 
-        QString downloadPath = QDir::cleanPath(Locations::getInstance().applicationDirPath() + "/patcher.zip");
+        QString downloadPath = QDir::cleanPath(Locations::getInstance().patcherDownloadPath());
 
         QFile file(downloadPath);
 

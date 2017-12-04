@@ -35,6 +35,8 @@ public:
 
     QString dataFilePath() const;
 
+    QString patcherDownloadPath() const;
+
     QString patcherDirectoryPath() const;
 
     QString patcherInstallationInfoFilePath() const;

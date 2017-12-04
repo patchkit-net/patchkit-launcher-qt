@@ -95,6 +95,11 @@ void Locations::initializeWithData(const Data& t_data)
 #endif
 }
 
+QString Locations::patcherDownloadPath() const
+{
+    return QDir::cleanPath(currentDirPath() + "/" + Config::patcherDownloadFileName);
+}
+
 QString Locations::applicationFilePath() const
 {
     return QApplication::applicationFilePath();
@@ -127,7 +132,7 @@ QString Locations::patcherDirectoryPath() const
 
 QString Locations::patcherInstallationInfoFilePath() const
 {
-    return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherDirectoryName);
+    return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherInstallationInfoFileName);
 }
 
 QString Locations::patcherVersionInfoFilePath() const
