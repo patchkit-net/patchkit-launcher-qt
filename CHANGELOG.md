@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Passing the .lock file to Patcher through the --lockfile argument.
 - Creating the launcher_path file in the Patcher directory, the file contains a relative path to Launcher executable.
 
+### Fixed
+- The error on OSX caused by downloading the patcher into location without necessary permissions.
+
 ## [v1.2.0]
 ### Added
 - .lock file creation to prevent multiple instances launching at the same time.
