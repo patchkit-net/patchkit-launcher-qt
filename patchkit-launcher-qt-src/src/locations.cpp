@@ -17,7 +17,7 @@
 
 bool Locations::isCurrentDirWritable() const
 {
-    QFile permissionsCheckFile(QDir::cleanPath(currentDirPath() + "/.writable_check"));
+    QFile permissionsCheckFile(QDir(currentDirPath()).filePath(".writable_check"));
 
     if (permissionsCheckFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
     {
@@ -29,70 +29,74 @@ bool Locations::isCurrentDirWritable() const
     return false;
 }
 
+#if defined(Q_OS_OSX)
+
+QString osxWritableDirectory()
+{
+    auto sep = QDir::separator();
+
+    auto genericDataLocation = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+
+    auto appsDirectory = QDir(genericDataLocation + sep + "PatchKit" + sep + "Apps");
+
+    if (!appsDirectory.exists())
+    {
+        appsDirectory.mkpath(".");
+    }
+
+    return appsDirectory;
+}
+
+#endif
+
 Locations::Locations()
 {
 #if defined(Q_OS_OSX)
-    QDir genericDataLocation = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
-
-    QDir patchKitAppsPath = QDir::cleanPath(genericDataLocation.path() + "/" + "PatchKit/Apps");
-
-    if (!patchKitAppsPath.exists())
-    {
-        patchKitAppsPath.mkpath(".");
-    }
-
-    m_logPath = QDir::cleanPath(patchKitAppsPath.path() + "/" + Config::logFileName);
+    m_logPath = QDir(osxWritableDirectory()).filePath(Config::logFileName);
 #else
 
-    m_logPath = QDir::cleanPath(applicationDirPath() + "/" + Config::logFileName);
+    m_logPath = QDir(applicationDirPath()).filePath(Config::logFileName);
 
 #endif
 }
 
 void Locations::initializeWithData(const Data& t_data)
 {
+    qDebug("Initializing path.");
+
 #if defined(Q_OS_OSX)
 
-    qDebug("OSX initializing path.");
-
-    QDir genericDataLocation = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
-
-    QDir patchKitAppsPath = QDir::cleanPath(genericDataLocation.path() + "/" + "PatchKit/Apps");
-
-    QDir appPath = QDir::cleanPath(patchKitAppsPath.path() + "/" + t_data.applicationSecret().mid(0, 8));
+    QDir appPath = QDir(osxWritableDirectory() + QDir::separator() + t_data.applicationSecret().mid(0, 8));
 
     if (!appPath.exists())
     {
         appPath.mkpath(".");
     }
 
+#else
+
+    QDir appPath = applicationDirPath();
+
+#endif
+
     if (QDir::setCurrent(appPath.path()))
     {
         qDebug() << "Path set to " << appPath.path();
-
     }
     else
     {
         qDebug() << "Couldn't set path to " << appPath.path();
-
     }
-
-#else
-
-    qDebug("Initializing path.");
-
-    QDir appPath = applicationDirPath();
-
-    qDebug() << "Path set to " << appPath.path();
-
-    QDir::setCurrent(appPath.path());
-
-#endif
 
 #if defined(QT_DEBUG)
     qDebug("Evaulating all the paths:");
     evalutatePaths();
 #endif
+}
+
+QString Locations::patcherDownloadPath() const
+{
+    return QDir(currentDirPath()).filePath(Config::patcherDownloadFileName);
 }
 
 QString Locations::applicationFilePath() const
@@ -117,42 +121,42 @@ QString Locations::logFilePath() const
 
 QString Locations::dataFilePath() const
 {
-    return QDir::cleanPath(applicationDirPath() + "/" + Config::dataFileName);
+    return QDir(applicationDirPath()).filePath(Config::dataFileName);
 }
 
 QString Locations::patcherDirectoryPath() const
 {
-    return QDir::cleanPath(currentDirPath() + "/" + Config::patcherDirectoryName);
+    return QDir(currentDirPath()).filePath(Config::patcherDirectoryName);
 }
 
 QString Locations::patcherInstallationInfoFilePath() const
 {
-    return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherDirectoryName);
+    return QDir(patcherDirectoryPath()).filePath(Config::patcherInstallationInfoFileName);
 }
 
 QString Locations::patcherVersionInfoFilePath() const
 {
-    return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherVersionInfoFileName);
+    return QDir(patcherDirectoryPath()).filePath(Config::patcherVersionInfoFileName);
 }
 
 QString Locations::patcherIdInfoFilePath() const
 {
-    return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherIdInfoFileName);
+    return QDir(patcherDirectoryPath()).filePath(Config::patcherIdInfoFileName);
 }
 
 QString Locations::patcherManifestFilePath() const
 {
-    return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherManifestFileName);
+    return QDir(patcherDirectoryPath()).filePath(Config::patcherManifestFileName);
 }
 
 QString Locations::patcherLauncherPathFilePath() const
 {
-    return QDir::cleanPath(patcherDirectoryPath() + "/" + Config::patcherLauncherPathFileName);
+    return QDir(patcherDirectoryPath()).filePath(Config::patcherLauncherPathFileName);
 }
 
 QString Locations::applicationInstallationDirPath() const
 {
-    return QDir::cleanPath(currentDirPath() + "/" + Config::applicationDirectoryName);
+    return QDir(currentDirPath()).filePath(Config::applicationDirectoryName);
 }
 
 #if defined (QT_DEBUG)

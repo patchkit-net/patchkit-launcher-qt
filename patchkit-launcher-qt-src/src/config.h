@@ -45,6 +45,8 @@ public:
     const static int dataResourceId;
     const static int dataResourceTypeId;
 
+    const static QString patcherDownloadFileName;
+
     const static QString patcherDirectoryName;
     const static QString patcherInstallationInfoFileName;
     const static QString patcherVersionInfoFileName;
