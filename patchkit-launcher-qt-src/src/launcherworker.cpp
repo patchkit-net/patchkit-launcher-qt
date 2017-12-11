@@ -30,6 +30,7 @@ void LauncherWorker::run()
     catch (LockException&)
     {
         m_result = CANCELLED;
+        QMessageBox::critical(nullptr, "Locked", "Another instance of Launcher is already running.");
         qCritical("Lock file detected.");
     }
     catch (CancelledException&)
