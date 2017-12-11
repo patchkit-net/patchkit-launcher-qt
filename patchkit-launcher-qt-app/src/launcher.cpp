@@ -11,6 +11,7 @@
 #include <src/config.h>
 #include <src/logger.h>
 #include <src/locations.h>
+#include <src/lockfile.h>
 
 Launcher::Launcher(const QApplication& t_application)
     : m_worker(m_state, this)
@@ -107,6 +108,7 @@ void Launcher::finish()
         if (retryRunDialogResult == QMessageBox::Yes)
         {
             qInfo("Retrying.");
+            LockFile::singleton().unlock();
             start();
         }
         else
