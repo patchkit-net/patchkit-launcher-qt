@@ -61,11 +61,13 @@ LauncherWorker::LauncherWorker(LauncherState& t_launcherState, QObject* parent)
     , m_api(&m_networkAccessManager, CancellationToken(m_cancellationTokenSource), m_launcherState)
     , m_remotePatcher(m_launcherState, m_api, &m_networkAccessManager)
     , m_result(NONE)
+    , m_lockFile(this)
 {
     m_api.moveToThread(this);
     m_networkAccessManager.moveToThread(this);
     m_remotePatcher.moveToThread(this);
     m_localPatcher.moveToThread(this);
+    m_lockFile.moveToThread(this);
 }
 
 void LauncherWorker::cancel()
@@ -161,7 +163,7 @@ void LauncherWorker::runWithData(Data& t_data)
             Utilities::tryRestartWithHigherPermissions();
         }
 
-        LockFile::singleton().lock();
+        m_lockFile.lock();
 
         qInfo("Starting launcher.");
 
@@ -313,5 +315,5 @@ void LauncherWorker::startPatcher(const Data& t_data)
 
     emit statusChanged("Starting...");
 
-    m_localPatcher.start(t_data);
+    m_localPatcher.start(t_data, m_lockFile);
 }

@@ -108,7 +108,6 @@ void Launcher::finish()
         if (retryRunDialogResult == QMessageBox::Yes)
         {
             qInfo("Retrying.");
-            LockFile::singleton().unlock();
             start();
         }
         else

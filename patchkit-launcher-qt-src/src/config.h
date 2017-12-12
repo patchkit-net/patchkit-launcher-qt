@@ -72,6 +72,8 @@ public:
     const static QString pingTarget;
     const static QString pingCountArg;
 
+    const static int lockingTimeout;
+
     const static bool    isLockFilePassingEnabled;
 
     const static char inlineData[];

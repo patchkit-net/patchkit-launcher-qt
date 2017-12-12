@@ -5,25 +5,24 @@
 
 #pragma once
 
+#include <QObject>
+
+#include <QLockFile>
 #include <QFile>
 
-class LockFile
+class LockFile : public QObject
 {
+    Q_OBJECT
 public:
+    explicit LockFile(QObject* parent = nullptr);
+    ~LockFile();
+
     void lock();
     void unlock();
 
     void cede();
 
-    bool isLocked() const;
-    bool isLockedLocally() const;
-
-    static LockFile& singleton();
-
 private:
-    LockFile();
-    ~LockFile();
-
-    QFile m_lockFile;
+    QLockFile m_lockFile;
     bool m_isLockFileLocal;
 };

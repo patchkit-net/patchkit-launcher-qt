@@ -10,6 +10,7 @@
 #include "localpatcherdata.h"
 #include "cancellationtokensource.h"
 #include "api.h"
+#include "lockfile.h"
 
 class LauncherWorker : public QThread
 {
@@ -68,6 +69,8 @@ private:
     LocalPatcherData m_localPatcher;
 
     Result m_result;
+
+    LockFile m_lockFile;
 
     Data m_data;
 };
