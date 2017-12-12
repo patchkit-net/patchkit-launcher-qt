@@ -5,16 +5,13 @@
 
 #pragma once
 
-#include <QObject>
-
 #include <QLockFile>
 #include <QFile>
 
-class LockFile : public QObject
+class LockFile
 {
-    Q_OBJECT
 public:
-    explicit LockFile(QObject* parent = nullptr);
+    LockFile();
     ~LockFile();
 
     void lock();

@@ -99,6 +99,14 @@ void Launcher::finish()
 
         QApplication::quit();
     }
+    else if (m_worker.result() == LauncherWorker::LOCKED)
+    {
+        qWarning("Launcher is locked by another instance! Notifying the user.");
+        QMessageBox::critical(nullptr, "Locked", "Another instance of Launcher is already running.");
+
+        qWarning("Closing launcher with status 1.");
+        QApplication::exit(1);
+    }
     else if (m_worker.result() == LauncherWorker::FAILED)
     {
         qWarning("Launcher worker has failed! Asking for retry.");

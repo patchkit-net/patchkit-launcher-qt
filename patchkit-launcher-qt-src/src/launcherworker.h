@@ -25,7 +25,8 @@ public:
         CANCELLED,
         SUCCESS,
         FAILED,
-        FATAL_ERROR
+        FATAL_ERROR,
+        LOCKED
     };
 
     LauncherWorker(LauncherState& t_launcherState, QObject* parent = nullptr);
@@ -69,8 +70,6 @@ private:
     LocalPatcherData m_localPatcher;
 
     Result m_result;
-
-    LockFile m_lockFile;
 
     Data m_data;
 };

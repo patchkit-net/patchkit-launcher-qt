@@ -132,7 +132,7 @@ void LocalPatcherData::install(const QString& t_downloadedPath, const Data& t_da
     IOUtils::writeTextToFile(locations.patcherIdInfoFilePath(), getPatcherId(t_data));
 }
 
-void LocalPatcherData::start(const Data& t_data, LockFile& t_lockFile)
+void LocalPatcherData::start(const Data& t_data)
 {
     qInfo("Starting patcher.");
 
@@ -149,7 +149,6 @@ void LocalPatcherData::start(const Data& t_data, LockFile& t_lockFile)
     if (Config::isLockFilePassingEnabled)
     {
         exeArguments += " --lockfile \"" + QDir(Config::lockFileName).absolutePath() + "\"";
-        t_lockFile.cede();
     }
 
     qDebug() << "Starting process with command - " << exeFileName << " " << exeArguments;

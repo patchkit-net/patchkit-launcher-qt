@@ -29,8 +29,7 @@ void LauncherWorker::run()
     }
     catch (LockException&)
     {
-        m_result = CANCELLED;
-        QMessageBox::critical(nullptr, "Locked", "Another instance of Launcher is already running.");
+        m_result = LOCKED;
         qCritical("Lock file detected.");
     }
     catch (CancelledException&)
@@ -61,13 +60,11 @@ LauncherWorker::LauncherWorker(LauncherState& t_launcherState, QObject* parent)
     , m_api(&m_networkAccessManager, CancellationToken(m_cancellationTokenSource), m_launcherState)
     , m_remotePatcher(m_launcherState, m_api, &m_networkAccessManager)
     , m_result(NONE)
-    , m_lockFile(this)
 {
     m_api.moveToThread(this);
     m_networkAccessManager.moveToThread(this);
     m_remotePatcher.moveToThread(this);
     m_localPatcher.moveToThread(this);
-    m_lockFile.moveToThread(this);
 }
 
 void LauncherWorker::cancel()
@@ -150,20 +147,21 @@ void LauncherWorker::setDownloadProgress(const long long& t_bytesDownloaded, con
 }
 
 void LauncherWorker::runWithData(Data& t_data)
-{
+{    
+    Locations::getInstance().initializeWithData(t_data);
+
+    LockFile lockFile;
+    lockFile.lock();
+
     try
     {
         emit progressChanged(0);
         emit statusChanged("Initializing...");
 
-        Locations::getInstance().initializeWithData(t_data);
-
         if (!Utilities::isCurrentDirectoryWritable())
         {
             Utilities::tryRestartWithHigherPermissions();
         }
-
-        m_lockFile.lock();
 
         qInfo("Starting launcher.");
 
@@ -220,6 +218,7 @@ void LauncherWorker::runWithData(Data& t_data)
         }
     }
 
+    lockFile.cede();
     startPatcher(t_data);
 }
 
@@ -315,5 +314,5 @@ void LauncherWorker::startPatcher(const Data& t_data)
 
     emit statusChanged("Starting...");
 
-    m_localPatcher.start(t_data, m_lockFile);
+    m_localPatcher.start(t_data);
 }

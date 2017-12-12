@@ -56,7 +56,8 @@ const QString Config::pingCountArg = "-n";
 const QString Config::pingCountArg = "-c";
 #endif
 
-const int Config::lockingTimeout = 100;
+const int Config::staleLockTime = 30000;
+const int Config::lockingTimeout = 1000;
 
 const bool Config::isLockFilePassingEnabled = true;
 

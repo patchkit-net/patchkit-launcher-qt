@@ -4,16 +4,19 @@
 #include "locations.h"
 #include "customexceptions.h"
 
-LockFile::LockFile(QObject* parent)
-    : QObject(parent)
-    , m_lockFile(Config::lockFileName)
+LockFile::LockFile()
+    : m_lockFile(Config::lockFileName)
     , m_isLockFileLocal(false)
 {
+    m_lockFile.setStaleLockTime(Config::staleLockTime);
 }
 
 LockFile::~LockFile()
 {
-    unlock();
+    if (m_isLockFileLocal)
+    {
+        unlock();
+    }
 }
 
 void LockFile::lock()
@@ -31,6 +34,7 @@ void LockFile::lock()
 
 void LockFile::unlock()
 {
+    m_lockFile.unlock();
 }
 
 void LockFile::cede()
@@ -43,5 +47,6 @@ void LockFile::cede()
         {
             qCritical("Failed to cede the lock file.");
         }
+        m_isLockFileLocal = false;
     }
 }

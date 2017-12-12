@@ -23,7 +23,7 @@ public:
 
     void install(const QString& t_downloadedPath, const Data& t_data, int t_version);
 
-    void start(const Data& t_data, LockFile& t_lockFile);
+    void start(const Data& t_data);
 
 private:
     void uninstall();
