@@ -29,7 +29,7 @@ void LauncherWorker::run()
     }
     catch (LockException&)
     {
-        m_result = CANCELLED;
+        m_result = LOCKED;
         qCritical("Lock file detected.");
     }
     catch (CancelledException&)
@@ -147,20 +147,21 @@ void LauncherWorker::setDownloadProgress(const long long& t_bytesDownloaded, con
 }
 
 void LauncherWorker::runWithData(Data& t_data)
-{
+{    
+    Locations::getInstance().initializeWithData(t_data);
+
+    LockFile lockFile;
+    lockFile.lock();
+
     try
     {
         emit progressChanged(0);
         emit statusChanged("Initializing...");
 
-        Locations::getInstance().initializeWithData(t_data);
-
         if (!Utilities::isCurrentDirectoryWritable())
         {
             Utilities::tryRestartWithHigherPermissions();
         }
-
-        LockFile::singleton().lock();
 
         qInfo("Starting launcher.");
 
@@ -217,6 +218,7 @@ void LauncherWorker::runWithData(Data& t_data)
         }
     }
 
+    lockFile.cede();
     startPatcher(t_data);
 }
 

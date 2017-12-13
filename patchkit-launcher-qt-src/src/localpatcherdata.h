@@ -9,6 +9,7 @@
 #include <QString>
 
 #include "data.h"
+#include "lockfile.h"
 #include <quazipfile.h>
 
 class LocalPatcherData : public QObject

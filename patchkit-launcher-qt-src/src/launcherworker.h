@@ -10,6 +10,7 @@
 #include "localpatcherdata.h"
 #include "cancellationtokensource.h"
 #include "api.h"
+#include "lockfile.h"
 
 class LauncherWorker : public QThread
 {
@@ -24,7 +25,8 @@ public:
         CANCELLED,
         SUCCESS,
         FAILED,
-        FATAL_ERROR
+        FATAL_ERROR,
+        LOCKED
     };
 
     LauncherWorker(LauncherState& t_launcherState, QObject* parent = nullptr);

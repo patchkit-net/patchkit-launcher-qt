@@ -8,56 +8,45 @@ LockFile::LockFile()
     : m_lockFile(Config::lockFileName)
     , m_isLockFileLocal(false)
 {
+    m_lockFile.setStaleLockTime(Config::staleLockTime);
 }
 
 LockFile::~LockFile()
 {
-    unlock();
+    if (m_isLockFileLocal)
+    {
+        unlock();
+    }
 }
 
 void LockFile::lock()
 {
-    if (isLocked())
+    if (!m_lockFile.tryLock(Config::lockingTimeout))
     {
+        qCritical("Failed to lock the lockfile.");
         throw LockException();
     }
     else
     {
-        if (!m_lockFile.open(QIODevice::ReadWrite))
-        {
-            throw LockException();
-        }
-        m_lockFile.close();
         m_isLockFileLocal = true;
     }
 }
 
 void LockFile::unlock()
 {
-    if (isLockedLocally())
-    {
-        m_lockFile.remove();
-        m_isLockFileLocal = false;
-    }
+    m_lockFile.unlock();
 }
 
 void LockFile::cede()
 {
-    m_isLockFileLocal = false;
-}
-
-bool LockFile::isLocked() const
-{
-    return m_lockFile.exists();
-}
-
-bool LockFile::isLockedLocally() const
-{
-    return isLocked() && m_isLockFileLocal;
-}
-
-LockFile& LockFile::singleton()
-{
-    static LockFile lockFile;
-    return lockFile;
+    if (m_isLockFileLocal)
+    {
+        m_lockFile.unlock();
+        QFile cededFile(Config::lockFileName);
+        if (!cededFile.open(QIODevice::ReadWrite))
+        {
+            qCritical("Failed to cede the lock file.");
+        }
+        m_isLockFileLocal = false;
+    }
 }

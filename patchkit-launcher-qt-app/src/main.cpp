@@ -15,12 +15,6 @@ int main(int argc, char* argv[])
 {
     QApplication application(argc, argv);
 
-    if (LockFile::singleton().isLocked())
-    {
-        QMessageBox::critical(nullptr, "Locked", "Another instance of Launcher is already running.");
-        return -1;
-    }
-
     Logger::initialize();
 
     application.setQuitOnLastWindowClosed(false);

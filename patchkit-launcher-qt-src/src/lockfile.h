@@ -5,25 +5,21 @@
 
 #pragma once
 
+#include <QLockFile>
 #include <QFile>
 
 class LockFile
 {
 public:
+    LockFile();
+    ~LockFile();
+
     void lock();
     void unlock();
 
     void cede();
 
-    bool isLocked() const;
-    bool isLockedLocally() const;
-
-    static LockFile& singleton();
-
 private:
-    LockFile();
-    ~LockFile();
-
-    QFile m_lockFile;
+    QLockFile m_lockFile;
     bool m_isLockFileLocal;
 };
