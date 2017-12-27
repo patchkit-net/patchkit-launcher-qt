@@ -43,4 +43,4 @@ macx {
     release:LIBS += $$PWD/lib/quazip/macosx_x86_64/libquazip.a -lz
 }
 
-win32: LIBS += -lshell32
+win32:LIBS += -lshell32
