@@ -150,6 +150,11 @@ void LauncherWorker::runWithData(Data& t_data)
 {    
     Locations::getInstance().initializeWithData(t_data);
 
+    if (!Utilities::isCurrentDirectoryWritable())
+    {
+        Utilities::tryRestartWithHigherPermissions();
+    }
+
     LockFile lockFile;
     lockFile.lock();
 
@@ -157,11 +162,6 @@ void LauncherWorker::runWithData(Data& t_data)
     {
         emit progressChanged(0);
         emit statusChanged("Initializing...");
-
-        if (!Utilities::isCurrentDirectoryWritable())
-        {
-            Utilities::tryRestartWithHigherPermissions();
-        }
 
         qInfo("Starting launcher.");
 
