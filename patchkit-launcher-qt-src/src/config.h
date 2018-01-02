@@ -75,7 +75,5 @@ public:
     const static int staleLockTime;
     const static int lockingTimeout;
 
-    const static bool    isLockFilePassingEnabled;
-
     const static char inlineData[];
 };

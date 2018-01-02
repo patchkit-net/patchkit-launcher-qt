@@ -146,11 +146,6 @@ void LocalPatcherData::start(const Data& t_data)
     exeFileName = formatPatcherManifestString(exeFileName, t_data.encodedApplicationSecret());
     exeArguments = formatPatcherManifestString(exeArguments, t_data.encodedApplicationSecret());
 
-    if (Config::isLockFilePassingEnabled)
-    {
-        exeArguments += " --lockfile \"" + QDir(Config::lockFileName).absolutePath() + "\"";
-    }
-
     qDebug() << "Starting process with command - " << exeFileName << " " << exeArguments;
 
     QProcess::startDetached(exeFileName + " " + exeArguments);
@@ -262,6 +257,7 @@ QString LocalPatcherData::formatPatcherManifestString(const QString& t_stringToF
     result = result.replace("{installdir}", Locations::getInstance().applicationInstallationDirPath());
     result = result.replace("{exedir}", Locations::getInstance().patcherDirectoryPath());
     result = result.replace("{secret}", applicationSecret);
+    result = result.replace("{lockfile}", QDir(Config::lockFileName).absolutePath());
 
     return result;
 }
