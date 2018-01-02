@@ -59,8 +59,6 @@ const QString Config::pingCountArg = "-c";
 const int Config::staleLockTime = 30000;
 const int Config::lockingTimeout = 1000;
 
-const bool Config::isLockFilePassingEnabled = true;
-
 QString Globals::toString(Globals::Platform platform)
 {
     switch (platform)
