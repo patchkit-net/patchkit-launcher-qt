@@ -41,15 +41,12 @@ QStringList PatcherManifestContext::symbols() const
     return result;
 }
 
-PatcherManifest::PatcherManifest(
-        int t_version,
+PatcherManifest::PatcherManifest(int t_version,
         const QString& t_target,
-        const QStringList& t_arguments,
-        const PatcherManifest::TTokenList& t_tokens)
+        const QList<QStringList>& t_arguments)
     : m_version(t_version)
     , m_target(t_target)
     , m_arguments(t_arguments)
-    , m_tokens(t_tokens)
 {
 }
 
@@ -64,14 +61,7 @@ QStringList PatcherManifest::makeArguments(const PatcherManifestContext& t_conte
 
     for (auto arg : m_arguments)
     {
-        if (isToken(arg))
-        {
-            argList.append(parseToken(m_tokens.at(arg), t_context));
-        }
-        else
-        {
-            argList.append(arg);
-        }
+        argList.append(parseArgument(arg, t_context));
     }
 
     return argList;
@@ -80,6 +70,11 @@ QStringList PatcherManifest::makeArguments(const PatcherManifestContext& t_conte
 QString PatcherManifest::makeTarget(const PatcherManifestContext& t_context) const
 {
     return parseSymbols(m_target, t_context);
+}
+
+int PatcherManifest::version() const
+{
+    return m_version;
 }
 
 bool PatcherManifest::isSymbol(const QString& t_text)
@@ -93,19 +88,23 @@ bool PatcherManifest::containsSymbols(const QString& t_text)
     return t_text.contains(pattern);
 }
 
-bool PatcherManifest::isToken(const QString& t_text)
-{
-    return t_text.size() > 0 && t_text.startsWith(">") && t_text.endsWith("<");
-}
-
-QStringList PatcherManifest::parseToken(const QStringList& t_tokenRaw, const PatcherManifestContext& t_context)
+QStringList PatcherManifest::parseArgument(const QStringList& t_argument, const PatcherManifestContext& t_context)
 {
     QStringList result;
-    for (auto s : t_tokenRaw)
+
+    for (auto s : t_argument)
     {
         if (containsSymbols(s))
         {
-            result.append(parseSymbols(s, t_context));
+            auto parsed = parseSymbols(s, t_context);
+
+            if (containsSymbols(parsed))
+            {
+                qWarning("Launcher found an unrecognized symbol in patcher.manifest.");
+                return {};
+            }
+
+            result.append(parsed);
         }
         else
         {
@@ -113,16 +112,7 @@ QStringList PatcherManifest::parseToken(const QStringList& t_tokenRaw, const Pat
         }
     }
 
-    // Only parse if at least one symbol was parsed
-    for (int i = 0; i < t_tokenRaw.size(); i++)
-    {
-        if (result.at(i) != t_tokenRaw.at(i))
-        {
-            return result;
-        }
-    }
-
-    return {};
+    return result;
 }
 
 QString PatcherManifest::parseSymbols(const QString& t_raw, const PatcherManifestContext& t_context)

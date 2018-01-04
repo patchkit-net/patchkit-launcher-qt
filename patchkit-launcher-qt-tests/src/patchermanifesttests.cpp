@@ -41,48 +41,30 @@ TEST_CASE("Patcher manifest context construction")
     REQUIRE(context.symbolValue("{test_symbol_2}").toStdString() == "TEST2");
 }
 
-TEST_CASE("Token parsing")
+TEST_CASE("Arguments parsing")
 {
     PatcherManifestContext context({
-        std::make_pair("{test_symbol}", "TEST")
+        std::make_pair("{target_symbol}", "TARGET_TEST"),
+        std::make_pair("{test_symbol_1}", "TEST1"),
+        std::make_pair("{test_symbol_2}", "TEST2")
     });
 
-    PatcherManifest::TTokenList tokenList;
-    tokenList.insert(std::make_pair(">token1<", QStringList({"--symbol", "{test_symbol}"})));
-
-    PatcherManifest manifest(1, "target",
-        {
-            "pos1", "--opt1", ">token1<"
-        },
-        tokenList
-    );
-
-    QStringList expectedArguments = {"pos1", "--opt1", "--symbol", "TEST"};
-
-    REQUIRE(manifest.makeTarget(context) == "target");
-    REQUIRE(manifest.makeArguments(context).size() > 0);
-    REQUIRE(manifest.makeArguments(context).join(" ").toStdString() == expectedArguments.join(" ").toStdString());
-}
-
-TEST_CASE("Token parsing - missing symbol values and parsing symbols in target name")
-{
-    PatcherManifestContext context({
-        std::make_pair("{symbol}", "TEST")
+    PatcherManifest manifest(2, "{target_symbol}/target", {
+        {"--prefix"},
+        {"--opt-test", "{test_symbol_1}"},
+        {"--missing-opt", "{test_symbol_3}"},
+        {"--postfix"}
     });
 
-    PatcherManifest::TTokenList tokenList;
-    tokenList.insert(std::make_pair(">token1<", QStringList({"--symbol", "{test_symbol}"})));
+    QStringList expectedArguments = {"--prefix", "--opt-test", "TEST1", "--postfix"};
+    auto expectedTarget = "TARGET_TEST/target";
+    int expectedVersion = 2;
 
-    PatcherManifest manifest(1, "{symbol}/target/{symbol}",
-        {
-            "pos1", "--opt1", ">token1<"
-        },
-        tokenList
-    );
+    auto version = manifest.version();
+    auto target = manifest.makeTarget(context).toStdString();
+    auto targetArguments = manifest.makeArguments(context).join(" ").toStdString();
 
-    QStringList expectedArguments = {"pos1", "--opt1"};
-
-    REQUIRE(manifest.makeTarget(context) == "TEST/target/TEST");
-    REQUIRE(manifest.makeArguments(context).size() > 0);
-    REQUIRE(manifest.makeArguments(context).join(" ").toStdString() == expectedArguments.join(" ").toStdString());
+    REQUIRE(targetArguments == expectedArguments.join(" ").toStdString());
+    REQUIRE(target == expectedTarget);
+    REQUIRE(version == expectedVersion);
 }
