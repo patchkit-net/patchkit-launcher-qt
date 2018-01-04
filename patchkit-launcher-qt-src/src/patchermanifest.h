@@ -16,6 +16,7 @@ class PatcherManifestContext
 public:
     typedef std::map<QString, QString> TSymbols;
 
+    PatcherManifestContext();
     PatcherManifestContext(const TSymbols& t_symbols);
 
     void defineSymbol(const QString& t_name, const QString& t_value);

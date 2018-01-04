@@ -21,6 +21,10 @@ const QString PatcherManifest::targetToken = "target";
 const QString PatcherManifest::targetArgumentsToken = "target_arguments";
 const QString PatcherManifest::targetArgumentValueToken = "value";
 
+PatcherManifestContext::PatcherManifestContext()
+{
+}
+
 PatcherManifestContext::PatcherManifestContext(const PatcherManifestContext::TSymbols& t_symbols)
     : m_symbols(t_symbols)
 {}
