@@ -100,7 +100,7 @@ PatcherManifest::PatcherManifest(const QJsonDocument& t_document)
     QJsonArray targetArgumentsArray = docObject[targetArgumentsToken].toArray();
     if (targetArgumentsArray == QJsonArray())
     {
-        throw InvalidFormatException("");
+        throw InvalidFormatException("Target arguments field is not an array.");
     }
 
     for (auto arg : targetArgumentsArray)
@@ -108,27 +108,27 @@ PatcherManifest::PatcherManifest(const QJsonDocument& t_document)
         QStringList argValues;
         if (!arg.isObject())
         {
-            throw InvalidFormatException("");
+            throw InvalidFormatException("Argument in target arguments array is not an object.");
         }
 
         auto argObject = arg.toObject();
 
         if (!argObject.contains(targetArgumentValueToken))
         {
-            throw InvalidFormatException("");
+            throw InvalidFormatException("Argument didn't contain the value field.");
         }
 
         auto valueArray = argObject[targetArgumentValueToken].toArray();
         if (valueArray == QJsonArray())
         {
-            throw InvalidFormatException("");
+            throw InvalidFormatException("The argument's value field wasn't an array.");
         }
 
         for (auto value : valueArray)
         {
             if (!value.isString())
             {
-                throw InvalidFormatException("");
+                throw InvalidFormatException("Couldn't resolve argument's value field elements as string.");
             }
 
             argValues.append(value.toString());
