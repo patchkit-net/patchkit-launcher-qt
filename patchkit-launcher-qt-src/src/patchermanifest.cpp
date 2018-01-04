@@ -6,9 +6,20 @@
 #include "patchermanifest.h"
 
 #include <QRegularExpression>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonValue>
+#include <QJsonArray>
 #include <QDebug>
 
 #include <iostream>
+
+#include "customexceptions.h"
+
+const QString PatcherManifest::manifestVersionToken = "manifest_version";
+const QString PatcherManifest::targetToken = "target";
+const QString PatcherManifest::targetArgumentsToken = "target_arguments";
+const QString PatcherManifest::targetArgumentValueToken = "value";
 
 PatcherManifestContext::PatcherManifestContext(const PatcherManifestContext::TSymbols& t_symbols)
     : m_symbols(t_symbols)
@@ -41,6 +52,9 @@ QStringList PatcherManifestContext::symbols() const
     return result;
 }
 
+PatcherManifest::PatcherManifest()
+{}
+
 PatcherManifest::PatcherManifest(int t_version,
         const QString& t_target,
         const QList<QStringList>& t_arguments)
@@ -52,6 +66,76 @@ PatcherManifest::PatcherManifest(int t_version,
 
 PatcherManifest::PatcherManifest(const QJsonDocument& t_document)
 {
+    if (t_document.isEmpty() || t_document.isNull())
+    {
+        throw InvalidFormatException("Document is null or empty.");
+    }
+
+    if (!t_document.isObject())
+    {
+        throw InvalidFormatException("Root of document is not an object.");
+    }
+
+    QJsonObject docObject = t_document.object();
+
+    if (!docObject.contains(targetToken))
+    {
+        throw InvalidFormatException("Couldn't resolve the target token field.");
+    }
+
+    m_target = docObject[targetToken].toString();
+
+    if (!docObject.contains(manifestVersionToken))
+    {
+        throw InvalidFormatException("Couldn't resolve the version field.");
+    }
+
+    m_version = docObject[manifestVersionToken].toInt();
+
+    if (!docObject.contains(targetArgumentsToken))
+    {
+        throw InvalidFormatException("Couldn't resolve the target arguments field.");
+    }
+
+    QJsonArray targetArgumentsArray = docObject[targetArgumentsToken].toArray();
+    if (targetArgumentsArray == QJsonArray())
+    {
+        throw InvalidFormatException("");
+    }
+
+    for (auto arg : targetArgumentsArray)
+    {
+        QStringList argValues;
+        if (!arg.isObject())
+        {
+            throw InvalidFormatException("");
+        }
+
+        auto argObject = arg.toObject();
+
+        if (!argObject.contains(targetArgumentValueToken))
+        {
+            throw InvalidFormatException("");
+        }
+
+        auto valueArray = argObject[targetArgumentValueToken].toArray();
+        if (valueArray == QJsonArray())
+        {
+            throw InvalidFormatException("");
+        }
+
+        for (auto value : valueArray)
+        {
+            if (!value.isString())
+            {
+                throw InvalidFormatException("");
+            }
+
+            argValues.append(value.toString());
+        }
+
+        m_arguments.append(argValues);
+    }
 
 }
 

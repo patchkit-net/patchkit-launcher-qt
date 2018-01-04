@@ -30,6 +30,12 @@ private:
 class PatcherManifest
 {
 public:
+    const static QString manifestVersionToken;
+    const static QString targetToken;
+    const static QString targetArgumentsToken;
+    const static QString targetArgumentValueToken;
+
+    PatcherManifest();
     PatcherManifest(
             int t_version,
             const QString& t_target,
