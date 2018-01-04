@@ -9,19 +9,22 @@
 #include <src/customexceptions.h>
 
 const std::string patcherManifestData =
-"{\n"
-"    \"exe_fileName\" : \"\\\"{exedir}/Patcher\\\"\",\n"
-"    \"exe_arguments\" : \"--installdir \\\"{installdir}\\\" --secret \\\"{secret}\\\"\",\n"
-"\n"
-"    \"manifest_version\": 2,\n"
-"    \"target\": \"open\",\n"
-"    \"target_arguments\": [\n"
-"        { \"value\": [\"{exedir}/patcher.app\"] },\n"
-"        { \"value\": [\"--args\"] },\n"
-"        { \"value\": [\"--secret\", \"{secret}\"]},\n"
-"        { \"value\": [\"--special\", \"{special}\"]}\n"
-"    ]\n"
-"}";
+R"(
+{
+    "exe_fileName" : "\"{exedir}/Patcher\"",
+    "exe_arguments" : "--installdir \"{installdir}\" --secret \"{secret}\"",
+
+    "manifest_version": 2,
+    "target": "open",
+    "target_arguments": [
+        { "value": ["{exedir}/patcher.app"] },
+        { "value": ["--args"] },
+        { "value": ["--installdir", "{installdir}"] },
+        { "value": ["--lockfile", "{lockfile}"] },
+        { "value": ["--secret", "{secret}"]}
+    ]
+}
+)";
 
 TEST_CASE("Patcher manifest JSON parsing")
 {
