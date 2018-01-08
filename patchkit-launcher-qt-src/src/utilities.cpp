@@ -119,3 +119,53 @@ PatcherManifest Utilities::parsePatcherManifest(const QJsonDocument& t_document)
 
     return PatcherManifest(version, target, arguments);
 }
+
+PatcherManifest Utilities::parseOldPatcherManifest(const QString& t_filename)
+{
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(IOUtils::readTextFromFile(t_filename).toUtf8());
+    return parseOldPatcherManifest(jsonDocument);
+}
+
+PatcherManifest Utilities::parseOldPatcherManifest(const QJsonDocument& t_document)
+{
+    if (t_document.isEmpty() || t_document.isNull())
+    {
+        throw InvalidFormatException("Document is null or empty");
+    }
+
+    if (!t_document.isObject())
+    {
+        throw InvalidFormatException("Document root is not an object.");
+    }
+
+    auto root = t_document.object();
+
+    if (!root.contains(PatcherManifest::exeFilenameToken))
+    {
+        throw InvalidFormatException("Couldn't resolve the exe filename field in document.");
+    }
+
+    if (!root.contains(PatcherManifest::exeArgumentsToken))
+    {
+        throw InvalidFormatException("Couldn't resolve the exe arguments field in document.");
+    }
+
+    if (!root[PatcherManifest::exeFilenameToken].isString())
+    {
+        throw InvalidFormatException("The exe filename field must be a string.");
+    }
+
+    if (!root[PatcherManifest::exeArgumentsToken].isString())
+    {
+        throw InvalidFormatException("The exe arguments field must be a string.");
+    }
+
+    auto exeFilename = root[PatcherManifest::exeFilenameToken].toString();
+    auto exeArguments = root[PatcherManifest::exeArgumentsToken].toString();
+
+    exeFilename.replace("\"", "");
+    exeArguments.replace("\"", "");
+
+    auto arguments = exeArguments.split(" ");
+    return PatcherManifest(0, exeFilename, {arguments});
+}

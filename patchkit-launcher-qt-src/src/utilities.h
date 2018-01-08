@@ -18,4 +18,7 @@ namespace Utilities
 
     PatcherManifest parsePatcherManifest(const QString& t_filename);
     PatcherManifest parsePatcherManifest(const QJsonDocument& t_document);
+
+    PatcherManifest parseOldPatcherManifest(const QString& t_filename);
+    PatcherManifest parseOldPatcherManifest(const QJsonDocument& t_document);
 }

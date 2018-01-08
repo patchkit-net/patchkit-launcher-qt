@@ -35,6 +35,9 @@ public:
     const static QString targetArgumentsToken;
     const static QString targetArgumentValueToken;
 
+    const static QString exeFilenameToken;
+    const static QString exeArgumentsToken;
+
     PatcherManifest();
     PatcherManifest(
             int t_version,

@@ -17,6 +17,9 @@ const QString PatcherManifest::targetToken = "target";
 const QString PatcherManifest::targetArgumentsToken = "target_arguments";
 const QString PatcherManifest::targetArgumentValueToken = "value";
 
+const QString PatcherManifest::exeFilenameToken = "exe_fileName";
+const QString PatcherManifest::exeArgumentsToken = "exe_arguments";
+
 PatcherManifestContext::PatcherManifestContext()
 {
 }

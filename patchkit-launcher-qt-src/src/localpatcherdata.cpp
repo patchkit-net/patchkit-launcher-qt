@@ -231,9 +231,11 @@ PatcherManifest LocalPatcherData::readPatcherManifset() const
 {
     qInfo("Reading patcher manifest.");
 
+    auto manifestLocation = Locations::getInstance().patcherManifestFilePath();
+
     try
     {
-        PatcherManifest manifest = Utilities::parsePatcherManifest(Locations::getInstance().patcherManifestFilePath());
+        PatcherManifest manifest = Utilities::parsePatcherManifest(manifestLocation);
         return manifest;
     }
     catch(InvalidFormatException&)
@@ -243,19 +245,10 @@ PatcherManifest LocalPatcherData::readPatcherManifset() const
 
     try
     {
-        QJsonDocument document = QJsonDocument::fromJson(IOUtils::readTextFromFile(Locations::getInstance().patcherManifestFilePath()).toUtf8());
-        auto root = document.object();
-
-        auto exeFilename = root["exe_fileName"].toString();
-        auto exeArguments = root["exe_arguments"].toString();
-
-        exeFilename.replace("\"", "");
-        exeArguments.replace("\"", "");
-
-        auto arguments = exeArguments.split(" ");
-        return PatcherManifest(0, exeFilename, {arguments});
+        PatcherManifest manifest = Utilities::parseOldPatcherManifest(manifestLocation);
+        return manifest;
     }
-    catch(...)
+    catch(InvalidFormatException&)
     {
         qCritical("Launcher couldn't parse the old patcher manifest format.");
         throw;
