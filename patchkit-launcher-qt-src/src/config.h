@@ -65,6 +65,7 @@ public:
     const static QStringList cacheApiUrls;
 
     const static QString apiUrlOverrideEnvironmentVariableName;
+    const static QString apiCacheUrlOverrideEnvironmentVariableName;
 
     const static QString geolocationApiUrl;
     const static int geolocationTimeout;
