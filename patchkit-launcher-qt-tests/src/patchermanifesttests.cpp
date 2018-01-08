@@ -7,6 +7,9 @@
 
 #include <src/patchermanifest.h>
 #include <src/customexceptions.h>
+#include <src/utilities.h>
+
+#include <QJsonDocument>
 
 const std::string patcherManifestData =
 R"(
@@ -26,6 +29,23 @@ R"(
 }
 )";
 
+const std::string invalidPatcherManifestData =
+R"(
+{
+    "exe_fileName" : "\"{exedir}/Patcher\"",
+    "exe_arguments" : "--installdir \"{installdir}\" --secret \"{secret}\"",
+
+    "manifest_version": 2,
+    "target_arguments": [
+        { "value": ["{exedir}/patcher.app"] },
+        { "value": ["--args"] },
+        { "value": ["--installdir", "{installdir}"] },
+        { "value": ["--lockfile", "{lockfile}"] },
+        { "value": ["--secret", "{secret}"]}
+    ]
+}
+)";
+
 TEST_CASE("Patcher manifest JSON parsing")
 {
     PatcherManifestContext context({
@@ -33,14 +53,23 @@ TEST_CASE("Patcher manifest JSON parsing")
         std::make_pair("{exedir}", "HERE")
     });
 
-    QJsonDocument doc = QJsonDocument::fromJson(QByteArray::fromStdString(patcherManifestData));
-    PatcherManifest manifest;
+    SECTION("Valid jason data")
+    {
+        QJsonDocument doc = QJsonDocument::fromJson(QByteArray::fromStdString(patcherManifestData));
+        PatcherManifest manifest;
 
-    REQUIRE_NOTHROW(manifest = PatcherManifest(doc));
+        REQUIRE_NOTHROW(manifest = Utilities::parsePatcherManifest(doc));
 
-    REQUIRE(manifest.version() == 2);
-    REQUIRE(manifest.makeTarget(context).toStdString() == "open");
-    REQUIRE(manifest.makeArguments(context).join(" ").toStdString() == "HERE/patcher.app --args --secret SECRET");
+        REQUIRE(manifest.version() == 2);
+        REQUIRE(manifest.makeTarget(context).toStdString() == "open");
+        REQUIRE(manifest.makeArguments(context).join(" ").toStdString() == "HERE/patcher.app --args --secret SECRET");
+    }
+
+    SECTION("Invalid json data")
+    {
+        QJsonDocument doc = QJsonDocument::fromJson(QByteArray::fromStdString(invalidPatcherManifestData));
+        REQUIRE_THROWS(Utilities::parsePatcherManifest(doc));
+    }
 }
 
 

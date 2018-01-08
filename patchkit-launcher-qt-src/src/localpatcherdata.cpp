@@ -18,6 +18,7 @@
 #include "lockfile.h"
 #include "patchermanifest.h"
 #include "customexceptions.h"
+#include "utilities.h"
 
 bool LocalPatcherData::isInstalled() const
 {
@@ -229,8 +230,5 @@ int LocalPatcherData::parseVersionInfoToNumber(const QString& t_versionInfoFileC
 PatcherManifest LocalPatcherData::readPatcherManifset() const
 {
     qInfo("Reading patcher manifest.");
-
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(IOUtils::readTextFromFile(Locations::getInstance().patcherManifestFilePath()).toUtf8());
-
-    return PatcherManifest(jsonDocument);
+    return Utilities::parsePatcherManifest(Locations::getInstance().patcherManifestFilePath());
 }

@@ -6,10 +6,6 @@
 #include "patchermanifest.h"
 
 #include <QRegularExpression>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonValue>
-#include <QJsonArray>
 #include <QDebug>
 
 #include <iostream>
@@ -66,81 +62,6 @@ PatcherManifest::PatcherManifest(int t_version,
     , m_target(t_target)
     , m_arguments(t_arguments)
 {
-}
-
-PatcherManifest::PatcherManifest(const QJsonDocument& t_document)
-{
-    if (t_document.isEmpty() || t_document.isNull())
-    {
-        throw InvalidFormatException("Document is null or empty.");
-    }
-
-    if (!t_document.isObject())
-    {
-        throw InvalidFormatException("Root of document is not an object.");
-    }
-
-    QJsonObject docObject = t_document.object();
-
-    if (!docObject.contains(targetToken))
-    {
-        throw InvalidFormatException("Couldn't resolve the target token field.");
-    }
-
-    m_target = docObject[targetToken].toString();
-
-    if (!docObject.contains(manifestVersionToken))
-    {
-        throw InvalidFormatException("Couldn't resolve the version field.");
-    }
-
-    m_version = docObject[manifestVersionToken].toInt();
-
-    if (!docObject.contains(targetArgumentsToken))
-    {
-        throw InvalidFormatException("Couldn't resolve the target arguments field.");
-    }
-
-    QJsonArray targetArgumentsArray = docObject[targetArgumentsToken].toArray();
-    if (targetArgumentsArray == QJsonArray())
-    {
-        throw InvalidFormatException("Target arguments field is not an array.");
-    }
-
-    for (auto arg : targetArgumentsArray)
-    {
-        QStringList argValues;
-        if (!arg.isObject())
-        {
-            throw InvalidFormatException("Argument in target arguments array is not an object.");
-        }
-
-        auto argObject = arg.toObject();
-
-        if (!argObject.contains(targetArgumentValueToken))
-        {
-            throw InvalidFormatException("Argument didn't contain the value field.");
-        }
-
-        auto valueArray = argObject[targetArgumentValueToken].toArray();
-        if (valueArray == QJsonArray())
-        {
-            throw InvalidFormatException("The argument's value field wasn't an array.");
-        }
-
-        for (auto value : valueArray)
-        {
-            if (!value.isString())
-            {
-                throw InvalidFormatException("Couldn't resolve argument's value field elements as string.");
-            }
-
-            argValues.append(value.toString());
-        }
-
-        m_arguments.append(argValues);
-    }
-
 }
 
 QStringList PatcherManifest::makeArguments(const PatcherManifestContext& t_context) const

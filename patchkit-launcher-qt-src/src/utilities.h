@@ -5,9 +5,17 @@
 
 #pragma once
 
+#include <QString>
+#include <QJsonDocument>
+
+class PatcherManifest;
+
 namespace Utilities
 {
     bool isCurrentDirectoryWritable();
 
     void tryRestartWithHigherPermissions();
+
+    PatcherManifest parsePatcherManifest(const QString& t_filename);
+    PatcherManifest parsePatcherManifest(const QJsonDocument& t_document);
 }

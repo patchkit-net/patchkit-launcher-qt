@@ -7,7 +7,6 @@
 
 #include <QString>
 #include <QStringList>
-#include <QJsonDocument>
 
 #include <map>
 
@@ -41,8 +40,6 @@ public:
             int t_version,
             const QString& t_target,
             const QList<QStringList>& t_arguments);
-
-    PatcherManifest(const QJsonDocument& t_document);
 
     QStringList makeArguments(const PatcherManifestContext& t_context) const;
     QString makeTarget(const PatcherManifestContext& t_context) const;
