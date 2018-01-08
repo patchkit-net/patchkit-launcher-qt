@@ -230,5 +230,34 @@ int LocalPatcherData::parseVersionInfoToNumber(const QString& t_versionInfoFileC
 PatcherManifest LocalPatcherData::readPatcherManifset() const
 {
     qInfo("Reading patcher manifest.");
-    return Utilities::parsePatcherManifest(Locations::getInstance().patcherManifestFilePath());
+
+    try
+    {
+        PatcherManifest manifest = Utilities::parsePatcherManifest(Locations::getInstance().patcherManifestFilePath());
+        return manifest;
+    }
+    catch(InvalidFormatException&)
+    {
+        qWarning("Invalid format exception detected while parsing the patcher manifest. Launcher will try to read the old format.");
+    }
+
+    try
+    {
+        QJsonDocument document = QJsonDocument::fromJson(IOUtils::readTextFromFile(Locations::getInstance().patcherManifestFilePath()).toUtf8());
+        auto root = document.object();
+
+        auto exeFilename = root["exe_fileName"].toString();
+        auto exeArguments = root["exe_arguments"].toString();
+
+        exeFilename.replace("\"", "");
+        exeArguments.replace("\"", "");
+
+        auto arguments = exeArguments.split(" ");
+        return PatcherManifest(0, exeFilename, {arguments});
+    }
+    catch(...)
+    {
+        qCritical("Launcher couldn't parse the old patcher manifest format.");
+        throw;
+    }
 }
