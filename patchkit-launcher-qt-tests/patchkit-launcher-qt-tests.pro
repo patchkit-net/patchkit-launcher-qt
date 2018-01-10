@@ -17,6 +17,7 @@ SOURCES += \
     $$PWD/src/mockednam.cpp \
     $$PWD/src/mockedreply.cpp\
     $$PWD/src/main.cpp \
+    $$PWD/src/patchermanifesttests.cpp
 
 HEADERS += \
     $$PWD/src/catch.h \

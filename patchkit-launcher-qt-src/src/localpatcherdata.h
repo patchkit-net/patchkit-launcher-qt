@@ -10,6 +10,8 @@
 
 #include "data.h"
 #include "lockfile.h"
+#include "patchermanifest.h"
+
 #include <quazipfile.h>
 
 class LocalPatcherData : public QObject
@@ -34,9 +36,5 @@ private:
 
     static int parseVersionInfoToNumber(const QString& t_versionInfoFileContents);
 
-    void readPatcherManifset(QString& t_exeFileName,
-                             QString& t_exeArguments) const;
-
-    QString formatPatcherManifestString(const QString& t_stringToFormat,
-                                        const QByteArray& t_encodedApplicationSecret) const;
+    PatcherManifest readPatcherManifset() const;
 };

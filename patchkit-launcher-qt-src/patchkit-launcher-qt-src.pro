@@ -32,7 +32,8 @@ SOURCES += \
     $$PWD/src/launcherstate.cpp \
     $$PWD/src/lockfile.cpp \
     $$PWD/src/xxhash.c \
-    $$PWD/src/utilities.cpp
+    $$PWD/src/utilities.cpp \
+    $$PWD/src/patchermanifest.cpp
 
 HEADERS += \
     $$PWD/src/launcherstate.h \
@@ -63,6 +64,7 @@ HEADERS += \
     $$PWD/src/customexceptions.h \
     $$PWD/src/executableresources.h \
     $$PWD/src/lockfile.h \
-    $$PWD/src/utilities.h
+    $$PWD/src/utilities.h \
+    $$PWD/src/patchermanifest.h
 
 include(../version.pri)

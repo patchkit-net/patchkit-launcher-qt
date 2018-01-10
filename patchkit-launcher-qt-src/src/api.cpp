@@ -301,7 +301,14 @@ QByteArray Api::downloadInternal(const QString& t_resourceUrl, bool t_withGeoloc
         totalUrlBases.append(Config::mainApiUrl);
     }
 
-    totalUrlBases.append(Config::cacheApiUrls);
+    if (environment.contains(Config::apiCacheUrlOverrideEnvironmentVariableName))
+    {
+        totalUrlBases.append(environment.value(Config::apiCacheUrlOverrideEnvironmentVariableName));
+    }
+    else
+    {
+        totalUrlBases.append(Config::cacheApiUrls);
+    }
 
     m_didLastDownloadSucceed = true;
 

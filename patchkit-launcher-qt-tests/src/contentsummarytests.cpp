@@ -13,25 +13,27 @@
 #include <string>
 
 const std::string contentSummaryData =
-"{"
-"  \"size\": 1234,"
-"  \"encryption_method\": \"none\","
-"  \"compression_method\": \"zip\","
-"  \"hashing_method\" : \"xxhash\","
-"  \"hash_code\" : \"123456\","
-"  \"files\": ["
-"    {"
-"      \"path\": \"path/to/some_file\","
-"      \"hash\": \"12345\","
-"      \"size\": \"12345\","
-"      \"flags\": \"ignore\""
-"    }"
-"  ],"
-"  \"chunks\": {"
-"     \"size\": 1048576,"
-"     \"hashes\": [\"3\", \"1\", \"5\"]"
-"   }\n"
-"}";
+R"(
+{
+    "size": 1234,
+    "encryption_method": "none",
+    "compression_method": "zip",
+    "hashing_method": "xxhash",
+    "hash_code": "123456",
+    "files": [
+        {
+            "path": "path/to/some_file",
+            "hash": "12345",
+            "size": "12345",
+            "flags": "ignore"
+        }
+    ],
+    "chunks": {
+        "size": 1048576,
+        "hashes": ["3", "1", "5"]
+    }
+}
+)";
 
 TEST_CASE("ContentSummary testing on a const data source.", "content_summary")
 {
