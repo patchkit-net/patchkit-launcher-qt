@@ -147,7 +147,7 @@ void LauncherWorker::setDownloadProgress(const long long& t_bytesDownloaded, con
 }
 
 void LauncherWorker::runWithData(Data& t_data)
-{    
+{
     Locations::getInstance().initializeWithData(t_data);
 
     if (!Utilities::isCurrentDirectoryWritable())
@@ -219,7 +219,15 @@ void LauncherWorker::runWithData(Data& t_data)
     }
 
     lockFile.cede();
-    startPatcher(t_data);
+    try
+    {
+        startPatcher(t_data);
+    }
+    catch(...)
+    {
+        lockFile.clear();
+        throw;
+    }
 }
 
 void LauncherWorker::setupPatcherSecret(Data& t_data)

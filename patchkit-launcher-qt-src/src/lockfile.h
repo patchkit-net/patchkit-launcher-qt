@@ -18,6 +18,7 @@ public:
     void unlock();
 
     void cede();
+    void clear();
 
 private:
     QLockFile m_lockFile;
