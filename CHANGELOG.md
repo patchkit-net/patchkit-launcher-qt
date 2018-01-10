@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 - The error on OSX caused by downloading the patcher into location without necessary permissions.
+- A small issue which would cause the Launcher to lock itself from executing again if an error occured when trying to start the Patcher.
 
 ## [v1.2.0]
 ### Added
