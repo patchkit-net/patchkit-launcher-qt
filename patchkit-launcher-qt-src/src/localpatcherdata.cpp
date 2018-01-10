@@ -16,6 +16,9 @@
 #include "locations.h"
 #include "ioutils.h"
 #include "lockfile.h"
+#include "patchermanifest.h"
+#include "customexceptions.h"
+#include "utilities.h"
 
 bool LocalPatcherData::isInstalled() const
 {
@@ -136,24 +139,25 @@ void LocalPatcherData::start(const Data& t_data)
 {
     qInfo("Starting patcher.");
 
-    QString exeFileName;
-    QString exeArguments;
+    QString applicationSecret = QString::fromUtf8(t_data.encodedApplicationSecret().toBase64());
 
-    readPatcherManifset(exeFileName, exeArguments);
+    PatcherManifestContext manifestContext;
+    manifestContext.defineSymbol("{installdir}", Locations::getInstance().applicationInstallationDirPath());
+    manifestContext.defineSymbol("{exedir}", Locations::getInstance().patcherDirectoryPath());
+    manifestContext.defineSymbol("{secret}", applicationSecret);
+    manifestContext.defineSymbol("{lockfile}", QDir(Config::lockFileName).absolutePath());
 
-    qDebug() << "Preparing run command from format - " << exeFileName << " " << exeArguments;
+    auto manifest = readPatcherManifset();
 
-    exeFileName = formatPatcherManifestString(exeFileName, t_data.encodedApplicationSecret());
-    exeArguments = formatPatcherManifestString(exeArguments, t_data.encodedApplicationSecret());
+    QString target = manifest.makeTarget(manifestContext);
+    QStringList targetArguments = manifest.makeArguments(manifestContext);
 
-    if (Config::isLockFilePassingEnabled)
+    qDebug() << "Preparing execute target: " << target << " with arguments: " << targetArguments;
+
+    if (!QProcess::startDetached(target, targetArguments))
     {
-        exeArguments += " --lockfile \"" + QDir(Config::lockFileName).absolutePath() + "\"";
+        throw FatalException("Failed to start the patcher.");
     }
-
-    qDebug() << "Starting process with command - " << exeFileName << " " << exeArguments;
-
-    QProcess::startDetached(exeFileName + " " + exeArguments);
 }
 
 void LocalPatcherData::uninstall()
@@ -223,45 +227,30 @@ int LocalPatcherData::parseVersionInfoToNumber(const QString& t_versionInfoFileC
     return version;
 }
 
-void LocalPatcherData::readPatcherManifset(QString& t_exeFileName, QString& t_exeArguments) const
+PatcherManifest LocalPatcherData::readPatcherManifset() const
 {
     qInfo("Reading patcher manifest.");
 
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(IOUtils::readTextFromFile(Locations::getInstance().patcherManifestFilePath()).toUtf8());
+    auto manifestLocation = Locations::getInstance().patcherManifestFilePath();
 
-    if (!jsonDocument.isObject())
+    try
     {
-        throw std::runtime_error("Invaild format of patcher manifest file.");
+        PatcherManifest manifest = Utilities::parsePatcherManifest(manifestLocation);
+        return manifest;
+    }
+    catch(InvalidFormatException&)
+    {
+        qWarning("Invalid format exception detected while parsing the patcher manifest. Launcher will try to read the old format.");
     }
 
-    QJsonObject jsonObject = jsonDocument.object();
-
-    if (!jsonObject.contains("exe_fileName") || !jsonObject.contains("exe_arguments"))
+    try
     {
-        throw std::runtime_error("Invaild format of patcher manifest file.");
+        PatcherManifest manifest = Utilities::parseOldPatcherManifest(manifestLocation);
+        return manifest;
     }
-
-    QJsonValue exeFileNameJsonValue = jsonObject.value("exe_fileName");
-    QJsonValue exeArgumentsJsonValue = jsonObject.value("exe_arguments");
-
-    if (!exeFileNameJsonValue.isString() || !exeArgumentsJsonValue.isString())
+    catch(InvalidFormatException&)
     {
-        throw std::runtime_error("Invaild format of patcher manifest file.");
+        qCritical("Launcher couldn't parse the old patcher manifest format.");
+        throw;
     }
-
-    t_exeFileName = exeFileNameJsonValue.toString();
-    t_exeArguments = exeArgumentsJsonValue.toString();
-}
-
-QString LocalPatcherData::formatPatcherManifestString(const QString& t_stringToFormat, const QByteArray& t_encodedApplicationSecret) const
-{
-    QString result(t_stringToFormat);
-
-    QString applicationSecret = QString::fromUtf8(t_encodedApplicationSecret.toBase64());
-
-    result = result.replace("{installdir}", Locations::getInstance().applicationInstallationDirPath());
-    result = result.replace("{exedir}", Locations::getInstance().patcherDirectoryPath());
-    result = result.replace("{secret}", applicationSecret);
-
-    return result;
 }

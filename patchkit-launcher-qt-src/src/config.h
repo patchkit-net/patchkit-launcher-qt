@@ -65,6 +65,7 @@ public:
     const static QStringList cacheApiUrls;
 
     const static QString apiUrlOverrideEnvironmentVariableName;
+    const static QString apiCacheUrlOverrideEnvironmentVariableName;
 
     const static QString geolocationApiUrl;
     const static int geolocationTimeout;
@@ -74,8 +75,6 @@ public:
 
     const static int staleLockTime;
     const static int lockingTimeout;
-
-    const static bool    isLockFilePassingEnabled;
 
     const static char inlineData[];
 };

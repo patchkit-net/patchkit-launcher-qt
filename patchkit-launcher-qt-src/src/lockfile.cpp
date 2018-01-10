@@ -47,6 +47,17 @@ void LockFile::cede()
         {
             qCritical("Failed to cede the lock file.");
         }
+        cededFile.close();
         m_isLockFileLocal = false;
+    }
+}
+
+void LockFile::clear()
+{
+    QFile lockFile(Config::lockFileName);
+
+    if (lockFile.exists())
+    {
+        lockFile.remove();
     }
 }
