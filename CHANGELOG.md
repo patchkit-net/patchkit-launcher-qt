@@ -14,11 +14,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v1.3.0]
 ### Added
-- Passing the .lock file to Patcher through the --lockfile argument.
 - Creating the launcher_path file in the Patcher directory, the file contains a relative path to Launcher executable.
+- Lockfile implementation using QLockFile
 
 ### Fixed
 - The error on OSX caused by downloading the patcher into location without necessary permissions.
+- The crash caused by invalid permissions on Windows
 
 ## [v1.2.0]
 ### Added
