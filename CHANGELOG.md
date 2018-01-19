@@ -4,16 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [v1.3.0]
+## [unreleased]
 ### Added
-- Passing the .lock file to Patcher through the --lockfile argument.
-- Creating the launcher_path file in the Patcher directory, the file contains a relative path to Launcher executable.
 - New patcher manifest file format processing.
 - Launcher will use the api-cache address from the `PK_LAUNCHER_API_CACHE_URL` environment variable if available.
 
 ### Fixed
-- The error on OSX caused by downloading the patcher into location without necessary permissions.
 - A small issue which would cause the Launcher to lock itself from executing again if an error occured when trying to start the Patcher.
+
+## [v1.3.0]
+### Added
+- Passing the .lock file to Patcher through the --lockfile argument.
+- Creating the launcher_path file in the Patcher directory, the file contains a relative path to Launcher executable.
+
+### Fixed
+- The error on OSX caused by downloading the patcher into location without necessary permissions.
 
 ## [v1.2.0]
 ### Added
