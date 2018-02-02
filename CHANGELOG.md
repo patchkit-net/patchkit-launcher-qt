@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v1.0.3]
 ### Added
-- Additional api-cache server
+- Addional api-cache server based on AWS Lambda
 
 ## [v1.0.2]
 ### Added
