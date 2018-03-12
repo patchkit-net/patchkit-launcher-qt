@@ -17,9 +17,17 @@ Logger::Logger()
     , m_stdoutStream(stdout)
     , m_isSilent(false)
 {
-    m_logFile.open(QIODevice::WriteOnly | QIODevice::Truncate);
+    m_logFile.open(QIODevice::WriteOnly | QIODevice::Append);
 
     qInstallMessageHandler(logHandler);
+
+    // Initial log message
+    m_logFileStream << endl
+                    << "########## "
+                    << QDateTime::currentDateTime().toString()
+                    << " - Log start"
+                    << endl
+                    << flush;
 }
 
 Logger &Logger::getInstance()
