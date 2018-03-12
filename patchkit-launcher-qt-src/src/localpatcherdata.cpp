@@ -119,7 +119,8 @@ void LocalPatcherData::install(const QString& t_downloadedPath, const Data& t_da
         system(QString("chmod +x \"%1\"").arg(entryPath).toStdString().c_str());
 #endif
 
-        installationInfoFileContents += installationPatcherEntries[i];
+        installationInfoFileContents +=
+                QDir::cleanPath(locations.patcherDirectoryPath() + QDir::separator() + installationPatcherEntries[i]);
 
         if (i != installationPatcherEntries.size() - 1)
         {
@@ -170,23 +171,25 @@ void LocalPatcherData::uninstall()
     }
     else
     {
-        QStringList installFiles = IOUtils::readTextFromFile(Locations::getInstance().patcherInstallationInfoFilePath()).split(QChar('\n'));
+        QStringList installFiles =
+                IOUtils::readTextFromFile(Locations::getInstance().patcherInstallationInfoFilePath())
+                .split(QChar('\n'));
 
-        for (int i = 0; i < installFiles.size(); i++)
+        for (const auto& filePath : installFiles)
         {
-            QFileInfo fileInfo(installFiles[i]);
+            QFileInfo fileInfo(filePath);
 
             if (fileInfo.exists())
             {
                 if (fileInfo.isFile())
                 {
-                    qInfo() << "Deleting file " << installFiles[i];
-                    QFile::remove(installFiles[i]);
+                    qInfo() << "Deleting file " << filePath;
+                    QFile::remove(filePath);
                 }
                 else if (fileInfo.isDir())
                 {
-                    qInfo() << "Deleting directory " << installFiles[i];
-                    QDir(installFiles[i]).removeRecursively();
+                    qInfo() << "Deleting directory " << filePath;
+                    QDir(filePath).removeRecursively();
                 }
             }
         }
