@@ -26,7 +26,8 @@ public:
         SUCCESS,
         FAILED,
         FATAL_ERROR,
-        LOCKED
+        LOCKED,
+        CONNECTION_ERROR
     };
 
     LauncherWorker(LauncherState& t_launcherState, QObject* parent = nullptr);

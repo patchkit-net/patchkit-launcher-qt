@@ -124,6 +124,21 @@ void Launcher::finish()
             QApplication::exit(1);
         }
     }
+    else if (m_worker.result() == LauncherWorker::CONNECTION_ERROR)
+    {
+        int retryRunDialogResult = QMessageBox::critical(nullptr, "Connection error!", "Failed to connect to server.", QMessageBox::Yes, QMessageBox::No);
+
+        if (retryRunDialogResult == QMessageBox::Yes)
+        {
+            qInfo("Retrying.");
+            start();
+        }
+        else
+        {
+            qWarning("Retry denied. Closing launcher application with status 1.");
+            QApplication::exit(1);
+        }
+    }
     else if (m_worker.result() == LauncherWorker::FATAL_ERROR)
     {
         QMessageBox::critical(nullptr, "Error!", "An error has occured!", QMessageBox::Close);

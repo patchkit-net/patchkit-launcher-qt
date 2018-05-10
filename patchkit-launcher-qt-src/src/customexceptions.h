@@ -40,6 +40,7 @@ public: \
 CUSTOM_RUNTIME_ERROR(FatalException)
 CUSTOM_RUNTIME_ERROR(ContentUnavailableException)
 CUSTOM_RUNTIME_ERROR(InvalidFormatException)
+CUSTOM_RUNTIME_ERROR(ServerConnectionError)
 CUSTOM_EXCEPTION(TimeoutException, "Timeout.")
 CUSTOM_EXCEPTION(CancelledException, "Operation has been cancelled.")
 CUSTOM_EXCEPTION(LockException, "Lock file detected.")

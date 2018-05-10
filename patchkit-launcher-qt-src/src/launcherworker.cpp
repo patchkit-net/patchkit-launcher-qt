@@ -27,6 +27,11 @@ void LauncherWorker::run()
         m_result = SUCCESS;
         qInfo("Launcher has succeeded.");
     }
+    catch(ServerConnectionError& e)
+    {
+        m_result = CONNECTION_ERROR;
+        qCritical(e.what());
+    }
     catch (LockException&)
     {
         m_result = LOCKED;

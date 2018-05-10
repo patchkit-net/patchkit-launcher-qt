@@ -139,21 +139,21 @@ int Api::downloadPatcherVersion(const QString& t_resourceUrl)
 
     if (!doc.isObject())
     {
-        throw std::runtime_error("Couldn't read version id from JSON data.");
+        throw ServerConnectionError("Couldn't read version id from JSON data.");
     }
 
     QJsonObject jsonObject = doc.object();
 
     if (!jsonObject.contains("id"))
     {
-        throw std::runtime_error("Couldn't read version id from JSON data.");
+        throw ServerConnectionError("Couldn't read version id from JSON data.");
     }
 
     int idValue = jsonObject.value("id").toInt(-1);
 
     if (idValue == -1)
     {
-        throw std::runtime_error("Couldn't read version id from JSON data.");
+        throw ServerConnectionError("Couldn't read version id from JSON data.");
     }
 
     return idValue;
@@ -330,6 +330,11 @@ QByteArray Api::downloadInternal(const QString& t_resourceUrl, bool t_withGeoloc
 
     QByteArray data;
     data = op.download(strategy, m_cancellationToken);
+
+    if (data.size() == 0)
+    {
+        throw ServerConnectionError("Failed to connect to server.");
+    }
 
     return data;
 }
