@@ -126,7 +126,7 @@ void Launcher::finish()
     }
     else if (m_worker.result() == LauncherWorker::CONNECTION_ERROR)
     {
-        int retryRunDialogResult = QMessageBox::critical(nullptr, "Connection error!", "Failed to connect to server.", QMessageBox::Yes, QMessageBox::No);
+        int retryRunDialogResult = QMessageBox::critical(nullptr, "Connection error!", "Failed to connect to server. Would you like to retry?", QMessageBox::Yes, QMessageBox::No);
 
         if (retryRunDialogResult == QMessageBox::Yes)
         {
