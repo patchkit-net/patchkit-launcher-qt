@@ -1,14 +1,24 @@
 #include "lockfile.h"
 
+#include <QDebug>
+#include <QDir>
+#include <QFile>
+
 #include "config.h"
 #include "locations.h"
 #include "customexceptions.h"
 
 LockFile::LockFile()
-    : m_lockFile(Config::lockFileName)
-    , m_isLockFileLocal(false)
+    : m_isLockFileLocal(false)
 {
-    m_lockFile.setStaleLockTime(Config::staleLockTime);
+    QFile lockFile(Config::lockFileName);
+    if (!lockFile.exists())
+    {
+        lockFile.open(QIODevice::ReadWrite);
+        lockFile.close();
+    }
+
+    m_lockFile = boost::interprocess::file_lock(Config::lockFileName.toStdString().c_str());
 }
 
 LockFile::~LockFile()
@@ -21,19 +31,21 @@ LockFile::~LockFile()
 
 void LockFile::lock()
 {
-    if (!m_lockFile.tryLock(Config::lockingTimeout))
+    if (!m_lockFile.try_lock())
     {
         qCritical("Failed to lock the lockfile.");
         throw LockException();
     }
     else
     {
+        qInfo() << "Successful lock on " << QDir::cleanPath(Config::lockFileName);
         m_isLockFileLocal = true;
     }
 }
 
 void LockFile::unlock()
 {
+    qInfo() << "Unlocking the lock file.";
     m_lockFile.unlock();
 }
 

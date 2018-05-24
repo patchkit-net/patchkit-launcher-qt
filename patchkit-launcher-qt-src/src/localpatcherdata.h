@@ -12,7 +12,7 @@
 #include "lockfile.h"
 #include "patchermanifest.h"
 
-#include <quazipfile.h>
+#include <quazip/quazipfile.h>
 
 class LocalPatcherData : public QObject
 {

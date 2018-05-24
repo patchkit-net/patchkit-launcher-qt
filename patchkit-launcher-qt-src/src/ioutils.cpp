@@ -7,8 +7,8 @@
 
 #include <QDir>
 #include <QTextStream>
-#include <quazip.h>
-#include <quazipfile.h>
+#include <quazip/quazip.h>
+#include <quazip/quazipfile.h>
 #include <memory>
 
 void IOUtils::createDir(const QString& t_dirPath)

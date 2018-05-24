@@ -4,7 +4,7 @@ DEFINES += QUAZIP_STATIC
 
 CONFIG += c++14
 
-INCLUDEPATH += $$PWD/include/zlib
-INCLUDEPATH += $$PWD/include/quazip
+INCLUDEPATH += $$PWD/include
+INCLUDEPATH += $$PWD/boost
 
 SRC_DIR = $$PWD
