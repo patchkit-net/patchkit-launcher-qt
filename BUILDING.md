@@ -5,7 +5,7 @@ Launcher requires the Boost library to compile.
 
 Make sure to set the `PK_LAUNCHER_BOOST_INCLUDEDIR` environment variable (from command line or using QT Creator project settings) to an appropriate path.
 
-For example, ff you're using [PDK](https://github.com/patchkit-net/patchkit-development-kit/) the path should look something like `/path/to/patchkit-development-kit/src/boost`.
+For example, if you're using [PDK](https://github.com/patchkit-net/patchkit-development-kit/) the path should look something like `/path/to/patchkit-development-kit/src/boost`.
 
 ## Building from Qt Creator (recommended)
 
