@@ -57,9 +57,6 @@ const QString Config::pingCountArg = "-n";
 const QString Config::pingCountArg = "-c";
 #endif
 
-const int Config::staleLockTime = 30000;
-const int Config::lockingTimeout = 1000;
-
 QString Globals::toString(Globals::Platform platform)
 {
     switch (platform)
