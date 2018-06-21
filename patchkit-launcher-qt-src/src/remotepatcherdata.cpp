@@ -38,19 +38,12 @@ QString RemotePatcherData::getPatcherSecret(const Data& t_data, CancellationToke
     QString resourceUrl = QString("1/apps/%1").arg(t_data.applicationSecret());
     QString data;
 
-    try
+    data = m_api.downloadPatcherSecret(resourceUrl);
+
+    if (data.isNull() || data.isEmpty())
     {
-        data = m_api.downloadPatcherSecret(resourceUrl);
-    }
-    catch(ContentUnavailableException& exception)
-    {
-        qWarning() << "Exception when downloading patcher secret: " << exception.what();
-        qInfo("Launcher will use a default patcher.");
+        qInfo() << "No patcher secret found, attempting to download default patcher secret.";
         data = m_api.downloadDefaultPatcherSecret();
-    }
-    catch(...)
-    {
-        throw;
     }
 
     return data;
