@@ -63,6 +63,16 @@ class DownloaderOperator : public QObject, public IDownloaderPool
 {
     Q_OBJECT
 public:
+    struct Result
+    {
+        Result(QByteArray data, int statusCode)
+            : data(data), statusCode(statusCode)
+        {}
+
+        QByteArray data;
+        int statusCode;
+    };
+
     DownloaderOperator(Downloader::TDataSource t_dataSource, const IUrlProvider& t_urlProvider, CancellationToken t_cancellationToken, QObject* parent = nullptr);
     DownloaderOperator(std::initializer_list<Downloader*> t_downloaders, QObject* parent = nullptr);
     DownloaderOperator(const DownloaderPool& t_downloaderPool, QObject* parent = nullptr);
@@ -81,7 +91,7 @@ public:
 
     void setRange(int t_bytesStart, int t_bytesEnd = -1);
 
-    QByteArray download(BaseDownloadStrategy& t_downloadStrategy, CancellationToken t_cancellationToken);
+    Result download(BaseDownloadStrategy& t_downloadStrategy, CancellationToken t_cancellationToken);
 
 signals:
     void downloadProgress(long long t_bytesDownloaded, long long t_totalBytes);

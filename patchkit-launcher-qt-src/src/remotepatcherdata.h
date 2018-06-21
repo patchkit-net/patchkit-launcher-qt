@@ -18,9 +18,9 @@ class RemotePatcherData : public QObject
     Q_OBJECT
 
 public:
-    RemotePatcherData(LauncherState& t_launcherState, Api& t_api, QNetworkAccessManager* t_networkAccessManager);
+    RemotePatcherData(LauncherState& t_launcherState, IApi& t_api, QNetworkAccessManager* t_networkAccessManager);
 
-    int getVersion(const Data& t_data, CancellationToken t_cancellationToken);
+    int getVersion(const Data& t_data, CancellationToken t_cancellationToken) const;
 
     QString getPatcherSecret(const Data& t_data, CancellationToken t_cancellationToken);
 
@@ -36,7 +36,7 @@ signals:
 private:
     QNetworkAccessManager* m_networkAccessManager;
     LauncherState& m_launcherState;
-    Api& m_api;
+    IApi& m_api;
 
     QStringList getContentUrls(const QString& t_patcherSecret, int t_version, CancellationToken t_cancellationToken);
 

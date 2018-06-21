@@ -201,7 +201,7 @@ void DownloaderOperator::setRange(int t_bytesStart, int t_bytesEnd)
     }
 }
 
-QByteArray DownloaderOperator::download(BaseDownloadStrategy& t_downloadStrategy, CancellationToken t_cancellationToken)
+DownloaderOperator::Result DownloaderOperator::download(BaseDownloadStrategy& t_downloadStrategy, CancellationToken t_cancellationToken)
 {
     connect(&t_downloadStrategy, &BaseDownloadStrategy::downloadProgress, this, &DownloaderOperator::downloadProgress);
 
@@ -209,7 +209,7 @@ QByteArray DownloaderOperator::download(BaseDownloadStrategy& t_downloadStrategy
 
     t_cancellationToken.throwIfCancelled();
 
-    return t_downloadStrategy.data();
+    return Result(t_downloadStrategy.data(), t_downloadStrategy.statusCode());
 }
 
 DownloaderPool::DownloaderPool(const DownloaderPool& t_downloaderPool)

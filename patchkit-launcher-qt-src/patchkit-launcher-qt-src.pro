@@ -33,7 +33,8 @@ SOURCES += \
     $$PWD/src/lockfile.cpp \
     $$PWD/src/xxhash.c \
     $$PWD/src/utilities.cpp \
-    $$PWD/src/patchermanifest.cpp
+    $$PWD/src/patchermanifest.cpp \
+    src/remoteappdata.cpp
 
 HEADERS += \
     $$PWD/src/launcherstate.h \
@@ -65,6 +66,7 @@ HEADERS += \
     $$PWD/src/executableresources.h \
     $$PWD/src/lockfile.h \
     $$PWD/src/utilities.h \
-    $$PWD/src/patchermanifest.h
+    $$PWD/src/patchermanifest.h \
+    src/remoteappdata.h
 
 include(../version.pri)

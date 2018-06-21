@@ -22,6 +22,7 @@ public:
     void start(CancellationToken t_cancellationToken);
 
     QByteArray data();
+    int statusCode();
 
 public slots:
     virtual void downloadProgressRelay(const long long& t_bytesDownloaded, const long long& t_totalBytes);
@@ -35,6 +36,7 @@ protected:
     void watchProgressOf(Downloader* t_downloader);
     void stopWatchingProgressOf(Downloader* t_downloader);
 
+    int m_statusCode;
     QByteArray m_data;
     DownloaderOperator& m_operator;
     LauncherState& m_state;

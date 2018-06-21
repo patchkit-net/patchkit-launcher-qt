@@ -11,6 +11,8 @@
 #include "downloaderoperator.h"
 #include "defaultdownloadstrategy.h"
 
+#include "remoteappdata.h"
+
 #include "contentsummary.h"
 
 #include "logger.h"
@@ -19,114 +21,50 @@
 
 Api::Api(
         Downloader::TDataSource t_dataSource,
-        CancellationToken t_cancellationToken,
         LauncherState& t_state,
         QObject* parent)
     : QObject(parent)
-    , m_cancellationToken(t_cancellationToken)
     , m_state(t_state)
     , m_dataSource(t_dataSource)
 {
 }
 
-ContentSummary Api::downloadContentSummary(const QString& t_resourceUrl)
+int Api::getLatestVersionId(const QString& t_appSecret, CancellationToken t_cancellationToken) const
+{
+    QString resourceUrl = QString("1/apps/%1/versions/latest/id").arg(t_appSecret);
+
+    auto result = downloadInternal(resourceUrl, true, t_cancellationToken);
+
+    return RemoteAppData::parseVersion(result.data);
+}
+
+ContentSummary Api::getContentSummary(const QString& t_appSecret, int t_version, CancellationToken t_cancellationToken) const
 {
     qInfo("Download content summary.");
-    QByteArray data;
-    data = downloadInternal(t_resourceUrl);
+    const QString contentSummaryPath = QString("1/apps/%1/versions/%2/content_summary").arg(t_appSecret, t_version);
+    auto result = downloadInternal(contentSummaryPath, true, t_cancellationToken);
 
-    QJsonDocument doc = QJsonDocument::fromJson(data);
+    QJsonDocument doc = QJsonDocument::fromJson(result.data);
     return ContentSummary(doc);
 }
 
-QString Api::downloadPatcherSecret(const QString& t_resourceUrl)
+QString Api::getPatcherSecret(const QString& t_appSecret, CancellationToken t_cancellationToken) const
 {
     qInfo("Downloading patcher secret.");
-    QByteArray data;
-    data = downloadInternal(t_resourceUrl);
+    const QString resourceUrl = QString("1/apps/%1").arg(t_appSecret);
 
-    if (!m_didLastDownloadSucceed)
-    {
-        throw ContentUnavailableException("Couldn't download patcher secret.");
-    }
+    auto result = downloadInternal(resourceUrl, true, t_cancellationToken);
 
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
-
-    if (!jsonDocument.isObject())
-    {
-        throw std::runtime_error("Couldn't read patcher secret from JSON data.");
-    }
-
-    QJsonObject jsonObject = jsonDocument.object();
-
-    if (!jsonObject.contains("patcher_secret"))
-    {
-        throw std::runtime_error("Couldn't read patcher secret from JSON data.");
-    }
-
-    return jsonObject.value("patcher_secret").toString();
+    return RemoteAppData::parsePatcherSecret(result.data);
 }
 
-QString Api::downloadDefaultPatcherSecret()
+QString Api::getDefaultPatcherSecret(CancellationToken t_cancellationToken) const
 {
     QString resourceUrl = "1/system/patchers";
 
-    auto data = downloadInternal(resourceUrl);
+    auto result = downloadInternal(resourceUrl, true, t_cancellationToken);
 
-    auto jsonDocument = QJsonDocument::fromJson(data);
-
-    if (!jsonDocument.isArray())
-    {
-        throw std::runtime_error("Couldn't read default patchers from JSON data.");
-    }
-
-    auto jsonArray = jsonDocument.array();
-
-    if (jsonArray.size() == 0)
-    {
-        throw std::runtime_error("Empty patcher list.");
-    }
-
-    std::vector<std::pair<QString, QString>> availableDefaultPatchers;
-
-    for (int i = 0; i < jsonArray.size(); i++)
-    {
-        if (!jsonArray[i].isObject())
-        {
-            throw std::runtime_error("Unexpected value in the array.");
-        }
-
-        auto object = jsonArray[i].toObject();
-
-        if (!(object.contains("platform") && object.contains("secret")))
-        {
-            throw std::runtime_error("Unexpected values in array object.");
-        }
-
-        if (!object["platform"].isString())
-        {
-            throw std::runtime_error("Platform value is not string.");
-        }
-
-        if (!object["secret"].isString())
-        {
-            throw std::runtime_error("Secret value is not string.");
-        }
-
-        auto defaultPatcher = std::make_pair(object["platform"].toString(), object["secret"].toString());
-        availableDefaultPatchers.push_back(defaultPatcher);
-    }
-
-    for (auto defaultPatcher : availableDefaultPatchers)
-    {
-        if (defaultPatcher.first == Globals::toString(Globals::currentPlatform()))
-        {
-            return defaultPatcher.second;
-        }
-    }
-
-    throw std::runtime_error("Couldn't resolve a default patcher for current platform.");
-    return "";
+    return RemoteAppData::parseDefaultPatchers(result.data);
 }
 
 int Api::downloadPatcherVersion(const QString& t_resourceUrl)
@@ -159,14 +97,15 @@ int Api::downloadPatcherVersion(const QString& t_resourceUrl)
     return idValue;
 }
 
-QStringList Api::downloadContentUrls(const QString& t_resourceUrl)
+QStringList Api::getContentUrls(
+        const QString &t_appSecret, int t_version, CancellationToken t_cancellationToken) const
 {
     qInfo("Downloading content urls.");
+    const QString resourceUrl = QString("1/api/").arg(t_appSecret, t_version);
 
-    QByteArray data;
-    data = downloadInternal(t_resourceUrl, true);
+    auto result = downloadInternal(resourceUrl, true, t_cancellationToken);
 
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(result.data);
 
     if (!jsonDocument.isArray())
     {
@@ -180,7 +119,7 @@ QStringList Api::downloadContentUrls(const QString& t_resourceUrl)
         throw std::runtime_error("Empty content urls.");
     }
 
-    QStringList result;
+    QStringList contentUrls;
 
     for (int i = 0; i < jsonArray.size(); i++)
     {
@@ -203,25 +142,50 @@ QStringList Api::downloadContentUrls(const QString& t_resourceUrl)
             throw std::runtime_error("Couldn't read content urls from JSON data.");
         }
 
-        result.append(jsonValue.toString());
+        contentUrls.append(jsonValue.toString());
     }
 
-    return result;
+    return contentUrls;
 }
 
-QStringList Api::downloadContentUrls(const QString& t_patcherSecret, const QString& t_version)
+QString Api::parseGeolocation(const QByteArray& data) const
 {
-    QString resourceUrl = QString("1/apps/%1/versions/%2/content_urls").arg(t_patcherSecret, t_version);
+    if (data.isEmpty())
+    {
+        qWarning("Geolocation failed, reply data was empty.");
+        return QString();
+    }
 
-    return downloadContentUrls(resourceUrl);
+    auto jsonDocument = QJsonDocument::fromJson(data);
+
+    if (!jsonDocument.isObject())
+    {
+        qWarning("Geolocation failed, couldn't create a json document from data.");
+        return QString();
+    }
+
+    auto root = jsonDocument.object();
+
+    if (!root.contains("country"))
+    {
+        qWarning("Geolocation failed, no field named country in the root json object.");
+        return QString();
+    }
+
+    auto countryValue = root.value("country");
+
+    if (!countryValue.isString())
+    {
+        qWarning("Geolocation failed, country field value was not a string.");
+        return QString();
+    }
+
+    auto stringValue = countryValue.toString();
+
+    return stringValue;
 }
 
-QStringList Api::downloadContentUrls(const QString& t_patcherSecret, int t_version)
-{
-    return downloadContentUrls(t_patcherSecret, QString::number(t_version));
-}
-
-bool Api::geolocate()
+Api::InternalResponse<QString> Api::geolocate()
 {
     Downloader downloader(Config::geolocationApiUrl, m_dataSource, m_cancellationToken);
     DownloaderOperator op({&downloader});
@@ -233,61 +197,18 @@ bool Api::geolocate()
     if (!finishedDownloader)
     {
         qWarning("Geolocation download process failed.");
-        return false;
+        return InternalResponse<QString>(QString(), -1);
     }
 
     int replyStatusCode = finishedDownloader->getStatusCode();
 
-    if (!Downloader::doesStatusCodeIndicateSuccess(replyStatusCode))
-    {
-        qWarning() << "Geolocation failed, reply status code was " << replyStatusCode;
-        return false;
-    }
+    QByteArray data = finishedDownloader->readData();
 
-    auto data = finishedDownloader->readData();
-
-    if (data == QByteArray())
-    {
-        qWarning("Geolocation failed, reply data was empty.");
-        return false;
-    }
-
-    auto jsonDocument = QJsonDocument::fromJson(data);
-
-    if (!jsonDocument.isObject())
-    {
-        qWarning("Geolocation failed, couldn't create a json document from data.");
-        return false;
-    }
-
-    auto root = jsonDocument.object();
-
-    if (!root.contains("country"))
-    {
-        qWarning("Geolocation failed, no field named country in the root json object.");
-        return false;
-    }
-
-    auto countryValue = root.value("country");
-
-    if (!countryValue.isString())
-    {
-        qWarning("Geolocation failed, country field value was not a string.");
-        return false;
-    }
-
-    auto stringValue = countryValue.toString();
-    m_countryCode = stringValue;
-
-    return true;
+    return InternalResponse<QString>(parseGeolocation(data), replyStatusCode);
 }
 
-const QString& Api::getCountryCode() const
-{
-    return m_countryCode;
-}
-
-QByteArray Api::downloadInternal(const QString& t_resourceUrl, bool t_withGeolocation)
+Api::InternalResponse<QByteArray> Api::downloadInternal(
+        const QString& t_resourceUrl, bool t_withGeolocation, CancellationToken t_cancellationToken)
 {
     auto environment = QProcessEnvironment::systemEnvironment();
 
@@ -328,13 +249,12 @@ QByteArray Api::downloadInternal(const QString& t_resourceUrl, bool t_withGeoloc
                 Config::minConnectionTimeoutMsec,
                 Config::maxConnectionTimeoutMsec);
 
-    QByteArray data;
-    data = op.download(strategy, m_cancellationToken);
+    DownloaderOperator::Result result = op.download(strategy, m_cancellationToken);
 
-    if (data.size() == 0)
+    if (result.data.size() == 0)
     {
         throw ServerConnectionError("Failed to connect to server.");
     }
 
-    return data;
+    return InternalResponse<QByteArray>(result.data, result.statusCode);
 }

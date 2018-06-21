@@ -13,40 +13,31 @@
 
 #include "api.h"
 
-RemotePatcherData::RemotePatcherData(LauncherState& t_launcherState, Api& t_api, QNetworkAccessManager* t_networkAccessManager)
+RemotePatcherData::RemotePatcherData(LauncherState& t_launcherState, IApi& t_api, QNetworkAccessManager* t_networkAccessManager)
     : m_networkAccessManager(t_networkAccessManager)
     , m_launcherState(t_launcherState)
     , m_api(t_api)
 {
 }
 
-int RemotePatcherData::getVersion(const Data& t_data, CancellationToken /*t_cancellationToken*/)
+int RemotePatcherData::getVersion(const Data& t_data, CancellationToken t_cancellationToken) const
 {
-    qInfo() << "Fetching newest patcher version from 1/apps/"
-            << Logger::adjustSecretForLog(t_data.patcherSecret())
-            << "/versions/latest/id";
-
-    QString resourceUrl = QString("1/apps/%1/versions/latest/id").arg(t_data.patcherSecret());
-
-    return m_api.downloadPatcherVersion(resourceUrl);
+    return m_api.getLatestVersionId(t_data.patcherSecret(), t_cancellationToken);
 }
 
-QString RemotePatcherData::getPatcherSecret(const Data& t_data, CancellationToken /*t_cancellationToken*/)
+QString RemotePatcherData::getPatcherSecret(const Data& t_data, CancellationToken t_cancellationToken)
 {
     qInfo() << "Fetching newest patcher secret from 1/apps/" <<  Logger::adjustSecretForLog(t_data.applicationSecret());
 
-    QString resourceUrl = QString("1/apps/%1").arg(t_data.applicationSecret());
-    QString data;
+    QString patcherSecret = m_api.getPatcherSecret(t_data.applicationSecret(), t_cancellationToken);
 
-    data = m_api.downloadPatcherSecret(resourceUrl);
-
-    if (data.isNull() || data.isEmpty())
+    if (patcherSecret.isNull() || patcherSecret.isEmpty())
     {
         qInfo() << "No patcher secret found, attempting to download default patcher secret.";
-        data = m_api.downloadDefaultPatcherSecret();
+        patcherSecret = m_api.getDefaultPatcherSecret(t_cancellationToken);
     }
 
-    return data;
+    return patcherSecret;
 }
 
 void RemotePatcherData::download(QIODevice& t_dataTarget, const Data& t_data, int t_version, CancellationToken t_cancellationToken)
@@ -56,27 +47,17 @@ void RemotePatcherData::download(QIODevice& t_dataTarget, const Data& t_data, in
     QStringList contentUrls = getContentUrls(t_data.patcherSecret(), t_version, t_cancellationToken);
 
     QString patcherSecret = t_data.patcherSecret();
-    QString version = QString::number(t_version);
-
-    QString contentSummaryPath = QString("1/apps/%1/versions/%2/content_summary").arg(patcherSecret, version);
 
     qInfo() << "Downloading content summary from 1/apps/"
             << Logger::adjustSecretForLog(patcherSecret)
             << "/versions/"
-            << version
+            << t_version
             << "/content_summary.";
 
     ContentSummary summary;
 
-    try
-    {
-        summary = m_api.downloadContentSummary(contentSummaryPath);
-        qInfo("Successfully downloaded the content summary.");
-    }
-    catch(std::runtime_error& err)
-    {
-        qWarning() << "Exception while downloading content summary: " << err.what();
-    }
+    summary = m_api.getContentSummary(patcherSecret, t_version, t_cancellationToken);
+    qInfo("Successfully downloaded the content summary.");
 
     if (summary.isValid())
     {
@@ -104,7 +85,7 @@ void RemotePatcherData::download(QIODevice& t_dataTarget, const Data& t_data, in
     throw std::runtime_error("Unable to download patcher version - " + std::to_string(t_version));
 }
 
-QStringList RemotePatcherData::getContentUrls(const QString& t_patcherSecret, int t_version, CancellationToken /*t_cancellationToken*/)
+QStringList RemotePatcherData::getContentUrls(const QString& t_patcherSecret, int t_version, CancellationToken t_cancellationToken)
 {
     qInfo() << "Fetching patcher content urls from 1/apps/"
             << Logger::adjustSecretForLog(t_patcherSecret)
@@ -112,7 +93,7 @@ QStringList RemotePatcherData::getContentUrls(const QString& t_patcherSecret, in
             << t_version
             << "/content_urls";
 
-    return m_api.downloadContentUrls(t_patcherSecret, t_version);
+    return m_api.getContentUrls(t_patcherSecret, t_version, t_cancellationToken);
 }
 
 bool RemotePatcherData::saveData(QByteArray& t_data, QIODevice& t_dataTarget)

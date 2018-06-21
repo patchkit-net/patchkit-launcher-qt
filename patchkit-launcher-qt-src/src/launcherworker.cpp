@@ -62,7 +62,7 @@ void LauncherWorker::run()
 LauncherWorker::LauncherWorker(LauncherState& t_launcherState, QObject* parent)
     : QThread(parent)
     , m_launcherState(t_launcherState)
-    , m_api(&m_networkAccessManager, CancellationToken(m_cancellationTokenSource), m_launcherState)
+    , m_api(&m_networkAccessManager, m_launcherState)
     , m_remotePatcher(m_launcherState, m_api, &m_networkAccessManager)
     , m_result(NONE)
 {
@@ -169,16 +169,6 @@ void LauncherWorker::runWithData(Data& t_data)
         emit statusChanged("Initializing...");
 
         qInfo("Starting launcher.");
-
-        qInfo("Trying to obtain location information...");
-        if (m_api.geolocate())
-        {
-            qInfo() << "Operation successful, country code resolved to: " << m_api.getCountryCode();
-        }
-        else
-        {
-            qWarning("Couldn't obtain the country code.");
-        }
 
         setupPatcherSecret(t_data);
 

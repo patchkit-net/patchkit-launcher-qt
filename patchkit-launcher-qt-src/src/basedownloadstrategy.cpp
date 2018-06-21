@@ -25,6 +25,11 @@ QByteArray BaseDownloadStrategy::data()
     return m_data;
 }
 
+int BaseDownloadStrategy::statusCode()
+{
+    return m_statusCode;
+}
+
 void BaseDownloadStrategy::downloadProgressRelay(const long long& t_bytesDownloaded, const long long& t_totalBytes)
 {
     emit downloadProgress(t_bytesDownloaded, t_totalBytes);
