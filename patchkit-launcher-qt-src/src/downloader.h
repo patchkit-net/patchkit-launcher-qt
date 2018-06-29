@@ -8,6 +8,7 @@
 #include <QtNetwork>
 #include <memory>
 
+#include "customexceptions.h"
 #include "cancellationtoken.h"
 
 typedef long long TByteCount;
@@ -22,6 +23,8 @@ class Downloader : public QObject
 {
     Q_OBJECT
 public:
+    CUSTOM_RUNTIME_ERROR(TimeoutException)
+
     typedef QNetworkAccessManager* TDataSource;
     typedef QNetworkReply* TRemoteDataReply;
 

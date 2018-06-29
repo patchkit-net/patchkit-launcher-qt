@@ -15,6 +15,8 @@ class CancellationToken : public QObject
 {
     Q_OBJECT
 public:
+    CUSTOM_EXCEPTION(CancelledException, "Operation has been cancelled.")
+
     CancellationToken(const CancellationToken& t_other)
         : QObject(t_other.parent())
         , m_source(t_other.m_source)

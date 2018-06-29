@@ -12,6 +12,17 @@ class PatcherManifest;
 
 namespace Utilities
 {
+    template<typename T>
+    struct Maybe
+    {
+        Maybe(bool is, T value)
+            : is(is), value(value)
+        {}
+
+        bool is;
+        T value;
+    };
+
     bool isCurrentDirectoryWritable();
 
     void tryRestartWithHigherPermissions();

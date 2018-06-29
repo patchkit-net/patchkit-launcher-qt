@@ -9,9 +9,8 @@
 
 #include <QMessageBox>
 
-BaseDownloadStrategy::BaseDownloadStrategy(DownloaderOperator& t_operator, LauncherState& t_state)
+BaseDownloadStrategy::BaseDownloadStrategy(DownloaderOperator& t_operator)
     : m_operator(t_operator)
-    , m_state(t_state)
 {
 }
 

@@ -17,6 +17,8 @@
 #include "patchermanifest.h"
 #include "ioutils.h"
 
+CUSTOM_RUNTIME_ERROR(InvalidFormatException)
+
 #if defined(Q_OS_WIN)
 #include <Windows.h>
 #endif
@@ -25,7 +27,7 @@ void Utilities::tryRestartWithHigherPermissions()
 {
 #if defined(Q_OS_WIN)
     ShellExecute(nullptr, L"runas", Locations::getInstance().applicationFilePath().toStdWString().c_str(), nullptr, nullptr, SW_SHOWNORMAL);
-    throw CancelledException();
+    throw CancellationToken::CancelledException();
 #else
     throw FatalException("Cannot write in current directory.");
 #endif

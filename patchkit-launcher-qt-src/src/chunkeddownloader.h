@@ -9,10 +9,10 @@
 #include <QVector>
 #include <QStack>
 
-#include "iapi.h"
-#include "downloader.h"
-#include "hashingstrategy.h"
 #include "chunkeddownloadstrategy.h"
+#include "downloader.h"
+#include "iapi.h"
+#include "hashingstrategy.h"
 
 class ContentSummary;
 
@@ -26,7 +26,6 @@ public:
             const ContentSummary& t_contentSummary,
             HashFunc t_hashingStrategy,
             CancellationToken t_cancellationToken,
-            LauncherState& t_state,
             const IApi& t_api
             );
 
@@ -43,7 +42,6 @@ private:
     HashFunc                m_hashingStrategy;
     const ContentSummary&   m_contentSummary;
     CancellationToken       m_cancellationToken;
-    LauncherState&          m_state;
     Downloader::TDataSource m_dataSource;
 
     const IApi&             m_api;

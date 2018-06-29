@@ -1,22 +1,18 @@
 #include "chunkeddownloadstrategy.h"
 
 #include "chunkeddownloader.h"
-
-#include "logger.h"
-
 #include "downloaderoperator.h"
 
+#include "logger.h"
 #include "contentsummary.h"
-
 #include "downloader.h"
 
 ChunkedDownloadStrategy::ChunkedDownloadStrategy(
         DownloaderOperator& t_operator,
-        LauncherState& t_state,
         int t_minTimeout,
         int t_maxTimeout,
         const ChunkedDownloader& t_parent)
-    : DefaultDownloadStrategy(t_operator, t_state, t_minTimeout, t_maxTimeout)
+    : DefaultDownloadStrategy(t_operator, t_minTimeout, t_maxTimeout)
     , m_parent(t_parent)
 {
 }

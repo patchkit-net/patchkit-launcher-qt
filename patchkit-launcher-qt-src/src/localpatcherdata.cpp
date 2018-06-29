@@ -66,7 +66,6 @@ bool LocalPatcherData::isInstalled() const
     return true;
 }
 
-
 bool LocalPatcherData::isInstalledSpecific(int t_version, const Data& t_data)
 {
     if (isInstalled())

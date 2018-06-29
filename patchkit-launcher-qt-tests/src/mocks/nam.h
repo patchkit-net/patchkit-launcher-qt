@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "mockedreply.h"
+#include "mocks/reply.h"
 
 #include <QNetworkAccessManager>
 #include <QtNetwork>

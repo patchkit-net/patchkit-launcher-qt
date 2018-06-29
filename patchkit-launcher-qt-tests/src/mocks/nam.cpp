@@ -3,7 +3,7 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#include "mockednam.h"
+#include "mocks/nam.h"
 
 MockedNAM::MockedNAM()
     : QNetworkAccessManager()

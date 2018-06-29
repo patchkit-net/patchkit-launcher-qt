@@ -11,7 +11,7 @@
 #include "src/downloaderoperator.h"
 #include "src/defaultdownloadstrategy.h"
 
-#include "mockednam.h"
+#include "mocks/nam.h"
 
 SCENARIO("Operator state testing.")
 {
@@ -60,8 +60,6 @@ SCENARIO("Basic operator functionality with default download startegy.")
     CancellationTokenSource tokenSource;
     CancellationToken token(tokenSource);
 
-    LauncherState state;
-
     QByteArray data = "123456789";
 
     MockedNAM nam;
@@ -78,11 +76,11 @@ SCENARIO("Basic operator functionality with default download startegy.")
             StringUrlProvider urlProvider({"link1", "link2", "link3"});
             DownloaderOperator op(&nam, (IUrlProvider&) urlProvider, token);
 
-            DefaultDownloadStrategy strategy(op, state, 300, 400);
+            DefaultDownloadStrategy strategy(op, 300, 400);
 
-            QByteArray downloadedData = op.download(strategy, token);
-
-            REQUIRE(data.toStdString() == downloadedData.toStdString());
+            auto result = op.download(strategy, token);
+            REQUIRE(200 == result.statusCode);
+            REQUIRE(data.toStdString() == result.data.toStdString());
         }
     }
 
@@ -98,11 +96,11 @@ SCENARIO("Basic operator functionality with default download startegy.")
             StringUrlProvider urlProvider({"link1", "link2", "link3"});
             DownloaderOperator op(&nam, (IUrlProvider&) urlProvider, token);
 
-            DefaultDownloadStrategy strategy(op, state, 300, 400);
+            DefaultDownloadStrategy strategy(op, 300, 400);
 
-            QByteArray downloadedData = op.download(strategy, token);
-
-            REQUIRE(data.toStdString() == downloadedData.toStdString());
+            auto result = op.download(strategy, token);
+            REQUIRE(200 == result.statusCode);
+            REQUIRE(data.toStdString() == result.data.toStdString());
         }
     }
 }

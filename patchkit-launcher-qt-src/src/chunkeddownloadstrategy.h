@@ -15,7 +15,6 @@ class ChunkedDownloadStrategy : public DefaultDownloadStrategy
 public:
     ChunkedDownloadStrategy(
             DownloaderOperator& t_operator,
-            LauncherState& t_state,
             int t_minTimeout,
             int t_maxTimeout,
             const ChunkedDownloader& t_parent);

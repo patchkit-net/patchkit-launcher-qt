@@ -12,28 +12,17 @@
 #include "src/customexceptions.h"
 #include "src/contentsummary.h"
 
-#include "mockednam.h"
+#include "mocks/nam.h"
+#include "mocks/api.h"
 #include "custommacros.h"
-
-class MockApi : public IApi
-{
-public:
-    const QString& getCountryCode() const override
-    {
-        return m_countryCode;
-    }
-
-private:
-    QString m_countryCode;
-};
 
 SCENARIO("Testing chunk verification.")
 {
     CancellationTokenSource tokenSource;
     CancellationToken token(tokenSource);
-    LauncherState state;
     MockedNAM nam;
-    MockApi api;
+    MockApi api("PL", "123",
+        {}, {}, {}, {});
 
     GIVEN("A some data with a content summary")
     {
@@ -41,7 +30,7 @@ SCENARIO("Testing chunk verification.")
         QByteArray data = "veryrandomstringofdata";
         ContentSummary contentSummary = ContentSummary::fromData(data, chunkSize, &HashingStrategy::xxHash);
 
-        ChunkedDownloader chunkedDownloader(&nam, contentSummary, &HashingStrategy::xxHash, token, state, api);
+        ChunkedDownloader chunkedDownloader(&nam, contentSummary, &HashingStrategy::xxHash, token, api);
 
         THEN("Given valid data, verification should complete without issues.")
         {

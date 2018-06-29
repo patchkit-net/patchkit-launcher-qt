@@ -19,6 +19,8 @@ class LocalPatcherData : public QObject
     Q_OBJECT
 
 public:
+    CUSTOM_RUNTIME_ERROR(InvalidFormatException)
+
     bool isInstalled() const;
 
     bool isInstalledSpecific(int t_version, const Data& t_data);

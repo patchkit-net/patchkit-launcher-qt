@@ -8,14 +8,11 @@
 #include <QObject>
 
 #include "cancellationtoken.h"
-#include "launcherstate.h"
-
 #include "contentsummary.h"
-
 #include "iapi.h"
-#include "downloader.h"
 
 #include "defaultdownloadstrategy.h"
+#include "downloader.h"
 
 class Api : public QObject, public IApi
 {
@@ -26,15 +23,16 @@ class Api : public QObject, public IApi
             : data(data), statusCode(statusCode)
         {}
 
-        int statusCode;
         T data;
+        int statusCode;
     };
 
     Q_OBJECT
 public:
+    CUSTOM_RUNTIME_ERROR(ServerConnectionError)
+
     explicit Api(
             Downloader::TDataSource t_dataSource,
-            LauncherState& t_state,
             QObject* parent = nullptr);
 
     QString getCountryCode(CancellationToken t_cancellationToken) const override;
@@ -55,19 +53,12 @@ public:
             const QString& t_appSecret, int version, CancellationToken t_cancellationToken) const override;
 
 private:
-    QString parseGeolocation(const QByteArray& data) const;
-
-    InternalResponse<QString> geolocate() const;
+    InternalResponse<QString> geolocate(CancellationToken t_cancellationToken) const;
 
     InternalResponse<QByteArray> downloadInternal(
             const QString& t_resourceUrl,
             bool t_withGeolocation,
             CancellationToken t_cancellationToken) const;
 
-    LauncherState& m_state;
     Downloader::TDataSource m_dataSource;
-
-    bool m_didLastDownloadSucceed;
-
-    QString m_countryCode;
 };

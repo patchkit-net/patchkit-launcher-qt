@@ -11,7 +11,7 @@
 #include "src/downloaderoperator.h"
 #include "src/defaultdownloadstrategy.h"
 
-#include "mockednam.h"
+#include "mocks/nam.h"
 
 TEST_CASE("Downloader pool ownership tests.")
 {

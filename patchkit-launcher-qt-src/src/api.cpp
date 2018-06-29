@@ -21,10 +21,8 @@
 
 Api::Api(
         Downloader::TDataSource t_dataSource,
-        LauncherState& t_state,
         QObject* parent)
     : QObject(parent)
-    , m_state(t_state)
     , m_dataSource(t_dataSource)
 {
 }
@@ -40,8 +38,8 @@ int Api::getLatestVersionId(const QString& t_appSecret, CancellationToken t_canc
 
 ContentSummary Api::getContentSummary(const QString& t_appSecret, int t_version, CancellationToken t_cancellationToken) const
 {
-    qInfo("Download content summary.");
-    const QString contentSummaryPath = QString("1/apps/%1/versions/%2/content_summary").arg(t_appSecret, t_version);
+    qInfo("Downloading content summary.");
+    const QString contentSummaryPath = QString("1/apps/%1/versions/%2/content_summary").arg(t_appSecret).arg(t_version);
     auto result = downloadInternal(contentSummaryPath, true, t_cancellationToken);
 
     QJsonDocument doc = QJsonDocument::fromJson(result.data);
@@ -67,41 +65,11 @@ QString Api::getDefaultPatcherSecret(CancellationToken t_cancellationToken) cons
     return RemoteAppData::parseDefaultPatchers(result.data);
 }
 
-int Api::downloadPatcherVersion(const QString& t_resourceUrl)
-{
-    qInfo("Downloading patcher version.");
-    QByteArray data;
-    data = downloadInternal(t_resourceUrl);
-
-    QJsonDocument doc = QJsonDocument::fromJson(data);
-
-    if (!doc.isObject())
-    {
-        throw ServerConnectionError("Couldn't read version id from JSON data.");
-    }
-
-    QJsonObject jsonObject = doc.object();
-
-    if (!jsonObject.contains("id"))
-    {
-        throw ServerConnectionError("Couldn't read version id from JSON data.");
-    }
-
-    int idValue = jsonObject.value("id").toInt(-1);
-
-    if (idValue == -1)
-    {
-        throw ServerConnectionError("Couldn't read version id from JSON data.");
-    }
-
-    return idValue;
-}
-
 QStringList Api::getContentUrls(
         const QString &t_appSecret, int t_version, CancellationToken t_cancellationToken) const
 {
     qInfo("Downloading content urls.");
-    const QString resourceUrl = QString("1/api/").arg(t_appSecret, t_version);
+    const QString resourceUrl = QString("1/apps/%1/versions/%2/content_urls").arg(t_appSecret).arg(t_version);
 
     auto result = downloadInternal(resourceUrl, true, t_cancellationToken);
 
@@ -148,51 +116,20 @@ QStringList Api::getContentUrls(
     return contentUrls;
 }
 
-QString Api::parseGeolocation(const QByteArray& data) const
+QString Api::getCountryCode(CancellationToken t_cancellationToken) const
 {
-    if (data.isEmpty())
-    {
-        qWarning("Geolocation failed, reply data was empty.");
-        return QString();
-    }
-
-    auto jsonDocument = QJsonDocument::fromJson(data);
-
-    if (!jsonDocument.isObject())
-    {
-        qWarning("Geolocation failed, couldn't create a json document from data.");
-        return QString();
-    }
-
-    auto root = jsonDocument.object();
-
-    if (!root.contains("country"))
-    {
-        qWarning("Geolocation failed, no field named country in the root json object.");
-        return QString();
-    }
-
-    auto countryValue = root.value("country");
-
-    if (!countryValue.isString())
-    {
-        qWarning("Geolocation failed, country field value was not a string.");
-        return QString();
-    }
-
-    auto stringValue = countryValue.toString();
-
-    return stringValue;
+    auto result = geolocate(t_cancellationToken);
+    return result.data;
 }
 
-Api::InternalResponse<QString> Api::geolocate()
+Api::InternalResponse<QString> Api::geolocate(CancellationToken t_cancellationToken) const
 {
-    Downloader downloader(Config::geolocationApiUrl, m_dataSource, m_cancellationToken);
+    Downloader downloader(Config::geolocationApiUrl, m_dataSource, t_cancellationToken);
     DownloaderOperator op({&downloader});
 
     op.startAll();
 
-    auto finishedDownloader = op.waitForAnyToFinish(m_cancellationToken, Config::geolocationTimeout);
+    auto finishedDownloader = op.waitForAnyToFinish(t_cancellationToken, Config::geolocationTimeout);
 
     if (!finishedDownloader)
     {
@@ -204,11 +141,11 @@ Api::InternalResponse<QString> Api::geolocate()
 
     QByteArray data = finishedDownloader->readData();
 
-    return InternalResponse<QString>(parseGeolocation(data), replyStatusCode);
+    return InternalResponse<QString>(RemoteAppData::tryParseGeolocation(data, QString()), replyStatusCode);
 }
 
 Api::InternalResponse<QByteArray> Api::downloadInternal(
-        const QString& t_resourceUrl, bool t_withGeolocation, CancellationToken t_cancellationToken)
+        const QString& t_resourceUrl, bool t_withGeolocation, CancellationToken t_cancellationToken) const
 {
     auto environment = QProcessEnvironment::systemEnvironment();
 
@@ -231,25 +168,26 @@ Api::InternalResponse<QByteArray> Api::downloadInternal(
         totalUrlBases.append(Config::cacheApiUrls);
     }
 
-    m_didLastDownloadSucceed = true;
-
     StringConcatUrlProvider urlProvider(totalUrlBases, t_resourceUrl);
-    if (t_withGeolocation && m_countryCode != QString())
+    if (t_withGeolocation)
     {
-        urlProvider.setCountryCode(m_countryCode);
+        auto countryCode = getCountryCode(t_cancellationToken);
+        if (countryCode != QString())
+        {
+            urlProvider.setCountryCode(countryCode);
+        }
     }
 
     urlProvider.setIdentifier(Globals::version());
 
-    DownloaderOperator op(m_dataSource, urlProvider, m_cancellationToken);
+    DownloaderOperator op(m_dataSource, urlProvider, t_cancellationToken);
 
     DefaultDownloadStrategy strategy(
                 op,
-                m_state,
                 Config::minConnectionTimeoutMsec,
                 Config::maxConnectionTimeoutMsec);
 
-    DownloaderOperator::Result result = op.download(strategy, m_cancellationToken);
+    DownloaderOperator::Result result = op.download(strategy, t_cancellationToken);
 
     if (result.data.size() == 0)
     {

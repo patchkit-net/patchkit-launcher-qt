@@ -6,9 +6,8 @@
 
 DefaultDownloadStrategy::DefaultDownloadStrategy(
         DownloaderOperator& t_operator,
-        LauncherState& t_state,
         int t_minTimeout, int t_maxTimeout)
-    : BaseDownloadStrategy(t_operator, t_state)
+    : BaseDownloadStrategy(t_operator)
     , m_timeoutCounter(0)
     , m_iterator(0)
     , m_minTimeout(t_minTimeout)
@@ -122,12 +121,13 @@ void DefaultDownloadStrategy::execute(CancellationToken t_cancellationToken)
 bool DefaultDownloadStrategy::processFinishedDownloader(Downloader* t_downloader)
 {
     m_data = t_downloader->readData();
+    m_statusCode = t_downloader->getStatusCode();
     return true;
 }
 
 void DefaultDownloadStrategy::onConnectionIssues(CancellationToken t_cancellationToken)
 {
-    m_state.awaitResponseTo(DownloadError::ConnectionIssues, t_cancellationToken);
+//    m_state.awaitResponseTo(DownloadError::ConnectionIssues, t_cancellationToken);
     m_operator.stopAll();
 }
 

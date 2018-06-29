@@ -13,7 +13,6 @@ class DefaultDownloadStrategy : public BaseDownloadStrategy
 public:
     DefaultDownloadStrategy(
             DownloaderOperator& t_operator,
-            LauncherState& t_state,
             int t_minTimeout, int t_maxTimeout);
 
     const static int maxStartingDownloadersCount;

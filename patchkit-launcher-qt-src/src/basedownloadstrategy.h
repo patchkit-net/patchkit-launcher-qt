@@ -7,7 +7,6 @@
 
 #include <QObject>
 
-#include "launcherstate.h"
 #include "idownloadstrategy.h"
 #include "downloader.h"
 
@@ -17,7 +16,7 @@ class BaseDownloadStrategy : public QObject, public IDownloadStrategy
 {
     Q_OBJECT
 public:
-    BaseDownloadStrategy(DownloaderOperator& t_operator, LauncherState& t_state);
+    BaseDownloadStrategy(DownloaderOperator& t_operator);
 
     void start(CancellationToken t_cancellationToken);
 
@@ -39,5 +38,4 @@ protected:
     int m_statusCode;
     QByteArray m_data;
     DownloaderOperator& m_operator;
-    LauncherState& m_state;
 };

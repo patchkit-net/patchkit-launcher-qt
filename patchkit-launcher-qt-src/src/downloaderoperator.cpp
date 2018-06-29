@@ -28,9 +28,9 @@ DownloaderOperator::DownloaderOperator(const DownloaderPool& t_downloaderPool, Q
 {
 }
 
-std::vector<Downloader*> DownloaderOperator::getDownloaders(IDownloaderPool::TDownloaderPredicate t_predicate) const
+std::vector<Downloader*> DownloaderOperator::getDownloaders() const
 {
-    return m_pool.getDownloaders(t_predicate);
+    return m_pool.getDownloaders();
 }
 
 void DownloaderOperator::add(Downloader* t_downloader)
@@ -276,62 +276,7 @@ bool DownloaderPool::hasOwnership() const
     return m_isOwner;
 }
 
-void IDownloaderPool::append(const std::vector<Downloader*>& t_downloaders)
+std::vector<Downloader*> DownloaderPool::getDownloaders() const
 {
-    for (auto downloader : t_downloaders)
-    {
-        add(downloader);
-    }
-}
-
-std::vector<Downloader*> IDownloaderPool::getFinishedDownloaders() const
-{
-    return getDownloaders([](Downloader* downloader)
-    {
-        return downloader->isFinished();
-    });
-}
-
-std::vector<Downloader*> IDownloaderPool::getActiveDownloaders() const
-{
-    return getDownloaders([](Downloader* downloader)
-    {
-        return downloader->isRunning() || downloader->isFinished();
-    });
-}
-
-std::vector<Downloader*> IDownloaderPool::getStartingDownloaders() const
-{
-    return getDownloaders([](Downloader* downloader)
-    {
-        return downloader->wasStarted() && !downloader->isRunning();
-    });
-}
-
-std::vector<Downloader*> IDownloaderPool::getInactiveDownloaders() const
-{
-    return getDownloaders([](Downloader* downloader)
-    {
-        return !downloader->wasStarted();
-    });
-}
-
-size_t IDownloaderPool::poolSize() const
-{
-    return getDownloaders().size();
-}
-
-std::vector<Downloader*> DownloaderPool::getDownloaders(bool (*t_predicate)(Downloader*)) const
-{
-    std::vector<Downloader*> downloaders;
-
-    for (Downloader* d : m_pool)
-    {
-        if (!t_predicate || t_predicate(d))
-        {
-            downloaders.push_back(d);
-        }
-    }
-
-    return downloaders;
+    return m_pool;
 }

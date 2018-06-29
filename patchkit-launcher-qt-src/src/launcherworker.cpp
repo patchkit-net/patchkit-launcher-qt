@@ -20,24 +20,24 @@ void LauncherWorker::run()
 {
     try
     {
-        resolveData();
+        Data data = resolveData();
 
-        runWithData(m_data);
+        runWithData(data);
 
         m_result = SUCCESS;
         qInfo("Launcher has succeeded.");
     }
-    catch(ServerConnectionError& e)
+    catch(Api::ServerConnectionError& e)
     {
         m_result = CONNECTION_ERROR;
-        qCritical(e.what());
+        qCritical() << e.what();
     }
-    catch (LockException&)
+    catch (LockFile::LockException&)
     {
         m_result = LOCKED;
         qCritical("Lock file detected.");
     }
-    catch (CancelledException&)
+    catch (CancellationToken::CancelledException&)
     {
         m_result = CANCELLED;
         qInfo("Launcher has been canceled.");
@@ -59,11 +59,10 @@ void LauncherWorker::run()
     }
 }
 
-LauncherWorker::LauncherWorker(LauncherState& t_launcherState, QObject* parent)
+LauncherWorker::LauncherWorker(QObject* parent)
     : QThread(parent)
-    , m_launcherState(t_launcherState)
-    , m_api(&m_networkAccessManager, m_launcherState)
-    , m_remotePatcher(m_launcherState, m_api, &m_networkAccessManager)
+    , m_api(&m_networkAccessManager)
+    , m_remotePatcher(m_api, &m_networkAccessManager)
     , m_result(NONE)
 {
     m_api.moveToThread(this);
@@ -79,26 +78,15 @@ void LauncherWorker::cancel()
     m_cancellationTokenSource.cancel();
 }
 
-bool LauncherWorker::canStartPatcher() const
-{
-    return isLocalPatcherInstalled();
-}
-
-void LauncherWorker::startPatcher()
-{
-    startPatcher(m_data);
-}
-
-void LauncherWorker::resolveData()
+Data LauncherWorker::resolveData() const
 {
     qInfo("Resolving data.");
     if (Data::canLoadFromConfig())
     {
         try
         {
-            m_data = Data::loadFromConfig();
             qInfo("Loaded inline data.");
-            return;
+            return Data::loadFromConfig();
         }
         catch(std::exception& e)
         {
@@ -109,11 +97,10 @@ void LauncherWorker::resolveData()
 #ifdef Q_OS_WIN
     try
     {
-        m_data = Data::loadFromResources(Locations::getInstance().applicationFilePath(),
+        qInfo("Loaded data from resource.");
+        return Data::loadFromResources(Locations::getInstance().applicationFilePath(),
                                             Config::dataResourceId,
                                             Config::dataResourceTypeId);
-        qInfo("Loaded data from resource.");
-        return;
     }
     catch(std::exception& e)
     {
@@ -122,14 +109,8 @@ void LauncherWorker::resolveData()
 
 #endif
 
-    m_data = Data::loadFromFile(Locations::getInstance().dataFilePath());
     qInfo("Loaded data from file.");
-    return;
-}
-
-bool LauncherWorker::isLocalPatcherInstalled() const
-{
-    return m_localPatcher.isInstalled();
+    return Data::loadFromFile(Locations::getInstance().dataFilePath());
 }
 
 LauncherWorker::Result LauncherWorker::result() const
@@ -147,13 +128,14 @@ void LauncherWorker::setDownloadProgress(const long long& t_bytesDownloaded, con
     long long kilobytesDownloaded = t_bytesDownloaded / 1024;
     long long totalKilobytes = t_totalBytes / 1024;
 
-    emit statusChanged(QString("Downloading %1 / %2 KB").arg(QString::number(kilobytesDownloaded), QString::number(totalKilobytes)));
+    emit statusChanged(QString("Downloading %1 / %2 KB").arg(kilobytesDownloaded).arg(totalKilobytes));
     emit progressChanged(qCeil((qreal(t_bytesDownloaded) / t_totalBytes) * 100.0));
 }
 
-void LauncherWorker::runWithData(Data& t_data)
+void LauncherWorker::runWithData(const Data& t_data)
 {
     Locations::getInstance().initializeWithData(t_data);
+    qInfo() << "Current directory set to - " << Locations::getInstance().currentDirPath();
 
     if (!Utilities::isCurrentDirectoryWritable())
     {
@@ -161,7 +143,6 @@ void LauncherWorker::runWithData(Data& t_data)
     }
 
     LockFile lockFile;
-    lockFile.lock();
 
     try
     {
@@ -169,18 +150,25 @@ void LauncherWorker::runWithData(Data& t_data)
         emit statusChanged("Initializing...");
 
         qInfo("Starting launcher.");
+        Data dataWithPatcherSecret = setupPatcherSecret(t_data);
 
-        setupPatcherSecret(t_data);
-
-        qInfo() << "Current directory set to - " << Locations::getInstance().currentDirPath();
-
-        updatePatcher(t_data);
+        while (true)
+        {
+            try
+            {
+                qInfo("Trying to update Patcher");
+                updatePatcher(t_data);
+            }
+            catch (Api::ServerConnectionError&)
+            {
+                if (!ask("Connection issues", "Launcher is experiencing connection issues, would you like to continue?"))
+                {
+                    throw;
+                }
+            }
+        }
     }
-    catch (LockException&)
-    {
-        throw;
-    }
-    catch (CancelledException&)
+    catch (CancellationToken::CancelledException&)
     {
         throw;
     }
@@ -225,28 +213,36 @@ void LauncherWorker::runWithData(Data& t_data)
     }
 }
 
-void LauncherWorker::setupPatcherSecret(Data& t_data)
+Data LauncherWorker::setupPatcherSecret(const Data& t_data)
 {
-    QSettings settings("UpSoft", t_data.applicationSecret().append("launcher-"));
+    auto maybePatcherSecret = tryToFetchPatcherSecret(t_data);
+    QSettings settings("UpSoft", t_data.encodedApplicationSecret().append("launcher-"));
+    const QString PATCHER_SECRET_KEY = "patcher_secret";
 
-    if (tryToFetchPatcherSecret(t_data))
+    if (maybePatcherSecret.is)
     {
-        settings.setValue("patcher_secret", t_data.overwritePatcherSecret);
+        qInfo("Setting up with downloaded patcher secret.");
+        settings.setValue(PATCHER_SECRET_KEY, maybePatcherSecret.value);
+        return Data(maybePatcherSecret.value, t_data.encodedApplicationSecret());
     }
-    else if (settings.contains("patcher_secret"))
+    else if (settings.contains(PATCHER_SECRET_KEY))
     {
-        t_data.overwritePatcherSecret = settings.value("patcher_secret").toString();
+        qInfo("Setting up with patcher secret from settings.");
+        return Data(settings.value(PATCHER_SECRET_KEY).toString(), t_data.encodedApplicationSecret());
     }
+
+    qInfo("Setting up with patcher secret from data.");
+    return t_data;
 }
 
-bool LauncherWorker::tryToFetchPatcherSecret(Data& t_data)
+Utilities::Maybe<QString> LauncherWorker::tryToFetchPatcherSecret(const Data& t_data)
 {
     try
     {
-        t_data.overwritePatcherSecret = m_remotePatcher.getPatcherSecret(t_data, m_cancellationTokenSource);
-        return true;
+        QString patcherSecret = m_remotePatcher.getPatcherSecret(t_data.applicationSecret(), m_cancellationTokenSource);
+        return Utilities::Maybe<QString>(patcherSecret != QString(), patcherSecret);
     }
-    catch (CancelledException&)
+    catch (CancellationToken::CancelledException&)
     {
         throw;
     }
@@ -257,12 +253,12 @@ bool LauncherWorker::tryToFetchPatcherSecret(Data& t_data)
     catch (std::exception& exception)
     {
         qWarning() << exception.what();
-        return false;
+        return Utilities::Maybe<QString>(false, QString());
     }
     catch (...)
     {
         qWarning("Unknown exception while fetching patcher secret.");
-        return false;
+        return Utilities::Maybe<QString>(false, QString());
     }
 }
 
@@ -318,4 +314,20 @@ void LauncherWorker::startPatcher(const Data& t_data)
     emit statusChanged("Starting...");
 
     m_localPatcher.start(t_data);
+}
+
+bool LauncherWorker::ask(const QString& t_title, const QString& t_message)
+{
+    bool answer;;
+    QEventLoop loop;
+
+    connect(this, &LauncherWorker::queryAnswer, [&loop, &answer] (bool ans) {
+        loop.quit();
+        answer = ans;
+    });
+
+    emit query(t_title, t_message);
+    loop.exec();
+
+    return answer;
 }

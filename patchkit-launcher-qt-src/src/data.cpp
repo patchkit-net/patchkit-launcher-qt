@@ -17,6 +17,18 @@ Data::Data()
 {
 }
 
+Data::Data(const QString& t_patcherSecret, const QByteArray& t_encodedApplicationSecret)
+    : m_encodedApplicationSecret(t_encodedApplicationSecret)
+    , m_patcherSecret(t_patcherSecret)
+{
+}
+
+Data::Data(const Data& t_other)
+    : m_encodedApplicationSecret(t_other.m_encodedApplicationSecret)
+    , m_patcherSecret(t_other.m_patcherSecret)
+{
+}
+
 bool Data::canLoadFromConfig()
 {
     QByteArray hash = QCryptographicHash::hash(QByteArray::fromRawData(Config::inlineData, CONFIG_INLINE_DATA_PLACEHOLDER_LENGTH), QCryptographicHash::Md5);
@@ -69,21 +81,22 @@ Data Data::loadFromFile(const QString& t_filePath)
 
 QString Data::patcherSecret() const
 {
-    if (overwritePatcherSecret.isEmpty())
-    {
-        return m_patcherSecret;
-    }
-    return overwritePatcherSecret;
+    return m_patcherSecret;
 }
 
 QString Data::applicationSecret() const
 {
-    return m_applicationSecret;
+    return decodeString(m_encodedApplicationSecret);
 }
 
 QByteArray Data::encodedApplicationSecret() const
 {
     return m_encodedApplicationSecret;
+}
+
+QString Data::decodeEncodedApplicationSecret(const QByteArray& t_data)
+{
+    return decodeString(t_data);
 }
 
  #ifdef Q_OS_WIN
@@ -110,17 +123,10 @@ Data Data::loadFromDataStream(QDataStream& t_dataStream)
 {
     t_dataStream.setByteOrder(QDataStream::LittleEndian);
 
-    QByteArray encodedPatcherSecret = readStringBytes(t_dataStream);
+    QString encodedPatcherSecret = decodeString(readStringBytes(t_dataStream));
     QByteArray encodedApplicationSecret = readStringBytes(t_dataStream);
 
     return Data(encodedPatcherSecret, encodedApplicationSecret);
-}
-
-Data::Data(const QByteArray& t_encodedPatcherSecret, const QByteArray& t_encodedApplicationSecret) :
-    m_encodedApplicationSecret(t_encodedApplicationSecret)
-{
-    m_patcherSecret = decodeString(t_encodedPatcherSecret);
-    m_applicationSecret = decodeString(m_encodedApplicationSecret);
 }
 
 QByteArray Data::readStringBytes(QDataStream& t_dataStream)

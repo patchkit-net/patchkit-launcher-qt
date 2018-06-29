@@ -14,76 +14,23 @@
 #include <src/lockfile.h>
 
 Launcher::Launcher(const QApplication& t_application)
-    : m_worker(m_state, this)
+    : m_worker(this)
     , m_mainWindow(m_worker, nullptr)
 {
     connect(&t_application, &QApplication::aboutToQuit, this, &Launcher::cleanup);
-    connect(&m_state, &LauncherState::error, this, &Launcher::onError);
 }
 
 void Launcher::start()
 {
     qInfo() << "Starting launcher, version: " << Globals::version();
     connect(&m_worker, &QThread::finished, this, &Launcher::finish);
+    connect(&m_worker, &LauncherWorker::query, this, &Launcher::workerQuery);
 
     qInfo("Showing main window.");
     m_mainWindow.show();
 
     qInfo("Starting launcher worker.");
     m_worker.start();
-}
-
-void Launcher::onError(DownloadError t_error)
-{
-    if (t_error == DownloadError::ConnectionIssues)
-    {
-        qWarning("Connection issues.");
-        if (m_worker.canStartPatcher())
-        {
-            qInfo("A version of patcher is installed, asking if launcher should go into offline mode.");
-            int answer = QMessageBox::question(nullptr, "Connection issues!",
-                                  "Launcher is experiencing connection issues, would you like to continue in offline mode?",
-                                  QMessageBox::Yes, QMessageBox::No);
-
-            if (answer == QMessageBox::Yes)
-            {
-                qInfo("User chose to go into offline mode.");
-                emit m_state.respond();
-
-                m_worker.stop();
-                m_worker.startPatcher();
-            }
-            else if (answer == QMessageBox::No)
-            {
-                qInfo("User chose to continue trying to download the newest version of patcher.");
-                emit m_state.respond();
-            }
-            else
-            {
-                emit m_state.respond();
-                qWarning("Unexpected outcome.");
-            }
-        }
-        else
-        {
-            qInfo("No version of patcher is installed.");
-            int answer = QMessageBox::warning(nullptr, "Connection issues!",
-                                  "Launcher is experiencing connection issues, would you like to keep trying?",
-                                  QMessageBox::Yes, QMessageBox::No);
-
-            if (answer == QMessageBox::Yes)
-            {
-                qInfo("User chose to keep trying.");
-                emit m_state.respond();
-            }
-            else if (answer == QMessageBox::No)
-            {
-                qInfo("User chose to stop.");
-                emit m_state.respond();
-                m_worker.stop();
-            }
-        }
-    }
 }
 
 void Launcher::finish()
@@ -164,4 +111,10 @@ void Launcher::cleanup()
     {
         qCritical("An error has occured!");
     }
+}
+
+void Launcher::workerQuery(const QString& t_title, const QString& t_question)
+{
+    int ans = QMessageBox::question(nullptr, t_title, t_question, QMessageBox::Yes, QMessageBox::No);
+    emit m_worker.queryAnswer(ans == QMessageBox::Yes);
 }

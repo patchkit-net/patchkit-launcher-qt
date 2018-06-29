@@ -10,7 +10,7 @@
 #include <QApplication>
 #include "src/downloader.h"
 
-#include "mockednam.h"
+#include "mocks/nam.h"
 #include "src/customexceptions.h"
 
 SCENARIO("Downloader life.")

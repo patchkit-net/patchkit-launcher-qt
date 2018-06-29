@@ -19,6 +19,8 @@ LockFile::LockFile()
     }
 
     m_lockFile = boost::interprocess::file_lock(Config::lockFileName.toStdString().c_str());
+
+    lock();
 }
 
 LockFile::~LockFile()

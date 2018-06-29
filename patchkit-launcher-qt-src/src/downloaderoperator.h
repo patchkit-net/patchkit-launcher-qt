@@ -12,28 +12,9 @@
 
 #include "downloader.h"
 #include "basedownloadstrategy.h"
+#include "idownloaderpool.h"
 
 #include "urlprovider.h"
-
-class IDownloaderPool
-{
-public:
-    typedef bool (*TDownloaderPredicate)(Downloader*);
-
-    virtual std::vector<Downloader*> getDownloaders(TDownloaderPredicate t_predicate = nullptr) const = 0;
-
-    virtual void add(Downloader* t_downloader) = 0;
-    virtual void remove(Downloader* t_downloader) = 0;
-
-    void append(const std::vector<Downloader*>& t_downloaders);
-
-    std::vector<Downloader*> getFinishedDownloaders() const;
-    std::vector<Downloader*> getActiveDownloaders() const;
-    std::vector<Downloader*> getStartingDownloaders() const;
-    std::vector<Downloader*> getInactiveDownloaders() const;
-
-    size_t poolSize() const;
-};
 
 class DownloaderPool : public IDownloaderPool
 {
@@ -45,7 +26,7 @@ public:
 
     ~DownloaderPool();
 
-    virtual std::vector<Downloader*> getDownloaders(TDownloaderPredicate t_predicate = nullptr) const override;
+    virtual std::vector<Downloader*> getDownloaders() const override;
     virtual void add(Downloader* t_downloader) override;
     virtual void remove(Downloader* t_downloader) override;
 
@@ -55,7 +36,6 @@ private:
     bool m_isOwner;
     std::vector<Downloader*> m_pool;
 };
-
 /**
  * @brief The DownloaderOperator class
  */
@@ -77,7 +57,7 @@ public:
     DownloaderOperator(std::initializer_list<Downloader*> t_downloaders, QObject* parent = nullptr);
     DownloaderOperator(const DownloaderPool& t_downloaderPool, QObject* parent = nullptr);
 
-    virtual std::vector<Downloader*> getDownloaders(TDownloaderPredicate t_predicate = nullptr) const override;
+    virtual std::vector<Downloader*> getDownloaders() const override;
     virtual void add(Downloader* t_downloader) override;
     virtual void remove(Downloader* t_downloader) override;
 

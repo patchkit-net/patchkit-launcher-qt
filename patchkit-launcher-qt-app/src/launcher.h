@@ -9,7 +9,6 @@
 
 #include "mainwindow.h"
 #include <src/launcherworker.h>
-#include "src/launcherstate.h"
 
 class Launcher : public QObject
 {
@@ -24,10 +23,9 @@ private slots:
     void finish();
     void cleanup();
 
-    void onError(DownloadError t_error);
+    void workerQuery(const QString& t_title, const QString& t_question);
 
 private:
-    LauncherState m_state;
     LauncherWorker m_worker;
     MainWindow m_mainWindow;
 };

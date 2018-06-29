@@ -14,15 +14,18 @@ SOURCES += \
     $$PWD/src/downloadertests.cpp \
     $$PWD/src/downloadoperatortests.cpp \
     $$PWD/src/hashingstrategiestests.cpp \
-    $$PWD/src/mockednam.cpp \
-    $$PWD/src/mockedreply.cpp\
     $$PWD/src/main.cpp \
-    $$PWD/src/patchermanifesttests.cpp
+    $$PWD/src/patchermanifesttests.cpp \
+    $$PWD/src/mocks/nam.cpp \
+    $$PWD/src/mocks/reply.cpp\
+    $$PWD/src/mocks/api.cpp \
+    src/apitests.cpp
 
 HEADERS += \
     $$PWD/src/catch.h \
     $$PWD/src/custommacros.h \
-    $$PWD/src/mockednam.h \
-    $$PWD/src/mockedreply.h \
+    $$PWD/src/mocks/nam.h \
+    $$PWD/src/mocks/reply.h \
+    $$PWD/src/mocks/api.h
 
 include(../link_static.pri)

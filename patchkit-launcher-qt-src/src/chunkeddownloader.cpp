@@ -3,19 +3,17 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#include <QtNetwork>
-
 #include "chunkeddownloader.h"
+
+#include <QtNetwork>
 
 #include "customexceptions.h"
 #include "contentsummary.h"
 #include "downloader.h"
 #include "logger.h"
-
-#include "idownloadstrategy.h"
-
 #include "config.h"
 
+#include "idownloadstrategy.h"
 #include "downloaderoperator.h"
 
 ChunkedDownloader::ChunkedDownloader(
@@ -23,13 +21,11 @@ ChunkedDownloader::ChunkedDownloader(
         const ContentSummary& t_contentSummary,
         HashFunc t_hashingStrategy,
         CancellationToken t_cancellationToken,
-        LauncherState& t_state,
         const IApi& t_api
         )
     : m_hashingStrategy(t_hashingStrategy)
     , m_contentSummary(t_contentSummary)
     , m_cancellationToken(t_cancellationToken)
-    , m_state(t_state)
     , m_dataSource(t_dataSource)
     , m_api(t_api)
 {
@@ -50,7 +46,6 @@ QByteArray ChunkedDownloader::downloadFile(const QStringList& t_contentUrls)
 
     ChunkedDownloadStrategy strategy(
                 op,
-                m_state,
                 Config::minConnectionTimeoutMsec,
                 Config::maxConnectionTimeoutMsec,
                 *this);

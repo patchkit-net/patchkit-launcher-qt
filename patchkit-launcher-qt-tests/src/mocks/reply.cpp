@@ -3,7 +3,7 @@
 * License: https://github.com/patchkit-net/patchkit-launcher-qt/blob/master/LICENSE
 */
 
-#include "mockedreply.h"
+#include "mocks/reply.h"
 
 #include <QTimer>
 #include <QtGlobal>

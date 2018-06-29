@@ -11,6 +11,13 @@
 #include "cancellationtokensource.h"
 #include "api.h"
 #include "lockfile.h"
+#include "utilities.h"
+
+struct ProgressData
+{
+    QString status;
+    int progress;
+};
 
 class LauncherWorker : public QThread
 {
@@ -30,19 +37,18 @@ public:
         CONNECTION_ERROR
     };
 
-    LauncherWorker(LauncherState& t_launcherState, QObject* parent = nullptr);
+    LauncherWorker(QObject* parent = nullptr);
 
     void cancel();
-
-    bool canStartPatcher() const;
-    void startPatcher();
-
-    void resolveData();
 
     Result result() const;
 signals:
     void statusChanged(const QString& t_status);
     void progressChanged(int t_progress);
+
+    void query(const QString& t_title, const QString& t_message);
+
+    void queryAnswer(bool answer);
 
 public slots:
     void stop();
@@ -51,18 +57,20 @@ private slots:
     void setDownloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes);
 
 private:
-    void runWithData(Data& t_data);
+    Data resolveData() const;
 
-    void setupPatcherSecret(Data& t_data);
+    void runWithData(const Data& t_data);
 
-    bool tryToFetchPatcherSecret(Data& t_data);
+    Data setupPatcherSecret(const Data& t_data);
 
-    bool isLocalPatcherInstalled() const;
+    Utilities::Maybe<QString> tryToFetchPatcherSecret(const Data& t_data);
+
     void updatePatcher(const Data& t_data);
     void startPatcher(const Data& t_data);
 
+    bool ask(const QString& t_title, const QString& t_message);
+
     CancellationTokenSource m_cancellationTokenSource;
-    LauncherState& m_launcherState;
 
     QNetworkAccessManager m_networkAccessManager;
 
@@ -71,6 +79,4 @@ private:
     LocalPatcherData m_localPatcher;
 
     Result m_result;
-
-    Data m_data;
 };
