@@ -84,9 +84,9 @@ bool LauncherWorker::canStartPatcher() const
     return isLocalPatcherInstalled();
 }
 
-void LauncherWorker::startPatcher()
+void LauncherWorker::startPatcher(bool isOffline)
 {
-    startPatcher(m_data);
+    startPatcher(m_data, isOffline);
 }
 
 void LauncherWorker::resolveData()
@@ -321,11 +321,11 @@ void LauncherWorker::updatePatcher(const Data& t_data)
     }
 }
 
-void LauncherWorker::startPatcher(const Data& t_data)
+void LauncherWorker::startPatcher(const Data& t_data, bool isOfline)
 {
     qInfo("Starting patcher.");
 
     emit statusChanged("Starting...");
 
-    m_localPatcher.start(t_data);
+    m_localPatcher.start(t_data, !isOfline);
 }

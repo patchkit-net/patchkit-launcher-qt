@@ -35,7 +35,7 @@ public:
     void cancel();
 
     bool canStartPatcher() const;
-    void startPatcher();
+    void startPatcher(bool isOffline = false);
 
     void resolveData();
 
@@ -59,7 +59,7 @@ private:
 
     bool isLocalPatcherInstalled() const;
     void updatePatcher(const Data& t_data);
-    void startPatcher(const Data& t_data);
+    void startPatcher(const Data& t_data, bool isOffline = false);
 
     CancellationTokenSource m_cancellationTokenSource;
     LauncherState& m_launcherState;

@@ -25,7 +25,7 @@ public:
 
     void install(const QString& t_downloadedPath, const Data& t_data, int t_version);
 
-    void start(const Data& t_data);
+    void start(const Data& t_data, bool isOnline);
 
 private:
     void uninstall();
