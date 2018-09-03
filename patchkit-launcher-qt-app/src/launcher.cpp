@@ -51,7 +51,7 @@ void Launcher::onError(DownloadError t_error)
                 emit m_state.respond();
 
                 m_worker.stop();
-                m_worker.startPatcher();
+                m_worker.startPatcher(true);
             }
             else if (answer == QMessageBox::No)
             {
