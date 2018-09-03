@@ -30,7 +30,7 @@ void LauncherWorker::run()
     catch(ServerConnectionError& e)
     {
         m_result = CONNECTION_ERROR;
-        qCritical(e.what());
+        qCritical() << e.what();
     }
     catch (LockException&)
     {
