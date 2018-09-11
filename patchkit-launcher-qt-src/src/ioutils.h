@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <quazip/quazipfile.h>
+#include <quazipfile.h>
 
 class IOUtils
 {
