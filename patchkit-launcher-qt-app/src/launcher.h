@@ -11,6 +11,8 @@
 #include <src/launcherworker.h>
 #include "src/launcherstate.h"
 
+namespace LauncherApp
+{
 class Launcher : public QObject
 {
     Q_OBJECT
@@ -31,3 +33,4 @@ private:
     LauncherWorker m_worker;
     MainWindow m_mainWindow;
 };
+}

@@ -11,6 +11,7 @@
 #include "cancellationtokensource.h"
 #include "api.h"
 #include "lockfile.h"
+#include "data/networkstatus.hpp"
 
 class LauncherWorker : public QThread
 {
@@ -35,7 +36,7 @@ public:
     void cancel();
 
     bool canStartPatcher() const;
-    void startPatcher(bool isOffline = false);
+    void startPatcher(LauncherCore::Types::NetworkStatus networkStatus);
 
     void resolveData();
 
@@ -59,7 +60,7 @@ private:
 
     bool isLocalPatcherInstalled() const;
     void updatePatcher(const Data& t_data);
-    void startPatcher(const Data& t_data, bool isOffline = false);
+    void startPatcher(const Data& t_data, LauncherCore::Types::NetworkStatus networkStatus);
 
     CancellationTokenSource m_cancellationTokenSource;
     LauncherState& m_launcherState;

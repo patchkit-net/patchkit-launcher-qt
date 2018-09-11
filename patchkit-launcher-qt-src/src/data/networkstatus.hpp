@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Launcher
+namespace LauncherCore
 {
 namespace Types
 {

@@ -11,6 +11,7 @@
 #include "data.h"
 #include "lockfile.h"
 #include "patchermanifest.h"
+#include "data/networkstatus.hpp"
 
 #include <quazipfile.h>
 
@@ -25,7 +26,7 @@ public:
 
     void install(const QString& t_downloadedPath, const Data& t_data, int t_version);
 
-    void start(const Data& t_data, bool isOnline);
+    void start(const Data& t_data, LauncherCore::Types::NetworkStatus networkStatus);
 
 private:
     void uninstall();
