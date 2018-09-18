@@ -30,7 +30,7 @@ void LauncherWorker::run()
     catch(ServerConnectionError& e)
     {
         m_result = CONNECTION_ERROR;
-        qCritical(e.what());
+        qCritical() << e.what();
     }
     catch (LockException&)
     {
@@ -84,9 +84,9 @@ bool LauncherWorker::canStartPatcher() const
     return isLocalPatcherInstalled();
 }
 
-void LauncherWorker::startPatcher()
+void LauncherWorker::startPatcher(LauncherCore::Types::NetworkStatus networkStatus)
 {
-    startPatcher(m_data);
+    startPatcher(m_data, networkStatus);
 }
 
 void LauncherWorker::resolveData()
@@ -226,7 +226,7 @@ void LauncherWorker::runWithData(Data& t_data)
     lockFile.cede();
     try
     {
-        startPatcher(t_data);
+        startPatcher(t_data, LauncherCore::Types::NetworkStatus::Online);
     }
     catch(...)
     {
@@ -321,11 +321,11 @@ void LauncherWorker::updatePatcher(const Data& t_data)
     }
 }
 
-void LauncherWorker::startPatcher(const Data& t_data)
+void LauncherWorker::startPatcher(const Data& t_data, LauncherCore::Types::NetworkStatus networkStatus)
 {
     qInfo("Starting patcher.");
 
     emit statusChanged("Starting...");
 
-    m_localPatcher.start(t_data);
+    m_localPatcher.start(t_data, networkStatus);
 }

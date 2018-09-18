@@ -136,7 +136,7 @@ void LocalPatcherData::install(const QString& t_downloadedPath, const Data& t_da
     IOUtils::writeTextToFile(locations.patcherIdInfoFilePath(), getPatcherId(t_data));
 }
 
-void LocalPatcherData::start(const Data& t_data)
+void LocalPatcherData::start(const Data& t_data, LauncherCore::Types::NetworkStatus networkStatus)
 {
     qInfo("Starting patcher.");
 
@@ -147,6 +147,7 @@ void LocalPatcherData::start(const Data& t_data)
     manifestContext.defineSymbol("{exedir}", Locations::getInstance().patcherDirectoryPath());
     manifestContext.defineSymbol("{secret}", applicationSecret);
     manifestContext.defineSymbol("{lockfile}", QDir(Config::lockFileName).absolutePath());
+    manifestContext.defineSymbol("{network-status}", LauncherCore::Types::ToString(networkStatus));
 
     auto manifest = readPatcherManifset();
 

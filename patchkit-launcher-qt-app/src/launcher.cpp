@@ -13,7 +13,7 @@
 #include <src/locations.h>
 #include <src/lockfile.h>
 
-Launcher::Launcher(const QApplication& t_application)
+LauncherApp::Launcher::Launcher(const QApplication& t_application)
     : m_worker(m_state, this)
     , m_mainWindow(m_worker, nullptr)
 {
@@ -21,7 +21,7 @@ Launcher::Launcher(const QApplication& t_application)
     connect(&m_state, &LauncherState::error, this, &Launcher::onError);
 }
 
-void Launcher::start()
+void LauncherApp::Launcher::start()
 {
     qInfo() << "Starting launcher, version: " << Globals::version();
     connect(&m_worker, &QThread::finished, this, &Launcher::finish);
@@ -33,7 +33,7 @@ void Launcher::start()
     m_worker.start();
 }
 
-void Launcher::onError(DownloadError t_error)
+void LauncherApp::Launcher::onError(DownloadError t_error)
 {
     if (t_error == DownloadError::ConnectionIssues)
     {
@@ -51,7 +51,7 @@ void Launcher::onError(DownloadError t_error)
                 emit m_state.respond();
 
                 m_worker.stop();
-                m_worker.startPatcher();
+                m_worker.startPatcher(LauncherCore::Types::NetworkStatus::Offline);
             }
             else if (answer == QMessageBox::No)
             {
@@ -86,7 +86,7 @@ void Launcher::onError(DownloadError t_error)
     }
 }
 
-void Launcher::finish()
+void LauncherApp::Launcher::finish()
 {
     disconnect(&m_worker, &QThread::finished, this, &Launcher::finish);
 
@@ -146,7 +146,7 @@ void Launcher::finish()
     }
 }
 
-void Launcher::cleanup()
+void LauncherApp::Launcher::cleanup()
 {
     if (m_worker.isRunning())
     {

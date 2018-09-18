@@ -65,6 +65,7 @@ HEADERS += \
     $$PWD/src/executableresources.h \
     $$PWD/src/lockfile.h \
     $$PWD/src/utilities.h \
-    $$PWD/src/patchermanifest.h
+    $$PWD/src/patchermanifest.h \
+    $$PWD/src/data/networkstatus.hpp
 
 include(../version.pri)
