@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
 
     QNetworkProxyFactory::setUseSystemConfiguration(true);
 
-    Launcher launcher(application);
+    LauncherApp::Launcher launcher(application);
     launcher.start();
 
     qInfo("Starting application loop.");

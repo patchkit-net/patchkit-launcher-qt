@@ -4,8 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [unreleased]
+## [v1.4.0]
 ### Added
+- Boost library linking
+- lock file implementation using `boost::interprocess::file_lock`
 - New patcher manifest file format processing.
 - Launcher will use the api-cache address from the `PK_LAUNCHER_API_CACHE_URL` environment variable if available.
 

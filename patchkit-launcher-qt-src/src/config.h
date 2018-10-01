@@ -73,8 +73,5 @@ public:
     const static QString pingTarget;
     const static QString pingCountArg;
 
-    const static int staleLockTime;
-    const static int lockingTimeout;
-
     const static char inlineData[];
 };

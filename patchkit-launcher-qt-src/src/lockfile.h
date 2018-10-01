@@ -5,8 +5,7 @@
 
 #pragma once
 
-#include <QLockFile>
-#include <QFile>
+#include <boost/interprocess/sync/file_lock.hpp>
 
 class LockFile
 {
@@ -21,6 +20,6 @@ public:
     void clear();
 
 private:
-    QLockFile m_lockFile;
+    boost::interprocess::file_lock m_lockFile;
     bool m_isLockFileLocal;
 };
