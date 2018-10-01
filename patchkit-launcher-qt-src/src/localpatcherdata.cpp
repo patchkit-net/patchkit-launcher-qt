@@ -39,27 +39,17 @@ bool LocalPatcherData::isInstalled() const
         }
     }
 
-    QStringList installationPatcherEntries = IOUtils::readTextFromFile(Locations::getInstance().patcherInstallationInfoFilePath()).split(QChar('\n'));
+    QStringList installationPatcherEntries = IOUtils::readTextFromFile(Locations::getInstance().patcherInstallationInfoFilePath())
+            .split(QChar('\n'));
 
     for (int i = 0; i < installationPatcherEntries.size(); i++)
     {
-        QString entryPath = QDir::cleanPath(Locations::getInstance().patcherDirectoryPath() + "/" + installationPatcherEntries[i]);
+        QString entryPath = installationPatcherEntries[i];
 
-        if(installationPatcherEntries[i].endsWith("/") || installationPatcherEntries[i].endsWith("\\"))
+        if (!QDir(entryPath).exists() && !QFile(entryPath).exists())
         {
-            if(!IOUtils::checkIfDirExists(entryPath))
-            {
-                qInfo() << "Installation directory doesn't exists - " << entryPath;
-                return false;
-            }
-        }
-        else
-        {
-            if(!IOUtils::checkIfFileExists(entryPath))
-            {
-                qInfo() << "Installation file doesn't exists - " << entryPath;
-                return false;
-            }
+            qInfo() << "Installation entry doesn't exist - " << entryPath;
+            return false;
         }
     }
 
@@ -113,14 +103,13 @@ void LocalPatcherData::install(const QString& t_downloadedPath, const Data& t_da
 
     for (int i = 0; i < installationPatcherEntries.size(); i++)
     {
-        QString entryPath = QDir::cleanPath(locations.patcherDirectoryPath() + "/" + installationPatcherEntries[i]);
+        QString entryPath = QDir::cleanPath(locations.patcherDirectoryPath() + QDir::separator() + installationPatcherEntries[i]);
 
 #if defined(Q_OS_OSX) || defined(Q_OS_UNIX)
         system(QString("chmod +x \"%1\"").arg(entryPath).toStdString().c_str());
 #endif
 
-        installationInfoFileContents +=
-                QDir::cleanPath(locations.patcherDirectoryPath() + QDir::separator() + installationPatcherEntries[i]);
+        installationInfoFileContents += entryPath;
 
         if (i != installationPatcherEntries.size() - 1)
         {
