@@ -7,6 +7,8 @@
 
 #include <exception>
 
+#include <QString>
+
 #define CUSTOM_RUNTIME_ERROR(classname) \
 class classname : public std::runtime_error \
 { \
@@ -22,25 +24,17 @@ public: \
 }; \
 
 #define CUSTOM_EXCEPTION(classname, msg) \
-class classname : public std::exception \
+class classname : public std::runtime_error \
 { \
 public: \
-    classname() \
-    { \
-    } \
-    virtual ~classname() throw () \
-    { \
-    } \
-    virtual const char* what() const throw () \
-    { \
-        return msg; \
-    } \
+    classname() :\
+        std::runtime_error(msg)\
+    {\
+    }\
 }; \
 
 CUSTOM_RUNTIME_ERROR(FatalException)
 CUSTOM_RUNTIME_ERROR(ContentUnavailableException)
 CUSTOM_RUNTIME_ERROR(InvalidFormatException)
-CUSTOM_RUNTIME_ERROR(ServerConnectionError)
-CUSTOM_EXCEPTION(TimeoutException, "Timeout.")
-CUSTOM_EXCEPTION(CancelledException, "Operation has been cancelled.")
-CUSTOM_EXCEPTION(LockException, "Lock file detected.")
+CUSTOM_RUNTIME_ERROR(NotImplementedException)
+CUSTOM_RUNTIME_ERROR(NotSupportedException)

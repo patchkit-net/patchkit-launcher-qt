@@ -12,9 +12,15 @@
 #include "logger.h"
 #include "executableresources.h"
 #include "config.h"
+#include "data/secretencoding.h"
 
 Data::Data()
 {
+}
+
+Data Data::overwritePatcherSecret(const Data &original, const QString &patcherSecret)
+{
+    return Data(patcherSecret, original.applicationSecret());
 }
 
 bool Data::canLoadFromConfig()
@@ -69,11 +75,7 @@ Data Data::loadFromFile(const QString& t_filePath)
 
 QString Data::patcherSecret() const
 {
-    if (overwritePatcherSecret.isEmpty())
-    {
-        return m_patcherSecret;
-    }
-    return overwritePatcherSecret;
+    return m_patcherSecret;
 }
 
 QString Data::applicationSecret() const
@@ -83,7 +85,7 @@ QString Data::applicationSecret() const
 
 QByteArray Data::encodedApplicationSecret() const
 {
-    return m_encodedApplicationSecret;
+    return data::secret::encode(m_applicationSecret);
 }
 
  #ifdef Q_OS_WIN
@@ -116,11 +118,11 @@ Data Data::loadFromDataStream(QDataStream& t_dataStream)
     return Data(encodedPatcherSecret, encodedApplicationSecret);
 }
 
-Data::Data(const QByteArray& t_encodedPatcherSecret, const QByteArray& t_encodedApplicationSecret) :
-    m_encodedApplicationSecret(t_encodedApplicationSecret)
+Data Data::fromEncoded(const QByteArray& t_encodedPatcherSecret, const QByteArray& t_encodedApplicationSecret)
 {
-    m_patcherSecret = decodeString(t_encodedPatcherSecret);
-    m_applicationSecret = decodeString(m_encodedApplicationSecret);
+    return Data(
+                data::secret::decode(t_encodedPatcherSecret),
+                data::secret::decode(t_encodedApplicationSecret));
 }
 
 QByteArray Data::readStringBytes(QDataStream& t_dataStream)
@@ -140,22 +142,4 @@ QByteArray Data::readStringBytes(QDataStream& t_dataStream)
     }
 
     return bytes;
-}
-
-QString Data::decodeString(const QByteArray& t_encodedSecret)
-{
-    std::unique_ptr<char> temp(new char[t_encodedSecret.size()]);
-    memcpy(temp.get(), t_encodedSecret.data(), t_encodedSecret.size());
-
-    for (int i = 0; i < t_encodedSecret.size(); i++)
-    {
-        char b = temp.get()[i];
-        bool lsb = (b & 1) > 0;
-        b = b >> 1;
-        b = b | (lsb ? 128 : 0);
-        b = static_cast<char>(~b);
-        temp.get()[i] = b;
-    }
-
-    return QString::fromUtf16(reinterpret_cast<const ushort*>(temp.get()), t_encodedSecret.size() / 2);
 }

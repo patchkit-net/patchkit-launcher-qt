@@ -51,7 +51,7 @@ void LauncherApp::Launcher::onError(DownloadError t_error)
                 emit m_state.respond();
 
                 m_worker.stop();
-                m_worker.startPatcher(LauncherCore::Types::NetworkStatus::Offline);
+                m_worker.startPatcher(data::NetworkStatus::Offline);
             }
             else if (answer == QMessageBox::No)
             {
@@ -112,6 +112,7 @@ void LauncherApp::Launcher::finish()
         qWarning("Launcher worker has failed! Asking for retry.");
 
         int retryRunDialogResult = QMessageBox::critical(nullptr, "Error!", "An error has occured! Would you like to retry?", QMessageBox::Yes, QMessageBox::No);
+
 
         if (retryRunDialogResult == QMessageBox::Yes)
         {

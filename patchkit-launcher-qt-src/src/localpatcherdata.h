@@ -8,10 +8,11 @@
 #include <QObject>
 #include <QString>
 
-#include "data.h"
-#include "lockfile.h"
-#include "patchermanifest.h"
+#include "data/data.h"
+#include "data/patchermanifest.h"
 #include "data/networkstatus.hpp"
+#include "data/installationinfo.h"
+#include "lockfile.h"
 
 #include <quazipfile.h>
 
@@ -21,12 +22,11 @@ class LocalPatcherData : public QObject
 
 public:
     bool isInstalled() const;
-
     bool isInstalledSpecific(int t_version, const Data& t_data);
 
-    void install(const QString& t_downloadedPath, const Data& t_data, int t_version);
+    InstallationInfo install(const QString& t_downloadedPath, const Data& t_data, int t_version);
 
-    void start(const Data& t_data, LauncherCore::Types::NetworkStatus networkStatus);
+    void start(const Data& t_data, data::NetworkStatus networkStatus);
 
 private:
     void uninstall();
@@ -37,5 +37,6 @@ private:
 
     static int parseVersionInfoToNumber(const QString& t_versionInfoFileContents);
 
+    InstallationInfo readInstallationInfo() const;
     PatcherManifest readPatcherManifset() const;
 };

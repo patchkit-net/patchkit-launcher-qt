@@ -6,99 +6,97 @@
 #include "launcherworker.h"
 
 #include <QtMath>
-#include <QMessageBox>
+#include <QSettings>
 
+#include "cancellation/cancellationtoken.h"
+#include "data/launchersettings.h"
 #include "logger.h"
 #include "locations.h"
 #include "customexceptions.h"
-#include "downloader.h"
 #include "config.h"
 #include "lockfile.h"
 #include "utilities.h"
 
 void LauncherWorker::run()
 {
-    try
+    // Check permissions
+    if (!Utilities::isCurrentDirectoryWritable())
     {
-        resolveData();
+        Utilities::tryRestartWithHigherPermissions();
+        m_result = Result::RESTART;
+        return;
+    }
 
-        runWithData(m_data);
+    // Initialize
+    Data data = resolveData();
 
-        m_result = SUCCESS;
-        qInfo("Launcher has succeeded.");
-    }
-    catch(ServerConnectionError& e)
+    // Initialize components
+    QNetworkAccessManager nam;
+    Api api(nam);
+    LocalPatcherData localData;
+
+    LauncherSettings settings(data.applicationSecret());
+
+    try // TODO: Figure out why is this here
     {
-        m_result = CONNECTION_ERROR;
-        qCritical() << e.what();
+        QString newPatcherSecret = api.getPatcherSecret(data.applicationSecret(), m_cancellationTokenSource);
+
+        settings.savePatcherSecret(newPatcherSecret);
+
+        data = Data::overwritePatcherSecret(data, newPatcherSecret);
     }
-    catch (LockException&)
+    catch (CancellationToken::CancelledException)
     {
-        m_result = LOCKED;
-        qCritical("Lock file detected.");
-    }
-    catch (CancelledException&)
-    {
-        m_result = CANCELLED;
-        qInfo("Launcher has been canceled.");
-    }
-    catch (FatalException& exception)
-    {
-        m_result = FATAL_ERROR;
-        qCritical() << exception.what();
-    }
-    catch (std::exception& exception)
-    {
-        m_result = FAILED;
-        qWarning() << exception.what();
+        throw;
     }
     catch (...)
     {
-        m_result = FATAL_ERROR;
-        qCritical("Unknown exception.");
+        if (!settings.patcherSecret().isEmpty())
+        {
+            data = Data::overwritePatcherSecret(data, settings.patcherSecret());
+        }
+    }
+
+    LockFile lockFile;
+    lockFile.lock();
+    while (true)
+    {
+        try
+        {
+            // Update
+        }
+        catch(Api::ApiConnectionError& e)
+        {
+            if (localData.isInstalled())
+            {
+//                m_launcherInterface.shouldRetry()
+            }
+        }
     }
 }
 
-LauncherWorker::LauncherWorker(LauncherState& t_launcherState, QObject* parent)
+LauncherWorker::LauncherWorker(ILauncherInterface& launcherInterface, QObject* parent)
     : QThread(parent)
-    , m_launcherState(t_launcherState)
-    , m_api(&m_networkAccessManager, CancellationToken(m_cancellationTokenSource), m_launcherState)
-    , m_remotePatcher(m_launcherState, m_api, &m_networkAccessManager)
     , m_result(NONE)
+    , m_launcherInterface(launcherInterface)
 {
-    m_api.moveToThread(this);
-    m_networkAccessManager.moveToThread(this);
-    m_remotePatcher.moveToThread(this);
-    m_localPatcher.moveToThread(this);
 }
 
 void LauncherWorker::cancel()
 {
     qInfo("Cancelling launcher thread.");
-
     m_cancellationTokenSource.cancel();
 }
 
-bool LauncherWorker::canStartPatcher() const
-{
-    return isLocalPatcherInstalled();
-}
-
-void LauncherWorker::startPatcher(LauncherCore::Types::NetworkStatus networkStatus)
-{
-    startPatcher(m_data, networkStatus);
-}
-
-void LauncherWorker::resolveData()
+Data LauncherWorker::resolveData()
 {
     qInfo("Resolving data.");
     if (Data::canLoadFromConfig())
     {
         try
         {
-            m_data = Data::loadFromConfig();
-            qInfo("Loaded inline data.");
-            return;
+            qInfo("Loading inline data.");
+            return Data::loadFromConfig();
         }
         catch(std::exception& e)
         {
@@ -109,37 +107,25 @@ void LauncherWorker::resolveData()
 #ifdef Q_OS_WIN
     try
     {
-        m_data = Data::loadFromResources(Locations::getInstance().applicationFilePath(),
+        qInfo("Loading data from resource.");
+        return Data::loadFromResources(Locations::getInstance().applicationFilePath(),
                                             Config::dataResourceId,
                                             Config::dataResourceTypeId);
-        qInfo("Loaded data from resource.");
-        return;
     }
     catch(std::exception& e)
     {
-        qWarning(e.what());
+        qWarning() << e.what();
     }
 
 #endif
 
-    m_data = Data::loadFromFile(Locations::getInstance().dataFilePath());
-    qInfo("Loaded data from file.");
-    return;
-}
-
-bool LauncherWorker::isLocalPatcherInstalled() const
-{
-    return m_localPatcher.isInstalled();
+    qInfo("Loading data from file.");
+    return Data::loadFromFile(Locations::getInstance().dataFilePath());
 }
 
 LauncherWorker::Result LauncherWorker::result() const
 {
     return m_result;
-}
-
-void LauncherWorker::stop()
-{
-    m_cancellationTokenSource.cancel();
 }
 
 void LauncherWorker::setDownloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes)
@@ -149,183 +135,4 @@ void LauncherWorker::setDownloadProgress(const long long& t_bytesDownloaded, con
 
     emit statusChanged(QString("Downloading %1 / %2 KB").arg(QString::number(kilobytesDownloaded), QString::number(totalKilobytes)));
     emit progressChanged(qCeil((qreal(t_bytesDownloaded) / t_totalBytes) * 100.0));
-}
-
-void LauncherWorker::runWithData(Data& t_data)
-{
-    Locations::getInstance().initializeWithData(t_data);
-
-    if (!Utilities::isCurrentDirectoryWritable())
-    {
-        Utilities::tryRestartWithHigherPermissions();
-    }
-
-    LockFile lockFile;
-    lockFile.lock();
-
-    try
-    {
-        emit progressChanged(0);
-        emit statusChanged("Initializing...");
-
-        qInfo("Starting launcher.");
-
-        qInfo("Trying to obtain location information...");
-        if (m_api.geolocate())
-        {
-            qInfo() << "Operation successful, country code resolved to: " << m_api.getCountryCode();
-        }
-        else
-        {
-            qWarning("Couldn't obtain the country code.");
-        }
-
-        setupPatcherSecret(t_data);
-
-        qInfo() << "Current directory set to - " << Locations::getInstance().currentDirPath();
-
-        updatePatcher(t_data);
-    }
-    catch (LockException&)
-    {
-        throw;
-    }
-    catch (CancelledException&)
-    {
-        throw;
-    }
-    catch (FatalException&)
-    {
-        throw;
-    }
-    catch (std::exception& exception)
-    {
-        if (m_localPatcher.isInstalled())
-        {
-            qWarning() << exception.what();
-            qWarning("Updating patcher failed but previous patcher is still available.");
-        }
-        else
-        {
-            throw;
-        }
-    }
-    catch (...)
-    {
-        if (m_localPatcher.isInstalled())
-        {
-            qWarning("Unknown exception.");
-            qWarning("Updating patcher failed but previous patcher is still available.");
-        }
-        else
-        {
-            throw;
-        }
-    }
-
-    lockFile.cede();
-    try
-    {
-        startPatcher(t_data, LauncherCore::Types::NetworkStatus::Online);
-    }
-    catch(...)
-    {
-        lockFile.clear();
-        throw;
-    }
-}
-
-void LauncherWorker::setupPatcherSecret(Data& t_data)
-{
-    QSettings settings("UpSoft", t_data.applicationSecret().append("launcher-"));
-
-    if (tryToFetchPatcherSecret(t_data))
-    {
-        settings.setValue("patcher_secret", t_data.overwritePatcherSecret);
-    }
-    else if (settings.contains("patcher_secret"))
-    {
-        t_data.overwritePatcherSecret = settings.value("patcher_secret").toString();
-    }
-}
-
-bool LauncherWorker::tryToFetchPatcherSecret(Data& t_data)
-{
-    try
-    {
-        t_data.overwritePatcherSecret = m_remotePatcher.getPatcherSecret(t_data, m_cancellationTokenSource);
-        return true;
-    }
-    catch (CancelledException&)
-    {
-        throw;
-    }
-    catch (FatalException&)
-    {
-        throw;
-    }
-    catch (std::exception& exception)
-    {
-        qWarning() << exception.what();
-        return false;
-    }
-    catch (...)
-    {
-        qWarning("Unknown exception while fetching patcher secret.");
-        return false;
-    }
-}
-
-void LauncherWorker::updatePatcher(const Data& t_data)
-{
-    qInfo("Updating patcher.");
-
-    int version = -1;
-    try
-    {
-        version = m_remotePatcher.getVersion(t_data, m_cancellationTokenSource);
-    }
-    catch(...)
-    {
-        throw;
-    }
-
-    qDebug("Current remote patcher version - %d", version);
-
-    if (!m_localPatcher.isInstalledSpecific(version, t_data))
-    {
-        qInfo("The newest patcher is not installed. Downloading the newest version of patcher.");
-
-        emit statusChanged("Downloading...");
-
-        qDebug("Connecting downloadProgressChanged signal from remote patcher to slot from launcher thread.");
-        connect(&m_remotePatcher, &RemotePatcherData::downloadProgressChanged, this, &LauncherWorker::setDownloadProgress);
-
-        QString downloadPath = Locations::getInstance().patcherDownloadPath();
-
-        QFile file(downloadPath);
-
-        m_remotePatcher.download(file, t_data, version, m_cancellationTokenSource);
-        qInfo() << "Patcher has been downloaded to " << downloadPath;
-
-        qDebug("Disconnecting downloadProgressChanged signal from remote patcher to slot from launcher thread.");
-        disconnect(&m_remotePatcher, &RemotePatcherData::downloadProgressChanged, this, &LauncherWorker::setDownloadProgress);
-
-        emit progressChanged(100);
-        emit statusChanged("Installing...");
-
-        m_localPatcher.install(downloadPath, t_data, version);
-
-        QFile::remove(downloadPath);
-        qInfo("Patcher has been installed.");
-    }
-}
-
-void LauncherWorker::startPatcher(const Data& t_data, LauncherCore::Types::NetworkStatus networkStatus)
-{
-    qInfo("Starting patcher.");
-
-    emit statusChanged("Starting...");
-
-    m_localPatcher.start(t_data, networkStatus);
 }

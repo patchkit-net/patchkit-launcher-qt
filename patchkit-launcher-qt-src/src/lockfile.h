@@ -6,10 +6,13 @@
 #pragma once
 
 #include <boost/interprocess/sync/file_lock.hpp>
+#include "customexceptions.h"
 
 class LockFile
 {
 public:
+    CUSTOM_RUNTIME_ERROR(LockException)
+
     LockFile();
     ~LockFile();
 

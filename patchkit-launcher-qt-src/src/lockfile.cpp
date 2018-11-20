@@ -34,7 +34,7 @@ void LockFile::lock()
     if (!m_lockFile.try_lock())
     {
         qCritical("Failed to lock the lockfile.");
-        throw LockException();
+        throw LockException("Failed to lock the lockfile.");
     }
     else
     {

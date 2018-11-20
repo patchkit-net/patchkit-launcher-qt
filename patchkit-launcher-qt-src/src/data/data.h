@@ -11,6 +11,8 @@ struct Data
 {
     Data();
 
+    static Data overwritePatcherSecret(const Data& original, const QString& patcherSecret);
+
     static bool canLoadFromConfig();
 
     static Data loadFromConfig();
@@ -21,23 +23,21 @@ struct Data
     static Data loadFromResources(const QString& t_applicationFilePath, int t_resourceId, int t_resourceTypeId);
 #endif
 
-    QString overwritePatcherSecret;
+    QString patcherSecret() const;
 
-    virtual QString patcherSecret() const;
+    QString applicationSecret() const;
 
-    virtual QString applicationSecret() const;
-
-    virtual QByteArray encodedApplicationSecret() const;
+    QByteArray encodedApplicationSecret() const;
 
 private:
+    static Data fromEncoded(const QByteArray& t_encodedPatcherSecret, const QByteArray& t_encodedApplicationSecret);
+
     static Data loadFromDataStream(QDataStream& t_dataStream);
+
+    Data(const QString& patcherSecret, const QString& appSecret);
 
     QString m_patcherSecret;
     QString m_applicationSecret;
-    QByteArray m_encodedApplicationSecret;
-
-    Data(const QByteArray& t_encodedPatcherSecret, const QByteArray& t_encodedApplicationSecret);
 
     static QByteArray readStringBytes(QDataStream& t_dataStream);
-    static QString decodeString(const QByteArray& t_encodedSecret);
 };

@@ -8,7 +8,7 @@
 #include <QString>
 #include <QJsonDocument>
 
-#include <src/contentsummary.h>
+#include <src/data/contentsummary.h>
 
 #include <string>
 

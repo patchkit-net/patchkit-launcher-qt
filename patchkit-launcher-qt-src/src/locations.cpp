@@ -12,7 +12,7 @@
 #include <QFileInfo>
 
 #include "config.h"
-#include "data.h"
+#include "data/data.h"
 #include "logger.h"
 
 bool Locations::isCurrentDirWritable() const

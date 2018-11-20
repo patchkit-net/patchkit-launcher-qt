@@ -1,9 +1,8 @@
 #pragma once
 
-namespace LauncherCore
+namespace data
 {
-namespace Types
-{
+
     enum class NetworkStatus
     {
         Offline, Online
@@ -20,6 +19,5 @@ namespace Types
                 return "offline";
         }
     }
-} // namespace Types
-} // namespace Launcher
+} // namespace data
 

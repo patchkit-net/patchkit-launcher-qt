@@ -16,7 +16,6 @@
 #include "locations.h"
 #include "ioutils.h"
 #include "lockfile.h"
-#include "patchermanifest.h"
 #include "customexceptions.h"
 #include "utilities.h"
 
@@ -80,7 +79,7 @@ bool LocalPatcherData::isInstalledSpecific(int t_version, const Data& t_data)
     return false;
 }
 
-void LocalPatcherData::install(const QString& t_downloadedPath, const Data& t_data, int t_version)
+InstallationInfo LocalPatcherData::install(const QString& t_downloadedPath, const Data& t_data, int t_version)
 {
     uninstall();
 
@@ -123,9 +122,11 @@ void LocalPatcherData::install(const QString& t_downloadedPath, const Data& t_da
 
     IOUtils::writeTextToFile(locations.patcherInstallationInfoFilePath(), installationInfoFileContents);
     IOUtils::writeTextToFile(locations.patcherIdInfoFilePath(), getPatcherId(t_data));
+
+    return InstallationInfo();
 }
 
-void LocalPatcherData::start(const Data& t_data, LauncherCore::Types::NetworkStatus networkStatus)
+void LocalPatcherData::start(const Data& t_data, data::NetworkStatus networkStatus)
 {
     qInfo("Starting patcher.");
 
@@ -136,7 +137,7 @@ void LocalPatcherData::start(const Data& t_data, LauncherCore::Types::NetworkSta
     manifestContext.defineSymbol("{exedir}", Locations::getInstance().patcherDirectoryPath());
     manifestContext.defineSymbol("{secret}", applicationSecret);
     manifestContext.defineSymbol("{lockfile}", QDir(Config::lockFileName).absolutePath());
-    manifestContext.defineSymbol("{network-status}", LauncherCore::Types::ToString(networkStatus));
+    manifestContext.defineSymbol("{network-status}", data::ToString(networkStatus));
 
     auto manifest = readPatcherManifset();
 

@@ -5,13 +5,15 @@
 
 #pragma once
 
-#include "data.h"
-#include "remotepatcherdata.h"
+#include "data/data.h"
 #include "localpatcherdata.h"
-#include "cancellationtokensource.h"
-#include "api.h"
+#include "cancellation/cancellationtokensource.h"
+#include "remote/api/api.h"
 #include "lockfile.h"
 #include "data/networkstatus.hpp"
+#include "ilauncher.h"
+
+#include <QThread>
 
 class LauncherWorker : public QThread
 {
@@ -23,55 +25,34 @@ public:
     enum Result
     {
         NONE,
+        RESTART,
         CANCELLED,
         SUCCESS,
         FAILED,
-        FATAL_ERROR,
-        LOCKED,
-        CONNECTION_ERROR
+        LOCKED
     };
 
-    LauncherWorker(LauncherState& t_launcherState, QObject* parent = nullptr);
+    LauncherWorker(ILauncherInterface& launcherInterface, QObject* parent = nullptr);
 
     void cancel();
 
-    bool canStartPatcher() const;
-    void startPatcher(LauncherCore::Types::NetworkStatus networkStatus);
-
-    void resolveData();
-
     Result result() const;
+
 signals:
     void statusChanged(const QString& t_status);
     void progressChanged(int t_progress);
-
-public slots:
-    void stop();
 
 private slots:
     void setDownloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes);
 
 private:
+    Result m_result;
+    Data resolveData();
     void runWithData(Data& t_data);
+
+    ILauncherInterface& m_launcherInterface;
 
     void setupPatcherSecret(Data& t_data);
 
-    bool tryToFetchPatcherSecret(Data& t_data);
-
-    bool isLocalPatcherInstalled() const;
-    void updatePatcher(const Data& t_data);
-    void startPatcher(const Data& t_data, LauncherCore::Types::NetworkStatus networkStatus);
-
     CancellationTokenSource m_cancellationTokenSource;
-    LauncherState& m_launcherState;
-
-    QNetworkAccessManager m_networkAccessManager;
-
-    Api m_api;
-    RemotePatcherData m_remotePatcher;
-    LocalPatcherData m_localPatcher;
-
-    Result m_result;
-
-    Data m_data;
 };

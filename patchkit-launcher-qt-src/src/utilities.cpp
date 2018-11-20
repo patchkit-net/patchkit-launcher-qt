@@ -14,7 +14,8 @@
 #include "locations.h"
 #include "config.h"
 #include "customexceptions.h"
-#include "patchermanifest.h"
+#include "data/patchermanifest.h"
+#include "cancellation/cancellationtoken.h"
 #include "ioutils.h"
 
 #if defined(Q_OS_WIN)
@@ -25,7 +26,7 @@ void Utilities::tryRestartWithHigherPermissions()
 {
 #if defined(Q_OS_WIN)
     ShellExecute(nullptr, L"runas", Locations::getInstance().applicationFilePath().toStdWString().c_str(), nullptr, nullptr, SW_SHOWNORMAL);
-    throw CancelledException();
+    throw CancellationToken::CancelledException();
 #else
     throw FatalException("Cannot write in current directory.");
 #endif
