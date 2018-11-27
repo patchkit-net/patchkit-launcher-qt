@@ -17,6 +17,7 @@ class Api : public IApi
 {
 public:
     CUSTOM_RUNTIME_ERROR(ApiConnectionError)
+    CUSTOM_RUNTIME_ERROR(InvalidFormat)
 
     Api(QNetworkAccessManager& dataSource);
     ~Api() override;

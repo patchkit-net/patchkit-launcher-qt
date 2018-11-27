@@ -15,9 +15,15 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(LauncherWorker& t_launcherWorker, QWidget* t_parent);
 
-private slots:
+public slots:
     void setStatus(const QString& t_status) const;
     void setProgress(int t_progress) const;
+
+    void shouldStartInOfflineMode(ILauncherInterface::OfflineModeAnswer& ans);
+    void shouldRetry(const QString& reason, bool& ans);
+
+signals:
+    void cancel();
 
 protected:
     void showEvent(QShowEvent* t_event) override;

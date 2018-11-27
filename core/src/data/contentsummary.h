@@ -8,7 +8,7 @@
 #include <QString>
 #include <QVector>
 
-#include "hashingstrategy.h"
+#include "../hashingstrategy.h"
 
 class QJsonDocument;
 class QJsonObject;

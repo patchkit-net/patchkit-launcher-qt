@@ -2,42 +2,33 @@
 
 #include <src/customexceptions.h>
 
-#include <QMessageBox>
 #include <QDebug>
 
-Interface::Interface()
+Interface::Interface(QObject* parent)
+    : QObject(parent)
 {
 }
 
 ILauncherInterface::OfflineModeAnswer Interface::shoulStartInOfflineMode()
 {
-    int answer = QMessageBox::question(nullptr, "Offline mode?",
-        "Launcher had some trouble updating. Would you like to continue in offline mode?",
-        QMessageBox::Yes, QMessageBox::No, QMessageBox::Cancel);
+    qInfo() << "Asking if launcher should start in offline mode";
+    OfflineModeAnswer ans;
 
-    switch (answer)
-    {
-    case QMessageBox::Yes:
-        return OfflineModeAnswer::YES;
+    emit shouldStartInOfflineModeSignal(ans);
 
-    case QMessageBox::No:
-        return OfflineModeAnswer::NO;
-
-    case QMessageBox::Cancel:
-        return OfflineModeAnswer::CANCEL;
-
-    default:
-        return OfflineModeAnswer::NO;
-    }
+    qInfo() << "Answer was " << (int) ans;
+    return ans;
 }
 
-bool Interface::shouldRetry(QString reason)
+bool Interface::shouldRetry(const QString& reason)
 {
-    QString message = QString("Error: %1").arg(reason);
-    int answer = QMessageBox::critical(nullptr, "Error",
-        message,
-        QMessageBox::Yes, QMessageBox::No);
+    qInfo() << "Asking if launcher should retry";
 
-    return answer == QMessageBox::Yes;
+    bool ans;
+
+    emit shouldRetrySignal(reason, ans);
+
+    qInfo() << "Answer was " << ans;
+    return ans;
 }
 

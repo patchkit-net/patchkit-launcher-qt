@@ -115,7 +115,7 @@ Data Data::loadFromDataStream(QDataStream& t_dataStream)
     QByteArray encodedPatcherSecret = readStringBytes(t_dataStream);
     QByteArray encodedApplicationSecret = readStringBytes(t_dataStream);
 
-    return Data(encodedPatcherSecret, encodedApplicationSecret);
+    return Data::fromEncoded(encodedPatcherSecret, encodedApplicationSecret);
 }
 
 Data::Data(const QString& patcherSecret, const QString& appSecret)

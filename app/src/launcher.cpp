@@ -14,11 +14,33 @@
 #include <src/lockfile.h>
 
 LauncherApp::Launcher::Launcher(const QApplication& t_application)
-    : m_interface()
-    , m_mainWindow(m_worker, nullptr)
+    : m_mainWindow(m_worker, nullptr)
+    , m_interface(this)
     , m_worker(m_interface, this)
 {
+    m_mainWindow.moveToThread(this->thread());
+
     connect(&t_application, &QApplication::aboutToQuit, this, &Launcher::cleanup);
+
+    // Thread --> UI
+    connect(&m_worker, &LauncherWorker::statusChanged, &m_mainWindow, &MainWindow::setStatus);
+    connect(&m_worker, &LauncherWorker::progressChanged, &m_mainWindow, &MainWindow::setProgress);
+    connect(&m_worker, &LauncherWorker::finished, &m_mainWindow, &MainWindow::close);
+
+    connect(&m_interface, &Interface::shouldStartInOfflineModeSignal,
+            &m_mainWindow, &MainWindow::shouldStartInOfflineMode,
+            Qt::BlockingQueuedConnection);
+
+    connect(&m_interface, &Interface::shouldRetrySignal,
+            &m_mainWindow, &MainWindow::shouldRetry,
+            Qt::BlockingQueuedConnection);
+
+    // Thread <-- UI
+    connect(&m_mainWindow, &MainWindow::cancel, &m_worker, &LauncherWorker::cancel);
+
+    // Termination
+    connect(&m_worker, &LauncherWorker::finished,
+            &t_application, &QApplication::quit);
 }
 
 void LauncherApp::Launcher::start()

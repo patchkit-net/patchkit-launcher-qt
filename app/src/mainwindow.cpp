@@ -7,8 +7,10 @@
 
 #include <QShowEvent>
 #include <QDesktopWidget>
+#include <QMessageBox>
 
 #include "ui_mainwindow.h"
+#include "interface.h"
 
 #include <src/logger.h>
 
@@ -17,14 +19,6 @@ MainWindow::MainWindow(LauncherWorker& t_launcherWorker, QWidget* t_parent)
     , m_launcherWorker(t_launcherWorker)
 {
     m_ui.setupUi(this);
-
-    // Thread --> UI
-    connect(&t_launcherWorker, &LauncherWorker::statusChanged, this, &MainWindow::setStatus);
-    connect(&t_launcherWorker, &LauncherWorker::progressChanged, this, &MainWindow::setProgress);
-    connect(&t_launcherWorker, &LauncherWorker::finished, this, &MainWindow::close);
-
-    // Thread <-- UI
-    connect(m_ui.cancelButton, &QPushButton::clicked, &t_launcherWorker, &LauncherWorker::cancel);
 }
 
 void MainWindow::setStatus(const QString& t_status) const
@@ -35,6 +29,42 @@ void MainWindow::setStatus(const QString& t_status) const
 void MainWindow::setProgress(int t_progress) const
 {
     m_ui.progressBar->setValue(t_progress);
+}
+
+void MainWindow::shouldStartInOfflineMode(ILauncherInterface::OfflineModeAnswer& ans)
+{
+    int answer = QMessageBox::question(nullptr, "Offline mode?",
+        "Launcher had some trouble updating. Would you like to continue in offline mode?",
+        QMessageBox::Yes, QMessageBox::No, QMessageBox::Cancel);
+
+    switch (answer)
+    {
+    case QMessageBox::Yes:
+        ans = ILauncherInterface::OfflineModeAnswer::YES;
+        break;
+
+    case QMessageBox::No:
+        ans = ILauncherInterface::OfflineModeAnswer::NO;
+        break;
+
+    case QMessageBox::Cancel:
+        ans = ILauncherInterface::OfflineModeAnswer::CANCEL;
+        break;
+
+    default:
+        ans = ILauncherInterface::OfflineModeAnswer::NO;
+        break;
+    }
+}
+
+void MainWindow::shouldRetry(const QString& reason, bool& ans)
+{
+    QString message = QString("Error: %1\n Would you like to retry?").arg(reason);
+    int answer = QMessageBox::critical(nullptr, "Error",
+        message,
+        QMessageBox::Yes, QMessageBox::No);
+
+    ans = answer == QMessageBox::Yes;
 }
 
 void MainWindow::showEvent(QShowEvent* t_event)

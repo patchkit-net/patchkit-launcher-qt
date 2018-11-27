@@ -3,7 +3,7 @@
 #include <QNetworkReply>
 #include <QEventLoop>
 
-int downloading::abstractions::getReplyStatusCode(const QNetworkReply *reply)
+int downloading::abstractions::getReplyStatusCode(const QNetworkReply* reply)
 {
     if (!reply)
     {
@@ -61,30 +61,33 @@ bool downloading::abstractions::tryDownload(QNetworkAccessManager &nam, QString 
 bool downloading::abstractions::tryDownload(
         QNetworkAccessManager& nam, QUrl url, QIODevice& target, int timeout, CancellationToken cancellationToken)
 {
+    qInfo() << "Downloading from " << url.toString() << " with timeout " << timeout;
+
     QNetworkRequest request(url);
+
+    QEventLoop loop;
 
     QNetworkReply* reply = nam.get(request);
 
     QObject::connect(&cancellationToken, &CancellationToken::cancelled, reply, &QNetworkReply::abort);
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
 
-    reply->waitForReadyRead(timeout);
-
+    loop.exec();
     cancellationToken.throwIfCancelled();
 
     int statusCode = getReplyStatusCode(reply);
 
     if (!doesStatusCodeIndicateSuccess(statusCode))
     {
+        qWarning() << "Status code was " << statusCode;
         return false;
     }
 
-    while (reply->waitForReadyRead(timeout))
-    {
-        cancellationToken.throwIfCancelled();
-        target.write(reply->readAll());
-    }
+    auto data = reply->readAll();
+    target.write(data);
+    target.close();
 
-    return doesStatusCodeIndicateSuccess(statusCode);
+    return true;
 }
 
 bool downloading::abstractions::doesStatusCodeIndicateSuccess(int statusCode)

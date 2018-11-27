@@ -174,7 +174,7 @@ void LauncherWorker::update(const Data& data, const Api& api, QNetworkAccessMana
 {
     LocalPatcherData localData;
 
-    int latestAppVersion = api.getLatestAppVersion(data.applicationSecret(), cancellationToken);
+    int latestAppVersion = api.getLatestAppVersion(data.patcherSecret(), cancellationToken);
 
     if (localData.isInstalledSpecific(latestAppVersion, data))
     {
@@ -182,11 +182,11 @@ void LauncherWorker::update(const Data& data, const Api& api, QNetworkAccessMana
         return;
     }
 
-    ContentSummary contentSummary = api.getContentSummary(data.applicationSecret(), latestAppVersion, cancellationToken);
+    ContentSummary contentSummary = api.getContentSummary(data.patcherSecret(), latestAppVersion, cancellationToken);
 
     QFile downloadFile(Locations::getInstance().patcherDownloadPath());
     downloading::chunked::Downloader downloader(
-                data.applicationSecret(), latestAppVersion, contentSummary, downloadFile);
+                data.patcherSecret(), latestAppVersion, contentSummary, downloadFile);
 
     while (true)
     {

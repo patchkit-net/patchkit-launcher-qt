@@ -5,7 +5,7 @@
 
 #include "catch.h"
 
-#include <src/patchermanifest.h>
+#include <src/data/patchermanifest.h>
 #include <src/customexceptions.h>
 #include <src/utilities.h>
 

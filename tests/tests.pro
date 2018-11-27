@@ -1,5 +1,4 @@
 QT += core network testlib
-include(../default.pri)
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = LauncherTests
@@ -8,11 +7,7 @@ TEMPLATE = app
 INCLUDEPATH += $$PWD/src
 
 SOURCES += \
-    $$PWD/src/chunkeddownloadertests.cpp \
     $$PWD/src/contentsummarytests.cpp \
-    $$PWD/src/downloaderpooltests.cpp \
-    $$PWD/src/downloadertests.cpp \
-    $$PWD/src/downloadoperatortests.cpp \
     $$PWD/src/hashingstrategiestests.cpp \
     $$PWD/src/mockednam.cpp \
     $$PWD/src/mockedreply.cpp\
@@ -25,4 +20,6 @@ HEADERS += \
     $$PWD/src/mockednam.h \
     $$PWD/src/mockedreply.h \
 
+include(../link_core.pri)
+include(../default.pri)
 include(../link_libz_and_quazip.pri)

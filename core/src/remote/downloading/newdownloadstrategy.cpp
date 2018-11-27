@@ -30,7 +30,6 @@ bool SimpleDownloadStrategy::execute(
     {
         int timeout = tryCount == 0 ? m_minConnectionTimeout : m_maxConnectionTimeout;
 
-
         if (tryDownload(
                     nam, QString("%1/%2").arg(m_apiConnectionSettings.mainApiUrl, path),
                     target, timeout, cancellationToken))

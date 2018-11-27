@@ -12,5 +12,5 @@ public:
     virtual ~ILauncherInterface() {}
 
     virtual OfflineModeAnswer shoulStartInOfflineMode() = 0;
-    virtual bool shouldRetry(QString reason) = 0;
+    virtual bool shouldRetry(const QString& reason) = 0;
 };

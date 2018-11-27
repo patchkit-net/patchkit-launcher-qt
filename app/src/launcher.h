@@ -28,8 +28,8 @@ private slots:
     void cleanup();
 
 private:
-    Interface m_interface;
     MainWindow m_mainWindow;
+    Interface m_interface;
     LauncherWorker m_worker;
 };
 }
