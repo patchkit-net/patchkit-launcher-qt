@@ -9,17 +9,20 @@
 
 #include <QNetworkAccessManager>
 #include <QIODevice>
-#include <QObject>
 
 namespace downloading
 {
 namespace chunked
 {
 
-class Downloader : public QObject
+class Downloader
 {
-    Q_OBJECT
 public:
+    struct Status
+    {
+        int chunksDownloaded;
+    };
+
     CUSTOM_RUNTIME_ERROR(InvalidTarget)
 
     Downloader(
@@ -29,18 +32,18 @@ public:
     bool downloadChunked(
             const Api& api, QNetworkAccessManager& nam,
             CancellationToken cancellationToken);
-signals:
-    void onProgress(long long downloaded, long long total);
-
-private slots:
-    void progressRelay(qint64 bytes);
 
 private:
+    int tryDownloadChunked(QNetworkAccessManager& nam, const QUrl& url,
+                           CancellationToken cancellationToken);
+
     const QString& m_appSecret;
     int m_versionId;
 
     const ContentSummary& m_contentSummary;
     QIODevice& m_target;
+
+    Status m_status;
 };
 
 }

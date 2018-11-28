@@ -1,4 +1,7 @@
 #include "downloadingabstractions.h"
+
+#include "cancellation/cancellationtoken.h"
+
 #include <QTimer>
 #include <QNetworkReply>
 #include <QEventLoop>
@@ -22,33 +25,84 @@ int downloading::abstractions::getReplyStatusCode(const QNetworkReply* reply)
     return statusCodeValue;
 }
 
-bool downloading::abstractions::tryRangedDownload(QNetworkAccessManager &nam, QUrl url, data::DownloadRange range, QIODevice &target, int timeout, CancellationToken cancellationToken)
+bool downloading::abstractions::tryRangedDownload(
+        QNetworkAccessManager &nam, QUrl url,
+        data::DownloadRange range, QIODevice &target,
+        int timeout, CancellationToken cancellationToken)
 {
     QNetworkRequest request(url);
     request.setRawHeader("Range", range.toString().toUtf8());
     QNetworkReply* reply = nam.get(request);
 
-    QObject::connect(&cancellationToken, &CancellationToken::cancelled, reply, &QNetworkReply::abort);
-
-    reply->waitForReadyRead(timeout);
-
-    int statusCode = getReplyStatusCode(reply);
+    int statusCode = waitUntilReplyIsReady(reply, timeout, cancellationToken);
 
     if (!doesStatusCodeIndicateSuccess(statusCode))
     {
-        reply->abort();
         return false;
     }
 
-    while (reply->waitForReadyRead(timeout))
-    {
-        cancellationToken.throwIfCancelled();
-        target.write(reply->readAll());
-    }
+    bufferReply(reply, target, timeout, cancellationToken);
+
+    return true;
+}
+
+int downloading::abstractions::waitUntilReplyIsReady(
+        QNetworkReply* reply,
+        int timeout,
+        CancellationToken cancellationToken)
+{
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+
+    QObject::connect(&cancellationToken, &CancellationToken::cancelled, reply, &QNetworkReply::abort);
+    QObject::connect(reply, &QNetworkReply::readyRead, &loop, &QEventLoop::quit);
+    QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+
+    timer.start(timeout);
+    loop.exec();
 
     cancellationToken.throwIfCancelled();
 
-    return true;
+    if (timer.remainingTime() == 0)
+    {
+        throw Timeout("Waiting for reply timed out");
+    }
+
+    return getReplyStatusCode(reply);
+}
+
+void downloading::abstractions::bufferReply(
+        QNetworkReply* reply, QIODevice& target,
+        int timeout, CancellationToken cancellationToken)
+{
+    if (!target.isOpen())
+    {
+        throw FatalException("Device is not open for writing");
+    }
+
+    while (!reply->isFinished())
+    {
+        QEventLoop loop;
+        QTimer timer;
+        timer.setSingleShot(true);
+
+        QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+        QObject::connect(reply, &QNetworkReply::readyRead, &loop, &QEventLoop::quit);
+        QObject::connect(&cancellationToken, &CancellationToken::cancelled, &loop, &QEventLoop::quit);
+
+        timer.start(timeout);
+        loop.exec();
+
+        QByteArray data = reply->readAll();
+
+        if (timer.remainingTime() == 0)
+        {
+            throw Timeout("Buffering reply timed out");
+        }
+
+        target.write(data);
+    }
 }
 
 bool downloading::abstractions::tryDownload(QNetworkAccessManager &nam, QString stringUrl, QIODevice &target, int timeout, CancellationToken cancellationToken)
@@ -64,18 +118,9 @@ bool downloading::abstractions::tryDownload(
     qInfo() << "Downloading from " << url.toString() << " with timeout " << timeout;
 
     QNetworkRequest request(url);
-
-    QEventLoop loop;
-
     QNetworkReply* reply = nam.get(request);
 
-    QObject::connect(&cancellationToken, &CancellationToken::cancelled, reply, &QNetworkReply::abort);
-    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-
-    loop.exec();
-    cancellationToken.throwIfCancelled();
-
-    int statusCode = getReplyStatusCode(reply);
+    int statusCode = waitUntilReplyIsReady(reply, timeout, cancellationToken);
 
     if (!doesStatusCodeIndicateSuccess(statusCode))
     {
@@ -85,7 +130,6 @@ bool downloading::abstractions::tryDownload(
 
     auto data = reply->readAll();
     target.write(data);
-    target.close();
 
     return true;
 }

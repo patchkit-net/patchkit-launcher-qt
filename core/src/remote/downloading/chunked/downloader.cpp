@@ -10,38 +10,61 @@ downloading::chunked::Downloader::Downloader(
     , m_contentSummary(contentSummary)
     , m_target(target)
 {
-    if (ChunkedBuffer::verifyTarget(m_target, m_contentSummary.getChunkSize()))
-    {
-        throw InvalidTarget("Target contains invalid data");
-    }
+    m_status.chunksDownloaded = 0;
 }
 
 bool downloading::chunked::Downloader::downloadChunked(
         const Api& api, QNetworkAccessManager& nam,
         CancellationToken cancellationToken)
 {
-    ChunkInfo chunkInfo(m_contentSummary);
-    ChunkedBuffer chunkedBuffer(chunkInfo, HashingStrategy::xxHash, m_target);
-    ProgressDevice progressDevice(chunkedBuffer, m_target.size());
-
-    QObject::connect(&progressDevice, &ProgressDevice::onProgress, this, &Downloader::progressRelay);
-
     QStringList contentUrls = api.getContentUrls(m_appSecret, m_versionId, cancellationToken);
 
-    for (QString url : contentUrls)
+    for (int i = 0; i < Config::maxInvalidChunksCount; i++)
     {
-        if (abstractions::tryDownload(
-                    nam, url, progressDevice, Config::downloadTimeoutMsec, cancellationToken))
+        for (QString url : contentUrls)
         {
-            return true;
+            int chunksDownloaded = tryDownloadChunked(nam, url, cancellationToken);
+
+            if (chunksDownloaded == m_contentSummary.getChunksCount())
+            {
+                return true;
+            }
+
+            m_status.chunksDownloaded += chunksDownloaded;
         }
     }
 
     return false;
 }
 
-void downloading::chunked::Downloader::progressRelay(qint64 bytes)
+int downloading::chunked::Downloader::tryDownloadChunked(
+        QNetworkAccessManager& nam, const QUrl& url, CancellationToken cancellationToken)
 {
-    auto total = m_contentSummary.getChunkSize() * m_contentSummary.getChunksCount();
-    emit onProgress(bytes, total);
+    auto expectedHashes = QVector<THash>();
+
+    for (int i = m_status.chunksDownloaded; i < m_contentSummary.getChunksCount(); i++)
+    {
+        expectedHashes.push_back(m_contentSummary.getChunkHash(i));
+    }
+
+    ChunkedBuffer chunkedBuffer(expectedHashes, m_contentSummary.getChunkSize(), HashingStrategy::xxHash, m_target);
+    chunkedBuffer.open(QIODevice::WriteOnly);
+
+    data::DownloadRange range(m_status.chunksDownloaded * m_contentSummary.getChunkSize());
+
+    try
+    {
+        if (downloading::abstractions::tryRangedDownload(
+                    nam, url, range, chunkedBuffer, Config::downloadTimeoutMsec, cancellationToken))
+        {
+            chunkedBuffer.flush();
+        }
+    }
+    catch (ChunkedBuffer::ChunkVerificationException)
+    {
+        qWarning() << "Invalid chunk";
+        return chunkedBuffer.validChunksWritten();
+    }
+
+    return chunkedBuffer.validChunksWritten();
 }

@@ -2,24 +2,27 @@
 
 using namespace downloading::chunked;
 
-ChunkedBuffer::ChunkedBuffer(const ChunkInfo& chunkInfo,
-                             HashFunc hashingMethod,
-                             QIODevice& target)
-    : m_chunkInfo(chunkInfo)
+ChunkedBuffer::ChunkedBuffer(const QVector<THash> expectedHashes, int chunkSize, HashFunc hashingMethod, QIODevice& target)
+    : m_expectedHashes(expectedHashes)
+    , m_chunkSize(chunkSize)
     , m_hashingMethod(hashingMethod)
     , m_target(target)
+    , m_chunkIndex(0)
 {
-    if (!verifyTarget(target, m_chunkInfo.chunkSize()))
-    {
-        throw ChunkVerificationException("Downloaded data is either complete or invalid.");
-    }
-
-    m_chunkIndex = static_cast<int>(target.size() / chunkInfo.chunkSize());
 }
 
-bool ChunkedBuffer::verifyTarget(QIODevice& target, int chunkSize)
+ChunkedBuffer::~ChunkedBuffer()
 {
-    return target.size() % chunkSize == 0;
+}
+
+int ChunkedBuffer::validChunksWritten() const
+{
+    return m_chunkIndex;
+}
+
+void ChunkedBuffer::flush()
+{
+    processChunk(m_buffer);
 }
 
 qint64 ChunkedBuffer::readData(char* /*data*/, qint64 /*maxSize*/)
@@ -27,52 +30,49 @@ qint64 ChunkedBuffer::readData(char* /*data*/, qint64 /*maxSize*/)
     throw NotSupportedException("Reading from the chunked buffer is not supported.");
 }
 
-qint64 ChunkedBuffer::writeData(const char* data, qint64 maxSize)
+qint64 ChunkedBuffer::writeData(const char* data, qint64 /*maxSize*/)
 {
-    auto chunkSize = m_chunkInfo.chunkSize();
-    auto written = m_buffer.write(data, maxSize);
+    qint64 oldSize = m_buffer.size();
+    m_buffer += data;
 
-    while (m_buffer.size() >= chunkSize)
+    qint64 written = m_buffer.size() - oldSize;
+
+    if (m_buffer.size() >= m_chunkSize)
     {
-        QByteArray chunk = m_buffer.read(chunkSize);
+        auto bufferSize = m_buffer.size();
+        auto chunkCount = m_buffer.size() / m_chunkSize;
 
-        auto validHash = m_chunkInfo.chunkHash(m_chunkIndex);
-        auto actualHash = m_hashingMethod(chunk);
-
-        if (validHash != actualHash)
+        for (int i = 0; i < chunkCount; i++)
         {
-            throw ChunkVerificationException("Chunk verification failed");
+            processChunk(m_buffer.mid(i * m_chunkSize, m_chunkSize));
         }
 
-        m_target.write(chunk);
-        m_chunkIndex++;
+        m_buffer = m_buffer.right(bufferSize - (chunkCount * m_chunkSize));
+    }
+
+    if (m_chunkIndex == m_expectedHashes.size() - 1)
+    {
+        processChunk(m_buffer);
     }
 
     return written;
 }
 
-ChunkInfo::ChunkInfo(const ContentSummary& summary)
+void ChunkedBuffer::processChunk(const QByteArray& chunk)
 {
-    m_chunkSize = summary.getChunkSize();
-
-    for (int i = 0; i < summary.getChunksCount(); i++)
+    if (chunk.size() > m_chunkSize)
     {
-        m_hashes.push_back(summary.getChunkHash(i));
+        throw ChunkVerificationException("Chunk too big");
     }
-}
 
-ChunkInfo::ChunkInfo(int chunkSize, const std::vector<unsigned int>& hashes)
-    : m_chunkSize(chunkSize)
-    , m_hashes(hashes)
-{
-}
+    auto validHash = m_expectedHashes.at(m_chunkIndex);
+    auto actualHash = m_hashingMethod(chunk);
 
-int ChunkInfo::chunkSize() const
-{
-    return m_chunkSize;
-}
+    if (validHash != actualHash)
+    {
+        throw ChunkVerificationException("Chunk verification failed");
+    }
 
-unsigned int ChunkInfo::chunkHash(int index) const
-{
-    return m_hashes.at(static_cast<size_t>(index));
+    m_target.write(chunk);
+    m_chunkIndex++;
 }

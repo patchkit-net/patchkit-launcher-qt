@@ -184,9 +184,10 @@ void LauncherWorker::update(const Data& data, const Api& api, QNetworkAccessMana
 
     ContentSummary contentSummary = api.getContentSummary(data.patcherSecret(), latestAppVersion, cancellationToken);
 
-    QFile downloadFile(Locations::getInstance().patcherDownloadPath());
+    QBuffer downloadData;
+    downloadData.open(QIODevice::ReadWrite);
     downloading::chunked::Downloader downloader(
-                data.patcherSecret(), latestAppVersion, contentSummary, downloadFile);
+                data.patcherSecret(), latestAppVersion, contentSummary, downloadData);
 
     while (true)
     {
@@ -197,7 +198,7 @@ void LauncherWorker::update(const Data& data, const Api& api, QNetworkAccessMana
     }
 
     LocalPatcherData local;
-    local.install(downloadFile, data, latestAppVersion);
+    local.install(downloadData, data, latestAppVersion);
 }
 
 bool LauncherWorker::tryUpdate(const Data& data, const Api& api, QNetworkAccessManager& nam, CancellationToken cancellationToken)

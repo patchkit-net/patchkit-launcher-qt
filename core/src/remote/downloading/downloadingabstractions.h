@@ -3,15 +3,29 @@
 #include <QIODevice>
 
 #include "cancellation/cancellationtoken.h"
+#include "customexceptions.h"
+
 #include "data/downloadrange.h"
 
 namespace downloading
 {
 namespace abstractions
 {
+
 int getReplyStatusCode(const QNetworkReply* reply);
 
 bool doesStatusCodeIndicateSuccess(int statusCode);
+
+int waitUntilReplyIsReady(
+        QNetworkReply* reply,
+        int timeout,
+        CancellationToken cancellationToken);
+
+void bufferReply(
+        QNetworkReply* reply,
+        QIODevice& target,
+        int timeout,
+        CancellationToken cancellationToken);
 
 bool tryDownload(
         QNetworkAccessManager& nam,
