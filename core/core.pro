@@ -23,7 +23,6 @@ SOURCES += \
     src/remote/api/api.cpp \
     src/remote/api/apiconnectionsetting.cpp \
     src/remote/downloading/downloadingabstractions.cpp \
-    src/remote/downloading/newdownloadstrategy.cpp \
     src/remote/downloading/chunked/chunkedbuffer.cpp \
     src/data/contentsummary.cpp \
     src/data/data.cpp \
@@ -33,7 +32,8 @@ SOURCES += \
     src/data/secretencoding.cpp \
     src/data/downloadrange.cpp \
     src/remote/downloading/chunked/downloader.cpp \
-    src/remote/downloading/progressdevice.cpp
+    src/remote/downloading/progressdevice.cpp \
+    src/remote/downloading/apiconnectionstrategy.cpp
 
 HEADERS += \
     src/xxhash.h \
@@ -54,7 +54,6 @@ HEADERS += \
     src/remote/api/api.h \
     src/remote/api/apiconnectionsetting.h \
     src/remote/downloading/downloadingabstractions.h \
-    src/remote/downloading/newdownloadstrategy.h \
     src/remote/downloading/chunked/chunkedbuffer.h \
     src/cancellation/cancellationtoken.h \
     src/cancellation/cancellationtokensource.h \
@@ -68,7 +67,8 @@ HEADERS += \
     src/data/downloadrange.h \
     src/data/launcherresult.h \
     src/remote/downloading/chunked/downloader.h \
-    src/remote/downloading/progressdevice.h
+    src/remote/downloading/progressdevice.h \
+    src/remote/downloading/apiconnectionstrategy.h
 
 include(../default.pri)
 include(../version.pri)

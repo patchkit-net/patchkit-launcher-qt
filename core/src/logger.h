@@ -31,6 +31,8 @@ private:
 
     bool m_isSilent;
 
+    static QString logFileLocation();
+
     static const char* resolveMessageType(QtMsgType t_type);
     static void logHandler(QtMsgType t_type, const QMessageLogContext& t_context, const QString& t_msg);
 };

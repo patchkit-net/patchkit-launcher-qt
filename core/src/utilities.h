@@ -12,7 +12,7 @@ class PatcherManifest;
 
 namespace Utilities
 {
-    bool isCurrentDirectoryWritable();
+    bool isDirectoryWritable(const QString& dirPath);
 
     void tryRestartWithHigherPermissions();
 

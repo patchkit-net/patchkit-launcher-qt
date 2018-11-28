@@ -1,4 +1,4 @@
-#include "newdownloadstrategy.h"
+#include "apiconnectionstrategy.h"
 
 #include <QtConcurrent/QtConcurrent>
 
@@ -6,7 +6,7 @@
 
 #include "downloadingabstractions.h"
 
-SimpleDownloadStrategy::SimpleDownloadStrategy(const ApiConnectionSettings& apiConnectionSettings,
+ApiConnectionStrategy::ApiConnectionStrategy(const ApiConnectionSettings& apiConnectionSettings,
                                                int minConnectionTimeout,
                                                int maxConnectionTimeout)
     : m_apiConnectionSettings(apiConnectionSettings)
@@ -15,7 +15,7 @@ SimpleDownloadStrategy::SimpleDownloadStrategy(const ApiConnectionSettings& apiC
 {
 }
 
-bool SimpleDownloadStrategy::execute(
+bool ApiConnectionStrategy::execute(
         QNetworkAccessManager &nam,
         QString path,
         QIODevice &target,

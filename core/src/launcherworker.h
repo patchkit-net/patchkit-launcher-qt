@@ -24,6 +24,7 @@ class LauncherWorker : public QThread
 
 public:
     CUSTOM_RUNTIME_ERROR(InsufficientPermissions)
+    CUSTOM_RUNTIME_ERROR(UpdateFailed)
 
     LauncherWorker(ILauncherInterface& launcherInterface, QObject* parent = nullptr);
 
@@ -41,13 +42,16 @@ private:
 
     Data resolveData();
     void update(
+            const Locations& locations,
             const Data& data, const Api& api,
             QNetworkAccessManager& nam,
             CancellationToken cancellationToken);
 
-    bool tryUpdate(const Data& data, const Api& api,
-                   QNetworkAccessManager& nam,
-                   CancellationToken cancellationToken);
+    bool tryUpdate(
+            const Locations& locations,
+            const Data& data, const Api& api,
+            QNetworkAccessManager& nam,
+            CancellationToken cancellationToken);
 
     Data setupPatcherSecret(const Data& data, const Api& api, CancellationToken cancellationToken);
 

@@ -7,9 +7,9 @@
 
 #include <QFile>
 #include <QCryptographicHash>
+#include <QtDebug>
 #include <memory>
 
-#include "logger.h"
 #include "executableresources.h"
 #include "config.h"
 #include "data/secretencoding.h"

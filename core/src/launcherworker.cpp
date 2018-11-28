@@ -60,14 +60,10 @@ void LauncherWorker::run()
 
 bool LauncherWorker::runInternal()
 {
-    // Check permissions
-    if (!Utilities::isCurrentDirectoryWritable())
-    {
-        throw InsufficientPermissions("Launcher needs the current directory to be writable");
-    }
-
+    Logger::initialize();
     emit statusChanged("Initializing...");
     qInfo() << "Initializing";
+
     // Initialize
     Data data = resolveData();
 
@@ -75,20 +71,27 @@ bool LauncherWorker::runInternal()
     QNetworkAccessManager nam;
     Api api(nam);
 
-    // TODO: Initialize the locations as a non-static structure
-
     // Setup the patcher secret
     // NOTE: Why?
     data = setupPatcherSecret(data, api, m_cancellationTokenSource);
+
+    // Locations
+    Locations locations(data);
+
+    // Check permissions
+    if (!Utilities::isDirectoryWritable(locations.currentDirPath()))
+    {
+        throw InsufficientPermissions("Launcher needs the current directory to be writable");
+    }
 
     // Lock instance
     LockFile lockFile;
     lockFile.lock();
 
-    LocalPatcherData localData;
+    LocalPatcherData localData(locations);
 
     qInfo() << "Updating the patcher";
-    bool hasUpdated = tryUpdate(data, api, nam, m_cancellationTokenSource);
+    bool hasUpdated = tryUpdate(locations, data, api, nam, m_cancellationTokenSource);
 
     if (hasUpdated)
     {
@@ -157,7 +160,7 @@ Data LauncherWorker::resolveData()
     try
     {
         qInfo("Loading data from resource.");
-        return Data::loadFromResources(Locations::getInstance().applicationFilePath(),
+        return Data::loadFromResources(Locations::applicationFilePath(),
                                             Config::dataResourceId,
                                             Config::dataResourceTypeId);
     }
@@ -169,12 +172,15 @@ Data LauncherWorker::resolveData()
 #endif
 
     qInfo("Loading data from file.");
-    return Data::loadFromFile(Locations::getInstance().dataFilePath());
+    return Data::loadFromFile(Locations::dataFilePath());
 }
 
-void LauncherWorker::update(const Data& data, const Api& api, QNetworkAccessManager& nam, CancellationToken cancellationToken)
+void LauncherWorker::update(
+        const Locations& locations, const Data& data,
+        const Api& api, QNetworkAccessManager& nam,
+        CancellationToken cancellationToken)
 {
-    LocalPatcherData localData;
+    LocalPatcherData localData(locations);
 
     int latestAppVersion = api.getLatestAppVersion(data.patcherSecret(), cancellationToken);
 
@@ -200,30 +206,28 @@ void LauncherWorker::update(const Data& data, const Api& api, QNetworkAccessMana
 
     if (!downloader.downloadChunked(api, nam, cancellationToken))
     {
-        throw 1; // TODO: DownloadFailedException
+        throw UpdateFailed("Failed to update");
     }
 
     downloadData.open(QIODevice::ReadOnly);
 
     emit statusChanged("Installing...");
 
-    LocalPatcherData local;
-    local.install(downloadData, data, latestAppVersion);
+    localData.install(downloadData, data, latestAppVersion);
 }
 
-bool LauncherWorker::tryUpdate(const Data& data, const Api& api, QNetworkAccessManager& nam, CancellationToken cancellationToken)
+bool LauncherWorker::tryUpdate(
+        const Locations& locations,
+        const Data& data, const Api& api,
+        QNetworkAccessManager& nam,
+        CancellationToken cancellationToken)
 {
     int invalidChunkCount = 0;
 
     try
     {
-        update(data, api, nam, cancellationToken);
+        update(locations, data, api, nam, cancellationToken);
         return true;
-    }
-    catch (downloading::chunked::Downloader::InvalidTarget&)
-    {
-        qWarning() << "Target contains invalid data and will be cleaned up.";
-        QFile(Locations::getInstance().patcherDownloadPath()).remove();
     }
     catch (downloading::chunked::ChunkedBuffer::ChunkVerificationException&)
     {
@@ -239,6 +243,8 @@ bool LauncherWorker::tryUpdate(const Data& data, const Api& api, QNetworkAccessM
             invalidChunkCount++;
         }
     }
+
+    return false;
 }
 
 Data LauncherWorker::setupPatcherSecret(const Data& data, const Api& api, CancellationToken cancellationToken)

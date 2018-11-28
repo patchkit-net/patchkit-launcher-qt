@@ -1,6 +1,8 @@
 #include "installationinfo.h"
 #include "customexceptions.h"
 
+#include <QDir>
+
 InstallationInfo InstallationInfo::from(QIODevice& source)
 {
     InstallationInfo info;
@@ -8,8 +10,10 @@ InstallationInfo InstallationInfo::from(QIODevice& source)
 
     while (!(line = source.readLine()).isNull())
     {
-        info.add(line);
+        info.add(line.chopped(1));
     }
+
+    source.close();
 
     return info;
 }
@@ -30,9 +34,17 @@ bool InstallationInfo::isInstalled(const QString& path) const
 
 void InstallationInfo::saveTo(QIODevice& target) const
 {
+    if (!target.isOpen())
+    {
+        if (!target.open(QIODevice::WriteOnly))
+        {
+            throw FatalException("Failed to save installation info");
+        }
+    }
+
     for (QString entry : m_installedFiles)
     {
-        target.write(entry.toUtf8());
+        target.write(entry.toUtf8() + "\n");
     }
 }
 

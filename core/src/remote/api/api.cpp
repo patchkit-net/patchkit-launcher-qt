@@ -6,7 +6,7 @@
 #include "api.h"
 
 #include "config.h"
-#include "remote/downloading/newdownloadstrategy.h"
+#include "remote/downloading/apiconnectionstrategy.h"
 
 #include <QIODevice>
 #include <QBuffer>
@@ -28,7 +28,7 @@ QJsonDocument Api::get(const QString& path, CancellationToken cancellationToken)
     qInfo() << "Executing GET " << path;
 
     ApiConnectionSettings connectionSettings(Config::mainApiUrl, Config::cacheApiUrls);
-    SimpleDownloadStrategy strategy(connectionSettings, Config::minConnectionTimeoutMsec, Config::maxConnectionTimeoutMsec);
+    ApiConnectionStrategy strategy(connectionSettings, Config::minConnectionTimeoutMsec, Config::maxConnectionTimeoutMsec);
 
     QBuffer buffer;
     buffer.open(QIODevice::WriteOnly);
@@ -168,7 +168,7 @@ QString Api::tryGetCountryCode(CancellationToken cancellationToken) const
     try
     {
         ApiConnectionSettings connectionSettings(Config::geolocationApiUrl, QStringList());
-        SimpleDownloadStrategy strategy(connectionSettings, Config::geolocationTimeout, Config::geolocationTimeout);
+        ApiConnectionStrategy strategy(connectionSettings, Config::geolocationTimeout, Config::geolocationTimeout);
 
         QString path = "v1/country";
 

@@ -12,7 +12,7 @@
 #include "locations.h"
 
 Logger::Logger()
-    : m_logFile(Locations::getInstance().logFilePath())
+    : m_logFile(Locations::logFilePath())
     , m_logFileStream(&m_logFile)
     , m_stdoutStream(stdout)
     , m_isSilent(false)

@@ -14,6 +14,7 @@
 #include "data/networkstatus.hpp"
 #include "data/installationinfo.h"
 #include "lockfile.h"
+#include "locations.h"
 
 #include <quazipfile.h>
 
@@ -22,6 +23,8 @@ class LocalPatcherData : public QObject
     Q_OBJECT
 
 public:
+    LocalPatcherData(const Locations& locations);
+
     bool isInstalled() const;
     bool isInstalledSpecific(int t_version, const Data& t_data);
 
@@ -37,6 +40,8 @@ private:
     void uninstall();
 
     int readVersion();
+
+    const Locations& m_locations;
 
     static QString getPatcherId(const Data& t_data);
 

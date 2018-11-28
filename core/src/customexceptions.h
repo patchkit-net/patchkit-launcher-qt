@@ -6,6 +6,7 @@
 #pragma once
 
 #include <exception>
+#include <string>
 
 #include <QString>
 
@@ -13,14 +14,13 @@
 class classname : public std::runtime_error \
 { \
 public: \
-    classname(const QString& t_message) :\
-        std::runtime_error(t_message.toStdString())\
-    {\
-    }\
-    classname(const char* t_message) : \
-        std::runtime_error(t_message)\
-    { \
-    } \
+    classname(const std::string& message) \
+        : std::runtime_error(std::string(#classname) + std::string(": ") + std::string(message)) \
+    {} \
+    \
+    classname(const QString& msg) : classname(msg.toStdString()) {} \
+    \
+    classname(const char* msg) : classname(std::string(msg)) {} \
 }; \
 
 #define CUSTOM_EXCEPTION(classname, msg) \
@@ -34,7 +34,6 @@ public: \
 }; \
 
 CUSTOM_RUNTIME_ERROR(FatalException)
-CUSTOM_RUNTIME_ERROR(ContentUnavailableException)
 CUSTOM_RUNTIME_ERROR(InvalidFormatException)
 CUSTOM_RUNTIME_ERROR(NotImplementedException)
 CUSTOM_RUNTIME_ERROR(NotSupportedException)

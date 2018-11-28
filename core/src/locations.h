@@ -11,29 +11,21 @@ struct Data;
 
 class Locations
 {
-    Locations();
 public:
-    Locations(Locations const&) = delete;
-    void operator=(Locations const&) = delete;
-
-    static Locations& getInstance()
-    {
-        static Locations instance;
-
-        return instance;
-    }
+    Locations(Locations const&) = default;
+    Locations(const Data& data);
 
     void initializeWithData(const Data& t_data);
 
-    QString applicationFilePath() const;
+    static QString applicationFilePath();
 
-    QString applicationDirPath() const;
+    static QString applicationDirPath();
 
     QString currentDirPath() const;
 
-    QString logFilePath() const;
+    static QString logFilePath();
 
-    QString dataFilePath() const;
+    static QString dataFilePath();
 
     QString patcherDownloadPath() const;
 
@@ -51,12 +43,7 @@ public:
 
     QString applicationInstallationDirPath() const;
 
-    bool isCurrentDirWritable() const;
-
 #if defined(QT_DEBUG)
     void evalutatePaths() const;
 #endif
-
-private:
-    QString m_logPath;
 };

@@ -10,6 +10,7 @@
 #include <QJsonValue>
 #include <QJsonArray>
 #include <QDebug>
+#include <QDir>
 
 #include "locations.h"
 #include "config.h"
@@ -25,16 +26,25 @@
 void Utilities::tryRestartWithHigherPermissions()
 {
 #if defined(Q_OS_WIN)
-    ShellExecute(nullptr, L"runas", Locations::getInstance().applicationFilePath().toStdWString().c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    ShellExecute(nullptr, L"runas", Locations::applicationFilePath().toStdWString().c_str(), nullptr, nullptr, SW_SHOWNORMAL);
     throw CancellationToken::CancelledException();
 #else
     throw FatalException("Cannot write in current directory.");
 #endif
 }
 
-bool Utilities::isCurrentDirectoryWritable()
+bool Utilities::isDirectoryWritable(const QString& dirPath)
 {
-    return Locations::getInstance().isCurrentDirWritable();
+    QFile permissionsCheckFile(QDir(dirPath).filePath(".writable_check"));
+
+    if (permissionsCheckFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+    {
+        permissionsCheckFile.remove();
+
+        return true;
+    }
+
+    return false;
 }
 
 PatcherManifest Utilities::parsePatcherManifest(const QString& t_filename)

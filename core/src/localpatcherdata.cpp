@@ -10,6 +10,7 @@
 #include <QProcess>
 #include <QTextStream>
 #include <QDir>
+#include <QFile>
 
 #include "config.h"
 #include "logger.h"
@@ -19,15 +20,20 @@
 #include "customexceptions.h"
 #include "utilities.h"
 
+LocalPatcherData::LocalPatcherData(const Locations& locations)
+    : m_locations(locations)
+{
+}
+
 bool LocalPatcherData::isInstalled() const
 {
     qInfo("Checking whether patcher is installed.");
 
     QStringList mandatoryPatcherFiles;
 
-    mandatoryPatcherFiles << Locations::getInstance().patcherInstallationInfoFilePath();
-    mandatoryPatcherFiles << Locations::getInstance().patcherVersionInfoFilePath();
-    mandatoryPatcherFiles << Locations::getInstance().patcherIdInfoFilePath();
+    mandatoryPatcherFiles << m_locations.patcherInstallationInfoFilePath();
+    mandatoryPatcherFiles << m_locations.patcherVersionInfoFilePath();
+    mandatoryPatcherFiles << m_locations.patcherIdInfoFilePath();
 
     for (int i = 0; i < mandatoryPatcherFiles.size(); i++)
     {
@@ -39,12 +45,14 @@ bool LocalPatcherData::isInstalled() const
     }
 
     InstallationInfo installationInfo = readInstallationInfo();
+    QDir installationDirectory(m_locations.patcherDirectoryPath());
 
     for (QString installedFile : installationInfo.installedFiles())
     {
-        if (!QDir(installedFile).exists() && !QFile(installedFile).exists())
+        QString absolutePath = installationDirectory.absoluteFilePath(installedFile);
+        if (!QDir(absolutePath).exists() && !QFile(absolutePath).exists())
         {
-            qInfo() << "Installation entry doesn't exist - " << installedFile;
+            qInfo() << "Installation entry doesn't exist - " << absolutePath;
             return false;
         }
     }
@@ -59,7 +67,7 @@ bool LocalPatcherData::isInstalledSpecific(int t_version, const Data& t_data)
     {
         qInfo("Installation found. Checking version compatibility.");
 
-        QString patcherId = IOUtils::readTextFromFile(Locations::getInstance().patcherIdInfoFilePath());
+        QString patcherId = IOUtils::readTextFromFile(m_locations.patcherIdInfoFilePath());
 
         int version = readVersion();
 
@@ -71,21 +79,18 @@ bool LocalPatcherData::isInstalledSpecific(int t_version, const Data& t_data)
                version == t_version;
     }
 
-    qInfo("Installation not found.");
-
+    qInfo("Installation not found.");    
     return false;
 }
 
 InstallationInfo LocalPatcherData::install(const QString& t_downloadedPath, const Data& t_data, int t_version)
 {
-    uninstall();
-
     qInfo() << "Installing patcher (version "
             << t_version
             << ") from downloaded zip - "
             << t_downloadedPath;
 
-    const auto& locations = Locations::getInstance();
+    const auto& locations = m_locations;
 
     IOUtils::createDir(locations.patcherDirectoryPath());
 
@@ -98,7 +103,8 @@ InstallationInfo LocalPatcherData::install(const QString& t_downloadedPath, cons
 
 InstallationInfo LocalPatcherData::install(QIODevice& source, const Data& data, int version)
 {
-    const auto& locations = Locations::getInstance();
+    uninstall();
+    const auto& locations = m_locations;
     InstallationInfo installationInfo;
 
     IOUtils::extractZip(source, locations.patcherDirectoryPath(), installationInfo);
@@ -112,7 +118,6 @@ InstallationInfo LocalPatcherData::install(QIODevice& source, const Data& data, 
     }
 #endif
 
-
     QDir patcherDir(locations.patcherDirectoryPath());
     IOUtils::writeTextToFile(locations.patcherLauncherPathFilePath(),
                 patcherDir.relativeFilePath(locations.applicationFilePath()));
@@ -120,6 +125,8 @@ InstallationInfo LocalPatcherData::install(QIODevice& source, const Data& data, 
     IOUtils::writeTextToFile(locations.patcherIdInfoFilePath(), getPatcherId(data));
 
     QFile installationInfoFile(locations.patcherInstallationInfoFilePath());
+    installationInfoFile.open(QIODevice::WriteOnly);
+
     installationInfo.saveTo(installationInfoFile);
 
     return installationInfo;
@@ -132,8 +139,8 @@ void LocalPatcherData::start(const Data& t_data, data::NetworkStatus networkStat
     QString applicationSecret = QString::fromUtf8(t_data.encodedApplicationSecret().toBase64());
 
     PatcherManifestContext manifestContext;
-    manifestContext.defineSymbol("{installdir}", Locations::getInstance().applicationInstallationDirPath());
-    manifestContext.defineSymbol("{exedir}", Locations::getInstance().patcherDirectoryPath());
+    manifestContext.defineSymbol("{installdir}", m_locations.applicationInstallationDirPath());
+    manifestContext.defineSymbol("{exedir}", m_locations.patcherDirectoryPath());
     manifestContext.defineSymbol("{secret}", applicationSecret);
     manifestContext.defineSymbol("{lockfile}", QDir(Config::lockFileName).absolutePath());
     manifestContext.defineSymbol("{network-status}", data::ToString(networkStatus));
@@ -155,14 +162,14 @@ void LocalPatcherData::uninstall()
 {
     qInfo("Uninstalling patcher.");
 
-    if (!QFile::exists(Locations::getInstance().patcherInstallationInfoFilePath()))
+    if (!QFile::exists(m_locations.patcherInstallationInfoFilePath()))
     {
         qInfo("Missing installation info!");
     }
     else
     {
         QStringList installFiles =
-                IOUtils::readTextFromFile(Locations::getInstance().patcherInstallationInfoFilePath())
+                IOUtils::readTextFromFile(m_locations.patcherInstallationInfoFilePath())
                 .split(QChar('\n'));
 
         for (const auto& filePath : installFiles)
@@ -190,7 +197,7 @@ int LocalPatcherData::readVersion()
 {
     qInfo("Reading version info of installed patcher.");
 
-    QString versionInfoFileContents = IOUtils::readTextFromFile(Locations::getInstance().patcherVersionInfoFilePath());
+    QString versionInfoFileContents = IOUtils::readTextFromFile(m_locations.patcherVersionInfoFilePath());
 
     int version = parseVersionInfoToNumber(versionInfoFileContents);
 
@@ -222,7 +229,9 @@ int LocalPatcherData::parseVersionInfoToNumber(const QString& t_versionInfoFileC
 
 InstallationInfo LocalPatcherData::readInstallationInfo() const
 {
-    QFile installationInfoFile(Locations::getInstance().patcherInstallationInfoFilePath());
+    QFile installationInfoFile(m_locations.patcherInstallationInfoFilePath());
+    installationInfoFile.open(QIODevice::ReadOnly);
+
     return InstallationInfo::from(installationInfoFile);
 }
 
@@ -230,7 +239,7 @@ PatcherManifest LocalPatcherData::readPatcherManifset() const
 {
     qInfo("Reading patcher manifest.");
 
-    auto manifestLocation = Locations::getInstance().patcherManifestFilePath();
+    auto manifestLocation = m_locations.patcherManifestFilePath();
 
     try
     {

@@ -1,4 +1,5 @@
 #pragma once
+#include "customexceptions.h"
 
 namespace data
 {
@@ -17,6 +18,9 @@ namespace data
 
             case NetworkStatus::Offline:
                 return "offline";
+
+            default:
+                throw NotSupportedException("NetworkStatus must be either offline or online");
         }
     }
 } // namespace data

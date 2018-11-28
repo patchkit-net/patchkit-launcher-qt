@@ -20,10 +20,13 @@ SOURCES += \
     $$PWD/src/patchermanifesttests.cpp \
     src/chunkedbuffertests.cpp \
     src/downloadingabstractionstests.cpp \
-    src/secretencodingtests.cpp
+    src/secretencodingtests.cpp \
+    src/installationinfotests.cpp \
+    src/sink.cpp
 
 HEADERS += \
     $$PWD/src/catch.h \
     $$PWD/src/custommacros.h \
     $$PWD/src/mockednam.h \
     $$PWD/src/mockedreply.h \
+    src/sink.h

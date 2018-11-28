@@ -10,14 +10,14 @@
 #pragma once
 
 ///
-/// \brief The SimpleDownloadStrategy class
+/// \brief The ApiConnectionStrategy class
 ///
 /// Attempts to download from each provided url.
 ///
-class SimpleDownloadStrategy
+class ApiConnectionStrategy
 {
 public:
-    SimpleDownloadStrategy(const ApiConnectionSettings& apiConnectionSettings,
+    ApiConnectionStrategy(const ApiConnectionSettings& apiConnectionSettings,
                            int minConnectionTimeout,
                            int maxConnectionTimeout);
 

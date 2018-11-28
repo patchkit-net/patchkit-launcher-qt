@@ -107,6 +107,8 @@ void downloading::abstractions::bufferReply(
         timer.start(timeout);
         loop.exec();
 
+        cancellationToken.throwIfCancelled();
+
         QByteArray data = reply->readAll();
 
         if (timer.remainingTime() == 0)

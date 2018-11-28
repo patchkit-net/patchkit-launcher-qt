@@ -15,22 +15,6 @@
 #include "data/data.h"
 #include "logger.h"
 
-bool Locations::isCurrentDirWritable() const
-{
-    QFile permissionsCheckFile(QDir(currentDirPath()).filePath(".writable_check"));
-
-    if (permissionsCheckFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
-    {
-        permissionsCheckFile.remove();
-
-        return true;
-    }
-
-    return false;
-}
-
-#if defined(Q_OS_OSX)
-
 QString osxWritableDirectory()
 {
     auto sep = QDir::separator();
@@ -44,29 +28,16 @@ QString osxWritableDirectory()
         appsDirectory.mkpath(".");
     }
 
-    return appsDirectory;
+    return appsDirectory.path();
 }
 
-#endif
-
-Locations::Locations()
-{
-#if defined(Q_OS_OSX)
-    m_logPath = QDir(osxWritableDirectory()).filePath(Config::logFileName);
-#else
-
-    m_logPath = QDir(applicationDirPath()).filePath(Config::logFileName);
-
-#endif
-}
-
-void Locations::initializeWithData(const Data& t_data)
+Locations::Locations(const Data& data)
 {
     qDebug("Initializing path.");
 
 #if defined(Q_OS_OSX)
 
-    QDir appPath = QDir(osxWritableDirectory() + QDir::separator() + t_data.applicationSecret().mid(0, 8));
+    QDir appPath = QDir(osxWritableDirectory() + QDir::separator() + data.applicationSecret().mid(0, 8));
 
     if (!appPath.exists())
     {
@@ -99,12 +70,12 @@ QString Locations::patcherDownloadPath() const
     return QDir(currentDirPath()).filePath(Config::patcherDownloadFileName);
 }
 
-QString Locations::applicationFilePath() const
+QString Locations::applicationFilePath()
 {
     return QApplication::applicationFilePath();
 }
 
-QString Locations::applicationDirPath() const
+QString Locations::applicationDirPath()
 {
     return QApplication::applicationDirPath();
 }
@@ -114,12 +85,16 @@ QString Locations::currentDirPath() const
     return QDir::currentPath();
 }
 
-QString Locations::logFilePath() const
+QString Locations::logFilePath()
 {
-    return m_logPath;
+#if defined(Q_OS_OSX)
+    return QDir(osxWritableDirectory()).filePath(Config::logFileName);
+#else
+    return QDir(applicationDirPath()).filePath(Config::logFileName);
+#endif
 }
 
-QString Locations::dataFilePath() const
+QString Locations::dataFilePath()
 {
     return QDir(applicationDirPath()).filePath(Config::dataFileName);
 }
