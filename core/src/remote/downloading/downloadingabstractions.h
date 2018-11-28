@@ -2,10 +2,10 @@
 #include <QNetworkAccessManager>
 #include <QIODevice>
 
-#include "cancellation/cancellationtoken.h"
-#include "customexceptions.h"
+#include "src/cancellation/cancellationtoken.h"
+#include "src/customexceptions.h"
 
-#include "data/downloadrange.h"
+#include "src/data/downloadrange.h"
 
 namespace downloading
 {
@@ -36,7 +36,7 @@ bool tryDownload(
 
 bool tryDownload(
         QNetworkAccessManager& nam,
-        QString url,
+        const QString& url,
         QIODevice& target,
         int timeout,
         CancellationToken cancellationToken);
@@ -44,6 +44,14 @@ bool tryDownload(
 bool tryRangedDownload(
         QNetworkAccessManager& nam,
         QUrl url,
+        data::DownloadRange range,
+        QIODevice& target,
+        int timeout,
+        CancellationToken cancellationToken);
+
+bool tryRangedDownload(
+        QNetworkAccessManager& nam,
+        const QString& stringUrl,
         data::DownloadRange range,
         QIODevice& target,
         int timeout,

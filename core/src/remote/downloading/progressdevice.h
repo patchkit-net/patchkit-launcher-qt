@@ -8,7 +8,7 @@ public:
     ProgressDevice(QIODevice& downstream, qint64 size);
 
 signals:
-    void onProgress(qint64 bytes);
+    void onProgress(qint64 bytes, qint64 total);
 
 protected:
     qint64 readData(char* data, qint64 maxSize) override;

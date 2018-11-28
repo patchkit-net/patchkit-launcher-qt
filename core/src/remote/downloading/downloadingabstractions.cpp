@@ -26,8 +26,8 @@ int downloading::abstractions::getReplyStatusCode(const QNetworkReply* reply)
 }
 
 bool downloading::abstractions::tryRangedDownload(
-        QNetworkAccessManager &nam, QUrl url,
-        data::DownloadRange range, QIODevice &target,
+        QNetworkAccessManager& nam, QUrl url,
+        data::DownloadRange range, QIODevice& target,
         int timeout, CancellationToken cancellationToken)
 {
     QNetworkRequest request(url);
@@ -46,6 +46,16 @@ bool downloading::abstractions::tryRangedDownload(
     return true;
 }
 
+bool downloading::abstractions::tryRangedDownload(
+        QNetworkAccessManager& nam, const QString& stringUrl,
+        data::DownloadRange range, QIODevice& target,
+        int timeout, CancellationToken cancellationToken)
+{
+    QUrl url(stringUrl);
+
+    return tryRangedDownload(nam, url, range, target, timeout, cancellationToken);
+}
+
 int downloading::abstractions::waitUntilReplyIsReady(
         QNetworkReply* reply,
         int timeout,
@@ -55,7 +65,9 @@ int downloading::abstractions::waitUntilReplyIsReady(
     QTimer timer;
     timer.setSingleShot(true);
 
-    QObject::connect(&cancellationToken, &CancellationToken::cancelled, reply, &QNetworkReply::abort);
+    QObject::connect(&cancellationToken, &CancellationToken::cancelled,
+                     reply, &QNetworkReply::abort);
+
     QObject::connect(reply, &QNetworkReply::readyRead, &loop, &QEventLoop::quit);
     QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
 
@@ -76,12 +88,12 @@ void downloading::abstractions::bufferReply(
         QNetworkReply* reply, QIODevice& target,
         int timeout, CancellationToken cancellationToken)
 {
-    if (!target.isOpen())
+    if (!target.isOpen() || !target.open(QIODevice::WriteOnly))
     {
-        throw FatalException("Device is not open for writing");
+        throw FatalException("Failed to open device for writing");
     }
 
-    while (!reply->isFinished())
+    do
     {
         QEventLoop loop;
         QTimer timer;
@@ -89,7 +101,8 @@ void downloading::abstractions::bufferReply(
 
         QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
         QObject::connect(reply, &QNetworkReply::readyRead, &loop, &QEventLoop::quit);
-        QObject::connect(&cancellationToken, &CancellationToken::cancelled, &loop, &QEventLoop::quit);
+        QObject::connect(&cancellationToken, &CancellationToken::cancelled,
+                         &loop, &QEventLoop::quit);
 
         timer.start(timeout);
         loop.exec();
@@ -103,9 +116,14 @@ void downloading::abstractions::bufferReply(
 
         target.write(data);
     }
+    while (!reply->isFinished());
+
+    target.close();
 }
 
-bool downloading::abstractions::tryDownload(QNetworkAccessManager &nam, QString stringUrl, QIODevice &target, int timeout, CancellationToken cancellationToken)
+bool downloading::abstractions::tryDownload(
+        QNetworkAccessManager &nam, const QString& stringUrl,
+        QIODevice &target, int timeout, CancellationToken cancellationToken)
 {
     QUrl url(stringUrl);
 
@@ -113,7 +131,8 @@ bool downloading::abstractions::tryDownload(QNetworkAccessManager &nam, QString 
 }
 
 bool downloading::abstractions::tryDownload(
-        QNetworkAccessManager& nam, QUrl url, QIODevice& target, int timeout, CancellationToken cancellationToken)
+        QNetworkAccessManager& nam, QUrl url, QIODevice& target,
+        int timeout, CancellationToken cancellationToken)
 {
     qInfo() << "Downloading from " << url.toString() << " with timeout " << timeout;
 

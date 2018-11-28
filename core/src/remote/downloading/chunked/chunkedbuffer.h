@@ -26,7 +26,8 @@ public:
     ~ChunkedBuffer() override;
 
     int validChunksWritten() const;
-    void flush();
+
+    virtual void close() override;
 
 protected:
     qint64 readData(char* data, qint64 maxSize) override;

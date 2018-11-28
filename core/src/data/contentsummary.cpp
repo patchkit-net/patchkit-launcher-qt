@@ -189,6 +189,11 @@ const QString& ContentSummary::getHashingMethod() const
     return m_hashingMethod;
 }
 
+int ContentSummary::getCompressedSize() const
+{
+    return getChunkSize() * getChunksCount();
+}
+
 THash ContentSummary::getHashCode() const
 {
     return m_hashCode;

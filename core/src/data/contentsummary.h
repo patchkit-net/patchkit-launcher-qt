@@ -101,6 +101,7 @@ public:
     const QString&  getEncryptionMethod()    const;
     const QString&  getCompressionMethod()   const;
     const QString&  getHashingMethod()       const;
+    int             getCompressedSize()      const;
 
     QJsonDocument   toJson() const;
 

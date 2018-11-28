@@ -1,26 +1,43 @@
 #include "secretencoding.h"
 #include "customexceptions.h"
 
-QString data::secret::decode(const QByteArray& encodedSecret)
-{
-    size_t encodedSize = static_cast<size_t>(encodedSecret.size());
-    std::unique_ptr<char> temp(new char[encodedSize]);
-    memcpy(temp.get(), encodedSecret.data(), encodedSize);
+#include <QTextCodec>
 
+QString data::secret::decode(QByteArray encodedSecret)
+{
     for (int i = 0; i < encodedSecret.size(); i++)
     {
-        char b = temp.get()[i];
+        char b = encodedSecret[i];
         bool lsb = (b & 1) > 0;
+
         b = b >> 1;
         b = b | (lsb ? 128 : 0);
-        b = static_cast<char>(~b);
-        temp.get()[i] = b;
+        b = ~b;
+
+        encodedSecret[i] = b;
     }
 
-    return QString::fromUtf16(reinterpret_cast<const ushort*>(temp.get()), encodedSecret.size() / 2);
+    auto raw = reinterpret_cast<const ushort*>(encodedSecret.data());
+    return QString::fromUtf16(raw, encodedSecret.size() / 2);
 }
 
-QByteArray data::secret::encode(const QString& /*decodedSecret*/)
+QByteArray data::secret::encode(QString decodedSecret)
 {
-    throw NotImplementedException("data::secret::encode");
+    const char* raw = reinterpret_cast<const char*>(decodedSecret.utf16());
+    int size = decodedSecret.size() * 2;
+
+    QByteArray encoded(raw, static_cast<int>(size));
+
+    for (int i = 0; i < size; i++)
+    {
+        char b = ~encoded[i];
+        bool fsb = (b & 128) > 0;
+
+        b = static_cast<char>(b << 1);
+        b = b | (fsb ? 1 : 0);
+
+        encoded[i] = b;
+    }
+
+    return encoded;
 }

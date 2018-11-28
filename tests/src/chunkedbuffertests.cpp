@@ -48,16 +48,20 @@ TEST_CASE("Writing chunks")
     buffer.write("b");
 
     CHECK(target.data().toStdString() == "ab");
+    CHECK(buffer.validChunksWritten() == 1);
 
     INFO("Writing entire chunks at a time");
     buffer.write("cd");
 
     CHECK(target.data().toStdString() == "abcd");
+    CHECK(buffer.validChunksWritten() == 2);
 
-    INFO("Accounting for the last chunk");
+    INFO("Accounting for the last chunk by closing");
     buffer.write("efg");
+    buffer.close();
 
     REQUIRE(target.data().toStdString() == "abcdefg");
+    CHECK(buffer.validChunksWritten() == 4);
 }
 
 TEST_CASE("Reading from chunked buffer is not supported")

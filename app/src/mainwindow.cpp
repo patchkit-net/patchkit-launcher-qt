@@ -19,6 +19,8 @@ MainWindow::MainWindow(LauncherWorker& t_launcherWorker, QWidget* t_parent)
     , m_launcherWorker(t_launcherWorker)
 {
     m_ui.setupUi(this);
+
+    connect(m_ui.cancelButton, &QPushButton::clicked, this, &MainWindow::cancel);
 }
 
 void MainWindow::setStatus(const QString& t_status) const

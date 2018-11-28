@@ -6,7 +6,7 @@ namespace data
 {
 namespace secret
 {
-    QString decode(const QByteArray& encodedSecret);
-    QByteArray encode(const QString& decodedSecret);
+    QString decode(QByteArray encodedSecret);
+    QByteArray encode(QString decodedSecret);
 }
 }

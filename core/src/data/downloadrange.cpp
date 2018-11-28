@@ -8,5 +8,5 @@ data::DownloadRange::DownloadRange(long long start, long long end)
 
 QString data::DownloadRange::toString() const
 {
-    return QString("%1-%2").arg(QString::number(start), end == -1 ? "" : QString::number(end));
+    return QString("bytes=%1-%2").arg(QString::number(start), end == -1 ? "" : QString::number(end));
 }

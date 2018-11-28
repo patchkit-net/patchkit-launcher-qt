@@ -20,9 +20,11 @@ int ChunkedBuffer::validChunksWritten() const
     return m_chunkIndex;
 }
 
-void ChunkedBuffer::flush()
+void ChunkedBuffer::close()
 {
     processChunk(m_buffer);
+
+    QIODevice::close();
 }
 
 qint64 ChunkedBuffer::readData(char* /*data*/, qint64 /*maxSize*/)
@@ -30,10 +32,10 @@ qint64 ChunkedBuffer::readData(char* /*data*/, qint64 /*maxSize*/)
     throw NotSupportedException("Reading from the chunked buffer is not supported.");
 }
 
-qint64 ChunkedBuffer::writeData(const char* data, qint64 /*maxSize*/)
+qint64 ChunkedBuffer::writeData(const char* data, qint64 maxSize)
 {
     qint64 oldSize = m_buffer.size();
-    m_buffer += data;
+    m_buffer += QByteArray(data, static_cast<int>(maxSize));
 
     qint64 written = m_buffer.size() - oldSize;
 
@@ -50,17 +52,14 @@ qint64 ChunkedBuffer::writeData(const char* data, qint64 /*maxSize*/)
         m_buffer = m_buffer.right(bufferSize - (chunkCount * m_chunkSize));
     }
 
-    if (m_chunkIndex == m_expectedHashes.size() - 1)
-    {
-        processChunk(m_buffer);
-    }
-
     return written;
 }
 
 void ChunkedBuffer::processChunk(const QByteArray& chunk)
 {
-    if (chunk.size() > m_chunkSize)
+    auto chunkSize = chunk.size();
+
+    if (chunkSize > m_chunkSize)
     {
         throw ChunkVerificationException("Chunk too big");
     }
@@ -70,7 +69,12 @@ void ChunkedBuffer::processChunk(const QByteArray& chunk)
 
     if (validHash != actualHash)
     {
-        throw ChunkVerificationException("Chunk verification failed");
+        auto msg = QString("Failed to verify chunk #%1 expected hash %2 got %3")
+                .arg(m_chunkIndex)
+                .arg(QString::number(validHash, 16))
+                .arg(QString::number(actualHash, 16));
+
+        throw ChunkVerificationException(msg);
     }
 
     m_target.write(chunk);

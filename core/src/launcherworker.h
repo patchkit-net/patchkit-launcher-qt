@@ -34,7 +34,7 @@ signals:
     void progressChanged(int t_progress);
 
 private slots:
-    void setDownloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes);
+    void setDownloadProgress(long long t_bytesDownloaded, long long t_totalBytes);
 
 private:
     bool runInternal();

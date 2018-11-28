@@ -12,6 +12,7 @@
 #include "cancellation/cancellationtoken.h"
 #include "data/launchersettings.h"
 #include "remote/downloading/chunked/downloader.h"
+#include "remote/downloading/progressdevice.h"
 #include "logger.h"
 #include "locations.h"
 #include "customexceptions.h"
@@ -65,6 +66,7 @@ bool LauncherWorker::runInternal()
         throw InsufficientPermissions("Launcher needs the current directory to be writable");
     }
 
+    emit statusChanged("Initializing...");
     qInfo() << "Initializing";
     // Initialize
     Data data = resolveData();
@@ -184,18 +186,26 @@ void LauncherWorker::update(const Data& data, const Api& api, QNetworkAccessMana
 
     ContentSummary contentSummary = api.getContentSummary(data.patcherSecret(), latestAppVersion, cancellationToken);
 
-    QBuffer downloadData;
-    downloadData.open(QIODevice::ReadWrite);
-    downloading::chunked::Downloader downloader(
-                data.patcherSecret(), latestAppVersion, contentSummary, downloadData);
 
-    while (true)
+    QBuffer downloadData;
+    downloadData.open(QIODevice::WriteOnly);
+
+    ProgressDevice progressDevice(downloadData, contentSummary.getCompressedSize());
+    progressDevice.open(QIODevice::WriteOnly);
+
+    connect(&progressDevice, &ProgressDevice::onProgress, this, &LauncherWorker::setDownloadProgress);
+
+    downloading::chunked::Downloader downloader(
+                data.patcherSecret(), latestAppVersion, contentSummary, progressDevice);
+
+    if (!downloader.downloadChunked(api, nam, cancellationToken))
     {
-        if (downloader.downloadChunked(api, nam, cancellationToken))
-        {
-            break;
-        }
+        throw 1; // TODO: DownloadFailedException
     }
+
+    downloadData.open(QIODevice::ReadOnly);
+
+    emit statusChanged("Installing...");
 
     LocalPatcherData local;
     local.install(downloadData, data, latestAppVersion);
@@ -205,31 +215,28 @@ bool LauncherWorker::tryUpdate(const Data& data, const Api& api, QNetworkAccessM
 {
     int invalidChunkCount = 0;
 
-    while (true)
+    try
     {
-        try
+        update(data, api, nam, cancellationToken);
+        return true;
+    }
+    catch (downloading::chunked::Downloader::InvalidTarget&)
+    {
+        qWarning() << "Target contains invalid data and will be cleaned up.";
+        QFile(Locations::getInstance().patcherDownloadPath()).remove();
+    }
+    catch (downloading::chunked::ChunkedBuffer::ChunkVerificationException&)
+    {
+        qWarning() << "An invalid chunk has been detected in the data stream " << invalidChunkCount << " times";
+        if (invalidChunkCount < Config::maxInvalidChunksCount)
         {
-            update(data, api, nam, cancellationToken);
-            return true;
+            qCritical() << "Incident count over threshold - update has failed.";
+            return false;
         }
-        catch (downloading::chunked::Downloader::InvalidTarget&)
+        else
         {
-            qWarning() << "Target contains invalid data and will be cleaned up.";
-            QFile(Locations::getInstance().patcherDownloadPath()).remove();
-        }
-        catch (downloading::chunked::ChunkedBuffer::ChunkVerificationException&)
-        {
-            qWarning() << "An invalid chunk has been detected in the data stream " << invalidChunkCount << " times";
-            if (invalidChunkCount < Config::maxInvalidChunksCount)
-            {
-                qCritical() << "Incident count over threshold - update has failed.";
-                return false;
-            }
-            else
-            {
-                qWarning() << "Incrementing counter and retrying";
-                invalidChunkCount++;
-            }
+            qWarning() << "Incrementing counter and retrying";
+            invalidChunkCount++;
         }
     }
 }
@@ -262,10 +269,10 @@ Data LauncherWorker::setupPatcherSecret(const Data& data, const Api& api, Cancel
     return data;
 }
 
-void LauncherWorker::setDownloadProgress(const long long& t_bytesDownloaded, const long long& t_totalBytes)
+void LauncherWorker::setDownloadProgress(long long t_bytesDownloaded, long long t_totalBytes)
 {
-    long long kilobytesDownloaded = t_bytesDownloaded / 1024;
-    long long totalKilobytes = t_totalBytes / 1024;
+    auto kilobytesDownloaded = t_bytesDownloaded / 1024;
+    auto totalKilobytes = t_totalBytes / 1024;
 
     emit statusChanged(QString("Downloading %1 / %2 KB").arg(QString::number(kilobytesDownloaded), QString::number(totalKilobytes)));
     emit progressChanged(qCeil((qreal(t_bytesDownloaded) / t_totalBytes) * 100.0));

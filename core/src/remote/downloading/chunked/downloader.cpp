@@ -40,6 +40,7 @@ bool downloading::chunked::Downloader::downloadChunked(
 int downloading::chunked::Downloader::tryDownloadChunked(
         QNetworkAccessManager& nam, const QUrl& url, CancellationToken cancellationToken)
 {
+    qInfo() << "Downloading chunked file from " << url;
     auto expectedHashes = QVector<THash>();
 
     for (int i = m_status.chunksDownloaded; i < m_contentSummary.getChunksCount(); i++)
@@ -47,23 +48,20 @@ int downloading::chunked::Downloader::tryDownloadChunked(
         expectedHashes.push_back(m_contentSummary.getChunkHash(i));
     }
 
-    ChunkedBuffer chunkedBuffer(expectedHashes, m_contentSummary.getChunkSize(), HashingStrategy::xxHash, m_target);
+    ChunkedBuffer chunkedBuffer(
+                expectedHashes, m_contentSummary.getChunkSize(), HashingStrategy::xxHash, m_target);
     chunkedBuffer.open(QIODevice::WriteOnly);
 
     data::DownloadRange range(m_status.chunksDownloaded * m_contentSummary.getChunkSize());
 
     try
     {
-        if (downloading::abstractions::tryRangedDownload(
-                    nam, url, range, chunkedBuffer, Config::downloadTimeoutMsec, cancellationToken))
-        {
-            chunkedBuffer.flush();
-        }
+        downloading::abstractions::tryRangedDownload(
+            nam, url, range, chunkedBuffer, Config::downloadTimeoutMsec, cancellationToken);
     }
-    catch (ChunkedBuffer::ChunkVerificationException)
+    catch (ChunkedBuffer::ChunkVerificationException& e)
     {
-        qWarning() << "Invalid chunk";
-        return chunkedBuffer.validChunksWritten();
+        qWarning() << "Invalid chunk: " << e.what();
     }
 
     return chunkedBuffer.validChunksWritten();

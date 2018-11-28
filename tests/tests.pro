@@ -18,7 +18,9 @@ SOURCES += \
     $$PWD/src/mockedreply.cpp\
     $$PWD/src/main.cpp \
     $$PWD/src/patchermanifesttests.cpp \
-    src/chunkedbuffertests.cpp
+    src/chunkedbuffertests.cpp \
+    src/downloadingabstractionstests.cpp \
+    src/secretencodingtests.cpp
 
 HEADERS += \
     $$PWD/src/catch.h \

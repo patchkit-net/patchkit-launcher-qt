@@ -48,7 +48,10 @@ void MockedNetworkReply::launch()
 
 void MockedNetworkReply::corrupt()
 {
-    m_content[rand() % m_content.size()] = rand();
+    m_content[0] = !m_content[0];
+    m_content[m_content.size() - 1] = !m_content[m_content.size() - 1];
+
+    std::reverse(m_content.begin(), m_content.end());
 }
 
 void MockedNetworkReply::abort()
