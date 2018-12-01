@@ -31,7 +31,7 @@ const QString Config::applicationDirectoryName = "app";
 
 const int Config::minConnectionTimeoutMsec = 10000;
 const int Config::maxConnectionTimeoutMsec = 30000;
-const int Config::maxInvalidChunksCount = 10;
+const int Config::maxInvalidChunksCount    = 10;
 const int Config::downloadTimeoutMsec      = 5000;
 
 const QString Config::mainApiUrl = "https://api2.patchkit.net";

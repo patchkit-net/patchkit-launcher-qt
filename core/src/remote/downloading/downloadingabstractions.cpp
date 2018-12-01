@@ -99,13 +99,16 @@ void downloading::abstractions::bufferReply(
         QTimer timer;
         timer.setSingleShot(true);
 
-        QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
-        QObject::connect(reply, &QNetworkReply::readyRead, &loop, &QEventLoop::quit);
-        QObject::connect(&cancellationToken, &CancellationToken::cancelled,
-                         &loop, &QEventLoop::quit);
+        if (!reply->isFinished())
+        {
+            QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+            QObject::connect(reply, &QNetworkReply::readyRead, &loop, &QEventLoop::quit);
+            QObject::connect(&cancellationToken, &CancellationToken::cancelled,
+                             &loop, &QEventLoop::quit);
 
-        timer.start(timeout);
-        loop.exec();
+            timer.start(timeout);
+            loop.exec();
+        }
 
         cancellationToken.throwIfCancelled();
 

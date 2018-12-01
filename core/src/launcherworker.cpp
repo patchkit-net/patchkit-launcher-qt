@@ -209,10 +209,11 @@ void LauncherWorker::update(
         throw UpdateFailed("Failed to update");
     }
 
+    emit progressChanged(100);
+
     downloadData.open(QIODevice::ReadOnly);
 
     emit statusChanged("Installing...");
-
     localData.install(downloadData, data, latestAppVersion);
 }
 

@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [unreleased]
+### Changed
+- Overhauled a significant portion of the codebase
+- Error messages now describe what happened
+
+### Fixed
+- Launcher will now query api caches if the main api doesn't respond
+
 ## [v1.4.0]
 ### Added
 - Boost library linking

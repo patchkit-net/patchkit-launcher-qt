@@ -89,7 +89,29 @@ QString Api::getDefaultPatcherSecret(CancellationToken cancellationToken) const
 
     QJsonDocument document = get(path, cancellationToken);
 
-    throw 1; // TODO: Implement parsing
+    if (!document.isArray())
+    {
+        throw InvalidFormat("Expected document root to be array");
+    }
+
+    QJsonArray array = document.array();
+
+    QString platformString = Globals::currentPlatformString();
+
+    for (QJsonValueRef item : array)
+    {
+        if (item.isObject())
+        {
+            QJsonObject object = item.toObject();
+
+            if (object.contains(platformString))
+            {
+                return object[platformString].toString();
+            }
+        }
+    }
+
+    throw InvalidFormat("Failed to resolve patcher for platform " + platformString);
 }
 
 int Api::getLatestAppVersion(const QString &appSecret, CancellationToken cancellationToken) const

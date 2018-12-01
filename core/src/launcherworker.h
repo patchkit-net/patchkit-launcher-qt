@@ -16,6 +16,12 @@
 
 #include <QThread>
 
+/* TODO:
+ * The declaration of this class is relatively fine but it's underlying logic
+ * is a sprawling mess of almost 300 lines.
+ *
+ * Splitting the implementation into separate source files would solve this problem.
+ */
 class LauncherWorker : public QThread
 {
     Q_OBJECT
