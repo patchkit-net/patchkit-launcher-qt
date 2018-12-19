@@ -12,7 +12,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Launcher will use the api-cache address from the `PK_LAUNCHER_API_CACHE_URL` environment variable if available.
 - The network-status symbol
 
+### Changed
+- Overhauled a significant portion of the codebase
+- Error messages now describe what happened
+
 ### Fixed
+- Launcher will now query api caches if the main api doesn't respond
 - The way the Launcher is reading installation info
 - A small issue which would cause the Launcher to lock itself from executing again if an error occured when trying to start the Patcher.
 
