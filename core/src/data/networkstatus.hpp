@@ -9,7 +9,7 @@ namespace data
         Offline, Online
     };
 
-    static constexpr const char* ToString(NetworkStatus status)
+    static const char* ToString(NetworkStatus status)
     {
         switch (status)
         {
