@@ -20,6 +20,6 @@ HEADERS     += \
 FORMS       += $$PWD/src/mainwindow.ui
 
 include($$PWD/../default.pri)
-include($$PWD/../link_libz_and_quazip.pri)
 include($$PWD/../version.pri)
 include($$PWD/../link_core.pri)
+include($$PWD/../link_libz_and_quazip.pri)
