@@ -1,5 +1,5 @@
 #pragma once
-#include "src/ilauncher.h"
+#include <ilauncher.h>
 #include <QObject>
 
 class Interface : public QObject, public ILauncherInterface

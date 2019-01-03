@@ -2,10 +2,10 @@
 #include <QNetworkAccessManager>
 #include <QIODevice>
 
-#include "src/cancellation/cancellationtoken.h"
-#include "src/customexceptions.h"
+#include <cancellation/cancellationtoken.h>
+#include <customexceptions.h>
 
-#include "src/data/downloadrange.h"
+#include <data/downloadrange.h>
 
 namespace downloading
 {

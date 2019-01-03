@@ -1,6 +1,6 @@
 #include "interface.h"
 
-#include <src/customexceptions.h>
+#include <customexceptions.h>
 
 #include <QDebug>
 

@@ -5,9 +5,9 @@
 
 #include "catch.h"
 
-#include <src/data/patchermanifest.h>
-#include <src/customexceptions.h>
-#include <src/utilities.h>
+#include <data/patchermanifest.h>
+#include <customexceptions.h>
+#include <utilities.h>
 
 #include <QJsonDocument>
 

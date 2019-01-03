@@ -1,8 +1,8 @@
 #include "catch.h"
 
-#include "src/remote/downloading/downloadingabstractions.h"
-#include "src/cancellation/cancellationtokensource.h"
-#include "src/data/downloadrange.h"
+#include <remote/downloading/downloadingabstractions.h>
+#include <cancellation/cancellationtokensource.h>
+#include <data/downloadrange.h>
 #include "mockednam.h"
 #include "mockedreply.h"
 

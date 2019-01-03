@@ -7,9 +7,9 @@
 
 #include <QApplication>
 
-#include <src/logger.h>
+#include <logger.h>
 
-#include <src/hashingstrategy.h>
+#include <hashingstrategy.h>
 
 TEST_CASE("HashingStrategy xxHash", "[xxHash]")
 {

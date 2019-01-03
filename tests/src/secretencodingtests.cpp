@@ -1,6 +1,6 @@
 #include "catch.h"
 
-#include "src/data/secretencoding.h"
+#include <data/secretencoding.h>
 
 TEST_CASE("Encoding and decoding a value")
 {

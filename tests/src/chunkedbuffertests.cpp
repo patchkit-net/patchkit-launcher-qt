@@ -1,7 +1,7 @@
 #include "catch.h"
 
-#include <src/remote/downloading/chunked/chunkedbuffer.h>
-#include <src/hashingstrategy.h>
+#include <remote/downloading/chunked/chunkedbuffer.h>
+#include <hashingstrategy.h>
 #include "custommacros.h"
 
 #include <QBuffer>

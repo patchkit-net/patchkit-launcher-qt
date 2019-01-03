@@ -1,6 +1,6 @@
 #include "catch.h"
 
-#include "src/data/installationinfo.h"
+#include <data/installationinfo.h>
 
 #include <QBuffer>
 

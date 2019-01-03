@@ -5,8 +5,8 @@
 
 #include "launcher.h"
 
-#include <src/logger.h>
-#include <src/lockfile.h>
+#include <logger.h>
+#include <lockfile.h>
 
 #include <QMessageBox>
 #include <QNetworkProxyFactory>

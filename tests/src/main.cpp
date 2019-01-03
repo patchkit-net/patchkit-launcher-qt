@@ -9,7 +9,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "src/logger.h"
+#include <logger.h>
 
 namespace Catch
 {

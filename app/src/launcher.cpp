@@ -8,10 +8,10 @@
 #include <QMessageBox>
 #include <QDebug>
 
-#include <src/config.h>
-#include <src/logger.h>
-#include <src/locations.h>
-#include <src/lockfile.h>
+#include <config.h>
+#include <logger.h>
+#include <locations.h>
+#include <lockfile.h>
 
 LauncherApp::Launcher::Launcher(const QApplication& t_application)
     : m_mainWindow(m_worker, nullptr)

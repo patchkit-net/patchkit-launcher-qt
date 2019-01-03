@@ -10,16 +10,16 @@ SOURCES     += \
     $$PWD/src/launcher.cpp \
     $$PWD/src/main.cpp \
     $$PWD/src/mainwindow.cpp \
-    src/interface.cpp
+    $$PWD/src/interface.cpp
 
 HEADERS     += \
     $$PWD/src/launcher.h \
     $$PWD/src/mainwindow.h \
-    src/interface.h
+    $$PWD/src/interface.h
 
 FORMS       += $$PWD/src/mainwindow.ui
 
-include(../default.pri)
-include(../link_libz_and_quazip.pri)
-include(../version.pri)
-include(../link_core.pri)
+include($$PWD/../default.pri)
+include($$PWD/../link_libz_and_quazip.pri)
+include($$PWD/../version.pri)
+include($$PWD/../link_core.pri)

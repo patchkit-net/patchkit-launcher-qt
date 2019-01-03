@@ -12,7 +12,7 @@
 #include "ui_mainwindow.h"
 #include "interface.h"
 
-#include <src/logger.h>
+#include <logger.h>
 
 MainWindow::MainWindow(LauncherWorker& t_launcherWorker, QWidget* t_parent)
     : QMainWindow(t_parent, Qt::FramelessWindowHint)

@@ -1,5 +1,5 @@
-INCLUDEPATH += ../core
-DEPENDPATH += ../core
+INCLUDEPATH += $$PWD/core/src
+DEPENDPATH += $$PWD/core/src
 
 win32 {
     Debug:LIBS += -L$$OUT_PWD/../core/debug/ -lcore

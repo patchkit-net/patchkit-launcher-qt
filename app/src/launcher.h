@@ -10,7 +10,7 @@
 #include "mainwindow.h"
 #include "interface.h"
 
-#include <src/launcherworker.h>
+#include <launcherworker.h>
 
 namespace LauncherApp
 {

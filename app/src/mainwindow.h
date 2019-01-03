@@ -6,7 +6,7 @@
 #pragma once
 
 #include "ui_mainwindow.h"
-#include <src/launcherworker.h>
+#include <launcherworker.h>
 
 class MainWindow : public QMainWindow
 {
