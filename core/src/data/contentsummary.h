@@ -42,20 +42,23 @@ struct FileData
 class ContentSummary
 {
 public:
-    const static QString   encryptionMethodToken;
-    const static QString   compressionMethodToken;
-    const static QString   hashingMethodToken;
-    const static QString   hashCodeToken;
-    const static QString   filesToken;
-    const static QString   hashesToken;
-    const static QString   hashToken;
-    const static QString   pathToken;
-    const static QString   chunksToken;
-    const static QString   sizeToken;
+    const static QString encryptionMethodToken;
+    const static QString compressionMethodToken;
+    const static QString hashingMethodToken;
+    const static QString hashCodeToken;
+    const static QString filesToken;
+    const static QString hashesToken;
+    const static QString hashToken;
+    const static QString pathToken;
+    const static QString chunksToken;
+    const static QString chunkSizeToken;
+    const static QString sizeToken;
+    const static QString uncompressedSizeToken;
 
     static ContentSummary fromData(
             const QByteArray& t_data,
-            int t_chunkSize,
+            int t_chunkSize, int t_size,
+            int t_uncompressedSize,
             HashFunc t_hashingMethod,
             THash t_hashCode = 0,
             QString t_hashingMethodName = "xxHash");
@@ -65,7 +68,8 @@ public:
 
     ContentSummary(int t_chunkSize, THash t_hashCode, QString t_encryptionMethod
                    , QString t_compressionMethod, QString t_hashingMethod
-                   , QVector<THash> t_chunkHashes, QVector<FileData> t_filesSummary);
+                   , QVector<THash> t_chunkHashes, QVector<FileData> t_filesSummary
+                   , int t_size, int t_uncompressedSize);
 
     /**
      * @brief getChunkHash
@@ -102,6 +106,7 @@ public:
     const QString&  getCompressionMethod()   const;
     const QString&  getHashingMethod()       const;
     int             getCompressedSize()      const;
+    int             getUncompressedSize()    const;
 
     QJsonDocument   toJson() const;
 
@@ -111,6 +116,8 @@ private:
 
     bool                m_isValid;
     int                 m_chunkSize;
+    int                 m_uncompressedSize;
+    int                 m_size;
     THash               m_hashCode;
     QString             m_encryptionMethod;
     QString             m_compressionMethod;

@@ -147,7 +147,7 @@ int Api::getLatestAppVersion(const QString &appSecret, CancellationToken cancell
     return id;
 }
 
-QStringList Api::getContentUrls(const QString &appSecret, int versionId, CancellationToken cancellationToken) const
+QStringList Api::getContentUrls(const QString& appSecret, int versionId, CancellationToken cancellationToken) const
 {
     qInfo() << "Getting the content urls for app " << appSecret << " version " << versionId;
     auto path = QString("1/apps/%1/versions/%2/content_urls")
@@ -205,7 +205,7 @@ QString Api::tryGetCountryCode(CancellationToken cancellationToken) const
 
         return document.object()["country"].toString();
     }
-    catch (ApiConnectionError)
+    catch (ApiConnectionError&)
     {
         return QString();
     }

@@ -14,16 +14,18 @@
 #include <QStringList>
 #include <QVariantList>
 
-const QString   ContentSummary::encryptionMethodToken   = QString("encryption_method");
-const QString   ContentSummary::compressionMethodToken  = QString("compression_method");
-const QString   ContentSummary::hashingMethodToken      = QString("hashing_method");
-const QString   ContentSummary::hashCodeToken           = QString("hash_code");
-const QString   ContentSummary::filesToken              = QString("files");
-const QString   ContentSummary::hashesToken             = QString("hashes");
-const QString   ContentSummary::hashToken               = QString("hash");
-const QString   ContentSummary::pathToken               = QString("path");
-const QString   ContentSummary::chunksToken             = QString("chunks");
-const QString   ContentSummary::sizeToken               = QString("size");
+const QString ContentSummary::encryptionMethodToken   = QString("encryption_method");
+const QString ContentSummary::compressionMethodToken  = QString("compression_method");
+const QString ContentSummary::hashingMethodToken      = QString("hashing_method");
+const QString ContentSummary::hashCodeToken           = QString("hash_code");
+const QString ContentSummary::filesToken              = QString("files");
+const QString ContentSummary::hashesToken             = QString("hashes");
+const QString ContentSummary::hashToken               = QString("hash");
+const QString ContentSummary::pathToken               = QString("path");
+const QString ContentSummary::chunksToken             = QString("chunks");
+const QString ContentSummary::chunkSizeToken          = QString("size");
+const QString ContentSummary::sizeToken               = QString("size");
+const QString ContentSummary::uncompressedSizeToken   = QString("uncompressed_size");
 
 const FileData& FileData::dummy = FileData("dummy", 0);
 
@@ -36,8 +38,12 @@ ContentSummary::ContentSummary(int t_chunkSize, THash t_hashCode
                                , QString t_encryptionMethod
                                , QString t_compressionMethod
                                , QString t_hashingMethod, QVector<THash> t_chunkHashes
-                               , QVector<FileData> t_filesSummary)
-    : m_chunkSize(t_chunkSize)
+                               , QVector<FileData> t_filesSummary
+                               , int t_size, int t_uncompressedSize)
+    : m_isValid(true)
+    , m_chunkSize(t_chunkSize)
+    , m_uncompressedSize(t_uncompressedSize)
+    , m_size(t_size)
     , m_hashCode(t_hashCode)
     , m_encryptionMethod(t_encryptionMethod)
     , m_compressionMethod(t_compressionMethod)
@@ -47,7 +53,10 @@ ContentSummary::ContentSummary(int t_chunkSize, THash t_hashCode
 {
 }
 
-ContentSummary ContentSummary::fromData(const QByteArray& t_data, int t_chunkSize, HashFunc t_hashingMethod, THash t_hashCode, QString t_hashingMethodName)
+ContentSummary ContentSummary::fromData(
+        const QByteArray& t_data, int t_chunkSize, int t_size,
+        int t_uncompressedSize, HashFunc t_hashingMethod,
+        THash t_hashCode, QString t_hashingMethodName)
 {
     QVector<THash> hashes;
     for (int i = 0; i < t_data.size(); i += t_chunkSize)
@@ -58,8 +67,7 @@ ContentSummary ContentSummary::fromData(const QByteArray& t_data, int t_chunkSiz
     return ContentSummary(
                 t_chunkSize, t_hashCode,
                 "none", "none", t_hashingMethodName,
-                hashes, {}
-                );
+                hashes, {}, t_size, t_uncompressedSize);
 }
 
 ContentSummary::ContentSummary(const QJsonDocument& t_document)
@@ -105,6 +113,18 @@ ContentSummary::ContentSummary(const QJsonDocument& t_document)
 
     bool ok;
     m_hashCode = doc_object[hashCodeToken].toString().toUInt(&ok, 16);
+
+    m_uncompressedSize = doc_object[uncompressedSizeToken].toInt(-1);
+    if (m_uncompressedSize == -1)
+    {
+        return;
+    }
+
+    m_size = doc_object[sizeToken].toInt(-1);
+    if (m_size == -1)
+    {
+        return;
+    }
 
     if (!ok)
     {
@@ -191,7 +211,12 @@ const QString& ContentSummary::getHashingMethod() const
 
 int ContentSummary::getCompressedSize() const
 {
-    return getChunkSize() * getChunksCount();
+    return m_size;
+}
+
+int ContentSummary::getUncompressedSize() const
+{
+    return m_uncompressedSize;
 }
 
 THash ContentSummary::getHashCode() const
@@ -217,6 +242,8 @@ QJsonDocument ContentSummary::toJson() const
     root[compressionMethodToken] = getCompressionMethod();
     root[hashingMethodToken] = getHashingMethod();
     root[hashCodeToken] = QString::number(getHashCode(), 16);
+    root[uncompressedSizeToken] = getUncompressedSize();
+    root[sizeToken] = getCompressedSize();
 
     QJsonArray filesArray;
 
@@ -237,7 +264,7 @@ QJsonDocument ContentSummary::toJson() const
         chunkHashes.append(QString::number(hash, 16));
     }
 
-    chunksObject[sizeToken] = getChunkSize();
+    chunksObject[chunkSizeToken] = getChunkSize();
     chunksObject[hashesToken] = chunkHashes;
 
     root[chunksToken] = chunksObject;
@@ -297,7 +324,7 @@ bool ContentSummary::parseChunks(QJsonObject& t_document)
         return false;
     }
 
-    int chunks_size = chunks[sizeToken].toInt(-1);
+    int chunks_size = chunks[chunkSizeToken].toInt(-1);
 
     if (chunks_size == -1)
     {
