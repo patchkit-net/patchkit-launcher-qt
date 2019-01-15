@@ -6,6 +6,8 @@
 
 #include "downloadingabstractions.h"
 
+using namespace remote::api;
+
 ApiConnectionStrategy::ApiConnectionStrategy(const ApiConnectionSettings& apiConnectionSettings,
                                                int minConnectionTimeout,
                                                int maxConnectionTimeout)

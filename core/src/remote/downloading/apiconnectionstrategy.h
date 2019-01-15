@@ -1,3 +1,5 @@
+#pragma once
+
 #include "cancellation/cancellationtoken.h"
 
 #include <QNetworkAccessManager>
@@ -7,8 +9,10 @@
 
 #include "remote/api/apiconnectionsetting.h"
 
-#pragma once
-
+namespace remote
+{
+namespace api
+{
 ///
 /// \brief The ApiConnectionStrategy class
 ///
@@ -34,3 +38,6 @@ private:
 
     static QByteArray downloadFromUrl(const QUrl& url);
 };
+
+} // namespace api
+} // namespace remote

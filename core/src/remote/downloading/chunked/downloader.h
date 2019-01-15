@@ -30,7 +30,7 @@ public:
             const ContentSummary& contentSummary, QIODevice& target);
 
     bool downloadChunked(
-            const Api& api, QNetworkAccessManager& nam,
+            const remote::api::Api& api, QNetworkAccessManager& nam,
             CancellationToken cancellationToken);
 
 private:

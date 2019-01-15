@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - The way the Launcher is reading installation info
 - A small issue which would cause the Launcher to lock itself from executing again if an error occured when trying to start the Patcher.
 - path handling bugs introduced in rc5
+- handling of PK_LAUNCHER_API_URL and PK_LAUNCHER_API_CACHE_URL environment variables
 
 ## [v1.3.0]
 ### Added
