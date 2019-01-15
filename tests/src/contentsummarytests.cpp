@@ -88,7 +88,8 @@ TEST_CASE("Content summary can be serialized to JSON." ,"[content_summary]")
     ContentSummary originalSummary(
         10, 123, "none", "none", "xxhash",
         {123, 321, 23, 43},
-        {FileData("path", 123), FileData("differentPath", 321)}
+        {FileData("path", 123), FileData("differentPath", 321)},
+        123, 321
     );
 
     QJsonDocument serializedContentSummary = originalSummary.toJson();
@@ -100,6 +101,8 @@ TEST_CASE("Content summary can be serialized to JSON." ,"[content_summary]")
     CHECK(originalSummary.getEncryptionMethod() == deserializedContentSummary.getEncryptionMethod());
     CHECK(originalSummary.getCompressionMethod() == deserializedContentSummary.getCompressionMethod());
     CHECK(originalSummary.getHashingMethod() == deserializedContentSummary.getHashingMethod());
+    CHECK(originalSummary.getCompressedSize() == deserializedContentSummary.getCompressedSize());
+    CHECK(originalSummary.getUncompressedSize() == deserializedContentSummary.getUncompressedSize());
 
     REQUIRE(originalSummary.getChunksCount() == deserializedContentSummary.getChunksCount());
     for (int i = 0; i < originalSummary.getChunksCount(); i++)
@@ -121,11 +124,17 @@ TEST_CASE("Content summary can be serialized to JSON." ,"[content_summary]")
 TEST_CASE("Generating content summary from data.", "[content_summary]")
 {
     int chunkSize = 2;
+    int compressedSize = 123;
+    int uncompressedSize = 321;
     QByteArray data = "somerandomdata";
 
-    ContentSummary contentSummary = ContentSummary::fromData(data, chunkSize, &HashingStrategy::xxHash);
+    ContentSummary contentSummary = ContentSummary::fromData(
+                data, compressedSize, uncompressedSize,
+                chunkSize, &HashingStrategy::xxHash);
 
     REQUIRE(contentSummary.getChunkSize() == chunkSize);
     REQUIRE(contentSummary.getChunksCount() == (data.size() / chunkSize));
     REQUIRE(contentSummary.getChunkHash(0) == HashingStrategy::xxHash(data.mid(0, chunkSize)));
+    REQUIRE(contentSummary.getCompressedSize() == compressedSize);
+    REQUIRE(contentSummary.getUncompressedSize() == uncompressedSize);
 }

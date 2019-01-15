@@ -23,8 +23,6 @@ public:
         int chunksDownloaded;
     };
 
-//    CUSTOM_RUNTIME_ERROR(InvalidTarget)
-
     Downloader(
             const QString& appSecret, int versionId,
             const ContentSummary& contentSummary, QIODevice& target);
