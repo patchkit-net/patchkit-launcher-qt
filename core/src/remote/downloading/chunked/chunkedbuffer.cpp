@@ -1,5 +1,7 @@
 #include "chunkedbuffer.h"
 
+#include <QDebug>
+
 using namespace downloading::chunked;
 
 ChunkedBuffer::ChunkedBuffer(const QVector<THash> expectedHashes, int chunkSize, HashFunc hashingMethod, QIODevice& target)
@@ -46,7 +48,15 @@ qint64 ChunkedBuffer::writeData(const char* data, qint64 maxSize)
 
         for (int i = 0; i < chunkCount; i++)
         {
-            processChunk(m_buffer.mid(i * m_chunkSize, m_chunkSize));
+            try
+            {
+                processChunk(m_buffer.mid(i * m_chunkSize, m_chunkSize));
+            }
+            catch (ChunkVerificationException&)
+            {
+                m_buffer.clear();
+                throw;
+            }
         }
 
         m_buffer = m_buffer.right(bufferSize - (chunkCount * m_chunkSize));

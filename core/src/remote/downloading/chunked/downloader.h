@@ -18,11 +18,6 @@ namespace chunked
 class Downloader
 {
 public:
-    struct Status
-    {
-        int chunksDownloaded;
-    };
-
     CUSTOM_RUNTIME_ERROR(InvalidTarget)
 
     Downloader(
@@ -34,7 +29,7 @@ public:
             CancellationToken cancellationToken);
 
 private:
-    int tryDownloadChunked(QNetworkAccessManager& nam, const QUrl& url,
+    int tryDownloadChunked(QNetworkAccessManager& nam, ChunkedBuffer& chunkedBuffer, const QUrl& url,
                            CancellationToken cancellationToken);
 
     const QString& m_appSecret;
@@ -42,8 +37,6 @@ private:
 
     const ContentSummary& m_contentSummary;
     QIODevice& m_target;
-
-    Status m_status;
 };
 
 }
