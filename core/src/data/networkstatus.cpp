@@ -1,6 +1,8 @@
 #include "networkstatus.hpp"
 
-const char* data::ToString(data::NetworkStatus status)
+namespace data
+{
+const char* ToString(data::NetworkStatus status)
 {
     switch (status)
     {
@@ -13,4 +15,5 @@ const char* data::ToString(data::NetworkStatus status)
     default:
         throw NotSupportedException("NetworkStatus must be either offline or online");
     }
+}
 }
