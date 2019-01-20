@@ -114,7 +114,8 @@ InstallationInfo LocalPatcherData::install(QIODevice& source, const Data& data, 
 #if defined(Q_OS_OSX) || defined(Q_OS_UNIX)
     for (QString entry : installationInfo.installedFiles())
     {
-        system(QString("chmod +x \"%1\"").arg(entry).toStdString().c_str());
+        auto effectivePath = QDir(locations.patcherDirectoryPath()).filePath(entry);
+        system(QString("chmod +x \"%1\"").arg(effectivePath).toStdString().c_str());
     }
 #endif
 

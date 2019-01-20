@@ -10,7 +10,7 @@ InstallationInfo InstallationInfo::from(QIODevice& source)
 
     while (!(line = source.readLine()).isNull())
     {
-        info.add(line.chopped(1));
+        info.add(line.trimmed());
     }
 
     source.close();

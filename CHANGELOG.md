@@ -15,12 +15,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Overhauled a significant portion of the codebase
 - Error messages now describe what happened
+- ContentSummary parsing - added fields size and uncompressed_size
 
 ### Fixed
 - Launcher will now query api caches if the main api doesn't respond
 - The way the Launcher is reading installation info
 - A small issue which would cause the Launcher to lock itself from executing again if an error occured when trying to start the Patcher.
 - (1134) The invalid chunk error introduced in rc5
+- path handling bugs introduced in rc5
 
 ## [v1.3.0]
 ### Added

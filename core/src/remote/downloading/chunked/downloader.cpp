@@ -5,9 +5,9 @@
 downloading::chunked::Downloader::Downloader(
         const QString& appSecret, int versionId,
         const ContentSummary& contentSummary, QIODevice& target)
-    : m_appSecret(appSecret)
+    : m_contentSummary(contentSummary)
+    , m_appSecret(QString(appSecret))
     , m_versionId(versionId)
-    , m_contentSummary(contentSummary)
     , m_target(target)
 {
 
@@ -17,7 +17,7 @@ bool downloading::chunked::Downloader::downloadChunked(
         const Api& api, QNetworkAccessManager& nam,
         CancellationToken cancellationToken)
 {
-    QStringList contentUrls = api.getContentUrls(m_appSecret, m_versionId, cancellationToken);
+    QStringList contentUrls = api.getContentUrls(this->m_appSecret, m_versionId, cancellationToken);
 
     auto expectedHashes = QVector<THash>();
     for (int i = 0; i < m_contentSummary.getChunksCount(); i++)

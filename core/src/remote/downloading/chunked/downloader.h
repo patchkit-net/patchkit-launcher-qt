@@ -20,6 +20,11 @@ class Downloader
 public:
     CUSTOM_RUNTIME_ERROR(InvalidTarget)
 
+    struct Status
+    {
+        int chunksDownloaded;
+    };
+
     Downloader(
             const QString& appSecret, int versionId,
             const ContentSummary& contentSummary, QIODevice& target);
@@ -32,10 +37,9 @@ private:
     int tryDownloadChunked(QNetworkAccessManager& nam, ChunkedBuffer& chunkedBuffer, const QUrl& url,
                            CancellationToken cancellationToken);
 
-    const QString& m_appSecret;
-    int m_versionId;
-
     const ContentSummary& m_contentSummary;
+    QString m_appSecret;
+    int m_versionId;
     QIODevice& m_target;
 };
 

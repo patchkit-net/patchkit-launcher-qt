@@ -200,8 +200,7 @@ void LauncherWorker::update(
     progressDevice.open(QIODevice::WriteOnly);
 
     connect(&progressDevice, &ProgressDevice::onProgress, this, &LauncherWorker::setDownloadProgress);
-
-    downloading::chunked::Downloader downloader(
+    auto downloader = downloading::chunked::Downloader(
                 data.patcherSecret(), latestAppVersion, contentSummary, progressDevice);
 
     if (!downloader.downloadChunked(api, nam, cancellationToken))
@@ -261,7 +260,7 @@ Data LauncherWorker::setupPatcherSecret(const Data& data, const Api& api, Cancel
 
         return Data::overwritePatcherSecret(data, newPatcherSecret);
     }
-    catch (CancellationToken::CancelledException)
+    catch (CancellationToken::CancelledException&)
     {
         throw;
     }
