@@ -14,7 +14,7 @@ downloading::chunked::Downloader::Downloader(
 }
 
 bool downloading::chunked::Downloader::downloadChunked(
-        const Api& api, QNetworkAccessManager& nam,
+        const remote::api::Api& api, QNetworkAccessManager& nam,
         CancellationToken cancellationToken)
 {
     QStringList contentUrls = api.getContentUrls(this->m_appSecret, m_versionId, cancellationToken);

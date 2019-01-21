@@ -5,7 +5,6 @@
 #include "remote/api/api.h"
 #include "remote/downloading/downloadingabstractions.h"
 #include "remote/downloading/chunked/chunkedbuffer.h"
-#include "customexceptions.h"
 
 #include <QNetworkAccessManager>
 #include <QIODevice>
@@ -18,19 +17,12 @@ namespace chunked
 class Downloader
 {
 public:
-    CUSTOM_RUNTIME_ERROR(InvalidTarget)
-
-    struct Status
-    {
-        int chunksDownloaded;
-    };
-
     Downloader(
             const QString& appSecret, int versionId,
             const ContentSummary& contentSummary, QIODevice& target);
 
     bool downloadChunked(
-            const Api& api, QNetworkAccessManager& nam,
+            const remote::api::Api& api, QNetworkAccessManager& nam,
             CancellationToken cancellationToken);
 
 private:

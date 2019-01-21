@@ -2,6 +2,10 @@
 #include <QString>
 #include <QStringList>
 
+namespace remote
+{
+namespace api
+{
 struct ApiConnectionSettings
 {
     ApiConnectionSettings(QString mainApiUrl, QStringList cacheApiUrls);
@@ -11,3 +15,8 @@ struct ApiConnectionSettings
     QString mainApiUrl;
     QStringList cacheApiUrls;
 };
+
+ApiConnectionSettings defaultConnectionSettings();
+
+} // namespace api
+} // namespace remote

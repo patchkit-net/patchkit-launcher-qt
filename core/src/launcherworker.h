@@ -16,6 +16,8 @@
 
 #include <QThread>
 
+using remote::api::Api;
+
 /* TODO:
  * The declaration of this class is relatively fine but it's underlying logic
  * is a sprawling mess of almost 300 lines.

@@ -20,6 +20,7 @@ SOURCES += \
     $$PWD/src/lockfile.cpp \
     $$PWD/src/xxhash.c \
     $$PWD/src/utilities.cpp \
+    $$PWD/src/data/networkstatus.cpp \
     $$PWD/src/remote/api/api.cpp \
     $$PWD/src/remote/api/apiconnectionsetting.cpp \
     $$PWD/src/remote/downloading/downloadingabstractions.cpp \

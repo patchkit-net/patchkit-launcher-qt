@@ -2,7 +2,10 @@
 
 #include <QDebug>
 
-using namespace downloading::chunked;
+namespace downloading
+{
+namespace chunked
+{
 
 ChunkedBuffer::ChunkedBuffer(const QVector<THash> expectedHashes, int chunkSize, HashFunc hashingMethod, QIODevice& target)
     : m_expectedHashes(expectedHashes)
@@ -90,3 +93,6 @@ void ChunkedBuffer::processChunk(const QByteArray& chunk)
     m_target.write(chunk);
     m_chunkIndex++;
 }
+
+} // namespace chunked
+} // namespace downloading

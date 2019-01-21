@@ -14,6 +14,11 @@
 #include <QJsonObject>
 #include <QJsonArray>
 
+namespace remote
+{
+namespace api
+{
+
 Api::Api(QNetworkAccessManager& dataSource)
     : m_dataSource(dataSource)
 {
@@ -27,7 +32,7 @@ QJsonDocument Api::get(const QString& path, CancellationToken cancellationToken)
 {
     qInfo() << "Executing GET " << path;
 
-    ApiConnectionSettings connectionSettings(Config::mainApiUrl, Config::cacheApiUrls);
+    ApiConnectionSettings connectionSettings = defaultConnectionSettings();
     ApiConnectionStrategy strategy(connectionSettings, Config::minConnectionTimeoutMsec, Config::maxConnectionTimeoutMsec);
 
     QBuffer buffer;
@@ -210,3 +215,6 @@ QString Api::tryGetCountryCode(CancellationToken cancellationToken) const
         return QString();
     }
 }
+
+} // namespace api
+} // namespace remote

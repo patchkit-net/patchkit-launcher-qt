@@ -13,6 +13,10 @@
 
 #include "iapi.h"
 
+namespace remote
+{
+namespace api
+{
 class Api : public IApi
 {
 public:
@@ -45,3 +49,6 @@ private:
     QNetworkAccessManager& m_dataSource;
     QString m_countryCode;
 };
+
+} // namespace api
+} // namespace remote
