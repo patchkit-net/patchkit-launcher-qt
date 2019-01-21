@@ -2,7 +2,10 @@
 #include "config.h"
 #include <QProcessEnvironment>
 
-using namespace remote::api;
+namespace remote
+{
+namespace api
+{
 
 ApiConnectionSettings::ApiConnectionSettings(QString mainApiUrl, QStringList cacheApiUrls)
     : mainApiUrl(mainApiUrl)
@@ -10,7 +13,7 @@ ApiConnectionSettings::ApiConnectionSettings(QString mainApiUrl, QStringList cac
 {
 }
 
-remote::api::ApiConnectionSettings remote::api::defaultConnectionSettings()
+ApiConnectionSettings defaultConnectionSettings()
 {
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     QString mainApiUrl = Config::mainApiUrl;
@@ -29,3 +32,6 @@ remote::api::ApiConnectionSettings remote::api::defaultConnectionSettings()
 
     return ApiConnectionSettings(mainApiUrl, cacheApiUrls);
 }
+
+} // namespace api
+} // namespace remote
