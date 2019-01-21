@@ -5,7 +5,6 @@
 #include "remote/api/api.h"
 #include "remote/downloading/downloadingabstractions.h"
 #include "remote/downloading/chunked/chunkedbuffer.h"
-#include "customexceptions.h"
 
 #include <QNetworkAccessManager>
 #include <QIODevice>
@@ -18,11 +17,6 @@ namespace chunked
 class Downloader
 {
 public:
-    struct Status
-    {
-        int chunksDownloaded;
-    };
-
     Downloader(
             const QString& appSecret, int versionId,
             const ContentSummary& contentSummary, QIODevice& target);
@@ -32,15 +26,13 @@ public:
             CancellationToken cancellationToken);
 
 private:
-    int tryDownloadChunked(QNetworkAccessManager& nam, const QUrl& url,
+    int tryDownloadChunked(QNetworkAccessManager& nam, ChunkedBuffer& chunkedBuffer, const QUrl& url,
                            CancellationToken cancellationToken);
 
     const ContentSummary& m_contentSummary;
     QString m_appSecret;
     int m_versionId;
     QIODevice& m_target;
-
-    Status m_status;
 };
 
 }

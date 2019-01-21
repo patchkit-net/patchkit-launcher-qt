@@ -16,7 +16,7 @@ win32 {
 }
 
 unix:!macx {
-    !contains(QMAKE_TARGET.arch, x86_64) {
+    !contains(QT_ARCH, x86_64) {
         debug:LIBS += $$PWD/lib/quazip/linux_i386/libquazipd.a -lz
         release:LIBS += $$PWD/lib/quazip/linux_i386/libquazip.a -lz
     } else {
