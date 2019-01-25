@@ -6,7 +6,12 @@
 #include <QNetworkReply>
 #include <QEventLoop>
 
-int downloading::abstractions::getReplyStatusCode(const QNetworkReply* reply)
+namespace downloading
+{
+namespace abstractions
+{
+
+int getReplyStatusCode(const QNetworkReply* reply)
 {
     if (!reply)
     {
@@ -25,7 +30,7 @@ int downloading::abstractions::getReplyStatusCode(const QNetworkReply* reply)
     return statusCodeValue;
 }
 
-bool downloading::abstractions::tryRangedDownload(
+bool tryRangedDownload(
         QNetworkAccessManager& nam, QUrl url,
         data::DownloadRange range, QIODevice& target,
         int timeout, CancellationToken cancellationToken)
@@ -46,7 +51,7 @@ bool downloading::abstractions::tryRangedDownload(
     return true;
 }
 
-bool downloading::abstractions::tryRangedDownload(
+bool tryRangedDownload(
         QNetworkAccessManager& nam, const QString& stringUrl,
         data::DownloadRange range, QIODevice& target,
         int timeout, CancellationToken cancellationToken)
@@ -56,7 +61,7 @@ bool downloading::abstractions::tryRangedDownload(
     return tryRangedDownload(nam, url, range, target, timeout, cancellationToken);
 }
 
-int downloading::abstractions::waitUntilReplyIsReady(
+int waitUntilReplyIsReady(
         QNetworkReply* reply,
         int timeout,
         CancellationToken cancellationToken)
@@ -66,7 +71,7 @@ int downloading::abstractions::waitUntilReplyIsReady(
     timer.setSingleShot(true);
 
     QObject::connect(&cancellationToken, &CancellationToken::cancelled,
-                     reply, &QNetworkReply::abort);
+                     &loop, &QEventLoop::quit);
 
     QObject::connect(reply, &QNetworkReply::readyRead, &loop, &QEventLoop::quit);
     QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
@@ -84,7 +89,34 @@ int downloading::abstractions::waitUntilReplyIsReady(
     return getReplyStatusCode(reply);
 }
 
-void downloading::abstractions::bufferReply(
+void waitUntilReplyIsFinished(
+        QNetworkReply* reply, int timeout, CancellationToken cancellationToken)
+{
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+
+    QObject::connect(&cancellationToken, &CancellationToken::cancelled,
+                     &loop, &QEventLoop::quit);
+
+    QObject::connect(reply, &QNetworkReply::finished,
+                     &loop, &QEventLoop::quit);
+
+    QObject::connect(&timer, &QTimer::timeout,
+                     &loop, &QEventLoop::quit);
+
+    timer.start(timeout);
+    loop.exec();
+
+    cancellationToken.throwIfCancelled();
+
+    if (timer.remainingTime() == 0)
+    {
+        throw Timeout("Waiting for reply to finish timed out");
+    }
+}
+
+void bufferReply(
         QNetworkReply* reply, QIODevice& target,
         int timeout, CancellationToken cancellationToken)
 {
@@ -126,7 +158,7 @@ void downloading::abstractions::bufferReply(
     target.close();
 }
 
-bool downloading::abstractions::tryDownload(
+bool tryDownload(
         QNetworkAccessManager &nam, const QString& stringUrl,
         QIODevice &target, int timeout, CancellationToken cancellationToken)
 {
@@ -135,7 +167,7 @@ bool downloading::abstractions::tryDownload(
     return tryDownload(nam, url, target, timeout, cancellationToken);
 }
 
-bool downloading::abstractions::tryDownload(
+bool tryDownload(
         QNetworkAccessManager& nam, QUrl url, QIODevice& target,
         int timeout, CancellationToken cancellationToken)
 {
@@ -152,13 +184,18 @@ bool downloading::abstractions::tryDownload(
         return false;
     }
 
+    waitUntilReplyIsFinished(reply, timeout, cancellationToken);
+
     auto data = reply->readAll();
     target.write(data);
 
     return true;
 }
 
-bool downloading::abstractions::doesStatusCodeIndicateSuccess(int statusCode)
+bool doesStatusCodeIndicateSuccess(int statusCode)
 {
     return statusCode >= 200 && statusCode < 300;
 }
+
+} // namespace abstractions
+} // namespace downloading

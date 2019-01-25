@@ -21,6 +21,11 @@ int waitUntilReplyIsReady(
         int timeout,
         CancellationToken cancellationToken);
 
+void waitUntilReplyIsFinished(
+        QNetworkReply* reply,
+        int timeout,
+        CancellationToken cancellationToken);
+
 void bufferReply(
         QNetworkReply* reply,
         QIODevice& target,
