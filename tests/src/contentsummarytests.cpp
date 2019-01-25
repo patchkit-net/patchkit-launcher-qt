@@ -16,6 +16,7 @@ const std::string contentSummaryData =
 R"(
 {
     "size": 1234,
+    "uncompressed_size": 4321,
     "encryption_method": "none",
     "compression_method": "zip",
     "hashing_method": "xxhash",
@@ -39,26 +40,18 @@ TEST_CASE("ContentSummary testing on a const data source.", "content_summary")
 {
     QString data = "";
 
-    ContentSummary summary;
-
-    CHECK(summary.isValid() == false);
-
     SECTION("Parsing from empty JSON doc, summary should be invalid")
     {
         QJsonDocument doc = QJsonDocument::fromJson(data.toUtf8());
 
-        summary = ContentSummary(doc);
-
-        REQUIRE(summary.isValid() == false);
+        REQUIRE_THROWS_AS(ContentSummary summary(doc), InvalidFormatException);
     }
 
     SECTION("Parsing from a valid JSON doc.")
     {
         QJsonDocument doc = QJsonDocument::fromJson(QByteArray::fromStdString(contentSummaryData));
 
-        summary = ContentSummary(doc);
-
-        REQUIRE(summary.isValid() == true);
+        ContentSummary summary = ContentSummary(doc);
 
         SECTION("Validating parsed data.")
         {
@@ -129,8 +122,8 @@ TEST_CASE("Generating content summary from data.", "[content_summary]")
     QByteArray data = "somerandomdata";
 
     ContentSummary contentSummary = ContentSummary::fromData(
-                data, compressedSize, uncompressedSize,
-                chunkSize, &HashingStrategy::xxHash);
+                data, chunkSize, compressedSize, uncompressedSize,
+                &HashingStrategy::xxHash);
 
     REQUIRE(contentSummary.getChunkSize() == chunkSize);
     REQUIRE(contentSummary.getChunksCount() == (data.size() / chunkSize));
