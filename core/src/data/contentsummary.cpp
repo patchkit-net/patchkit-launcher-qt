@@ -29,10 +29,11 @@ const QString ContentSummary::uncompressedSizeToken   = QString("uncompressed_si
 
 const FileData& FileData::dummy = FileData("dummy", 0);
 
-ContentSummary::ContentSummary()
-    : m_isValid(false)
+ContentSummary::InvalidFormat::InvalidFormat(const std::string &message)
+    : InvalidFormatException (std::string("ContentSummary: ") + message)
 {
 }
+
 
 ContentSummary::ContentSummary(int t_chunkSize, THash t_hashCode
                                , QString t_encryptionMethod
@@ -40,8 +41,7 @@ ContentSummary::ContentSummary(int t_chunkSize, THash t_hashCode
                                , QString t_hashingMethod, QVector<THash> t_chunkHashes
                                , QVector<FileData> t_filesSummary
                                , int t_size, int t_uncompressedSize)
-    : m_isValid(true)
-    , m_chunkSize(t_chunkSize)
+    : m_chunkSize(t_chunkSize)
     , m_uncompressedSize(t_uncompressedSize)
     , m_size(t_size)
     , m_hashCode(t_hashCode)
@@ -71,82 +71,66 @@ ContentSummary ContentSummary::fromData(
 }
 
 ContentSummary::ContentSummary(const QJsonDocument& t_document)
-    : m_isValid(false)
 {
     if (t_document.isEmpty() || t_document.isNull())
     {
-        return;
+        throw InvalidFormat("Document is empty");
     }
 
     if (!t_document.isObject())
     {
-        return;
+        throw InvalidFormat("Document is not an object");
     }
 
     QJsonObject doc_object = t_document.object();
 
     if (!doc_object.contains(encryptionMethodToken))
     {
-        return;
+        throw InvalidFormat("Document doesn't contain an encryption method");
     }
 
     m_encryptionMethod = doc_object[encryptionMethodToken].toString();
 
     if (!doc_object.contains(compressionMethodToken))
     {
-        return;
+        throw InvalidFormat("Document doesn't contain a compression method");
     }
 
     m_compressionMethod = doc_object[compressionMethodToken].toString();
 
     if (!doc_object.contains(hashingMethodToken))
     {
-        return;
+        throw InvalidFormat("Document doesn't contain a hashing method");
     }
 
     m_hashingMethod = doc_object[hashingMethodToken].toString();
 
     if (!doc_object.contains(hashCodeToken))
     {
-        return;
+        throw InvalidFormat("Document doesn't contain a hash code");
     }
 
     bool ok;
     m_hashCode = doc_object[hashCodeToken].toString().toUInt(&ok, 16);
+    if (!ok)
+    {
+        throw InvalidFormat("Hash code format is invalid");
+    }
 
     m_uncompressedSize = doc_object[uncompressedSizeToken].toInt(-1);
     if (m_uncompressedSize == -1)
     {
-        return;
+        throw InvalidFormat("Document doesn't contain uncompressed size");
     }
 
     m_size = doc_object[sizeToken].toInt(-1);
     if (m_size == -1)
     {
-        return;
+        throw InvalidFormat("Document doesn't contain size");
     }
 
-    if (!ok)
-    {
-        return;
-    }
-
-    if (!parseFiles(doc_object))
-    {
-        return;
-    }
-
-    if (!parseChunks(doc_object))
-    {
-        return;
-    }
-
-    m_isValid = true;
-}
-
-bool ContentSummary::isValid() const
-{
-    return m_isValid;
+    parseFiles(doc_object);
+    parseChunks(doc_object);
 }
 
 int ContentSummary::getChunkSize() const
@@ -160,6 +144,7 @@ THash ContentSummary::getChunkHash(int t_index, bool& t_outOfBounds) const
 
     if (t_outOfBounds)
     {
+        qCritical("Accessing a chunk hash out of bounds");
         return 0;
     }
     else
@@ -180,6 +165,7 @@ const FileData& ContentSummary::getFileData(int t_index, bool& t_outOfBounds) co
 
     if (t_outOfBounds)
     {
+        qCritical("Accessing file data out of bounds");
         return FileData::dummy;
     }
     else
@@ -273,11 +259,11 @@ QJsonDocument ContentSummary::toJson() const
     return QJsonDocument(root);
 }
 
-bool ContentSummary::parseFiles(QJsonObject& t_document)
+void ContentSummary::parseFiles(QJsonObject& t_document)
 {
     if (!t_document.contains(filesToken))
     {
-        return false;
+        throw InvalidFormat("Document doesn't contain files");
     }
 
     QJsonArray files = t_document[filesToken].toArray();
@@ -287,12 +273,12 @@ bool ContentSummary::parseFiles(QJsonObject& t_document)
     {
         if (!f.isObject())
         {
-            return false;
+            throw InvalidFormat("Failed to parse file - entry wasn't an object");
         }
 
         if (!(f.toObject().contains(hashToken) && f.toObject().contains(pathToken)))
         {
-            return false;
+            throw InvalidFormat("Failed to parse file - entry didn't contain hash or path");
         }
 
         QString path = f.toObject()[pathToken].toString();
@@ -300,47 +286,44 @@ bool ContentSummary::parseFiles(QJsonObject& t_document)
 
         if (!ok)
         {
-            return false;
+            throw InvalidFormat("Failed to parse file - entry hash was invalid");
         }
 
         m_filesSummary.push_back(FileData(path, hash));
-
     }
-
-    return true;
 }
 
-bool ContentSummary::parseChunks(QJsonObject& t_document)
+void ContentSummary::parseChunks(QJsonObject& t_document)
 {
     if (!t_document.contains(chunksToken))
     {
-        return false;
+        throw InvalidFormat("Document doesn't contain chunks");
     }
 
     QJsonObject chunks = t_document[chunksToken].toObject();
 
     if (chunks == QJsonObject())
     {
-        return false;
+        throw InvalidFormat("Chunks are empty");
     }
 
     int chunks_size = chunks[chunkSizeToken].toInt(-1);
 
     if (chunks_size == -1)
     {
-        return false;
+        throw InvalidFormat("Chunk size was missing or invalid");
     }
 
     if (!chunks.contains(hashesToken))
     {
-        return false;
+        throw InvalidFormat("Document doesn't contain hashes");
     }
 
     QJsonArray hashes = chunks[hashesToken].toArray();
 
     if (hashes == QJsonArray())
     {
-        return false;
+        throw InvalidFormat("Chunk hashes were invalid or empty");
     }
 
     QVector<THash> hash_list;
@@ -351,12 +334,10 @@ bool ContentSummary::parseChunks(QJsonObject& t_document)
         hash_list.push_back(item.toString().toUInt(&ok, 16));
         if (!ok)
         {
-            return false;
+            throw InvalidFormat("Failed to parse chunk - hash was missing or empty");
         }
     }
 
     m_chunkSize = chunks_size;
     m_chunkHashes = hash_list;
-
-    return true;
 }

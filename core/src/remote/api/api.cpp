@@ -44,7 +44,14 @@ QJsonDocument Api::get(const QString& path, CancellationToken cancellationToken)
     }
 
     auto data = buffer.data();
-    auto doc = QJsonDocument::fromJson(data);
+
+    QJsonParseError parseError;
+    auto doc = QJsonDocument::fromJson(data, &parseError);
+
+    if (parseError.error != QJsonParseError::NoError)
+    {
+        throw InvalidFormatException(parseError.errorString());
+    }
 
     return doc;
 }

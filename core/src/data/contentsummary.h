@@ -9,6 +9,7 @@
 #include <QVector>
 
 #include "../hashingstrategy.h"
+#include "customexceptions.h"
 
 class QJsonDocument;
 class QJsonObject;
@@ -55,6 +56,12 @@ public:
     const static QString sizeToken;
     const static QString uncompressedSizeToken;
 
+    class InvalidFormat : public InvalidFormatException
+    {
+    public:
+        InvalidFormat(const std::string& message);
+    };
+
     static ContentSummary fromData(
             const QByteArray& t_data,
             int t_chunkSize, int t_size,
@@ -64,7 +71,6 @@ public:
             QString t_hashingMethodName = "xxHash");
 
     ContentSummary(const QJsonDocument& t_document);
-    ContentSummary();
 
     ContentSummary(int t_chunkSize, THash t_hashCode, QString t_encryptionMethod
                    , QString t_compressionMethod, QString t_hashingMethod
@@ -97,7 +103,6 @@ public:
     const FileData& getFileData(int t_index)                        const;
     const FileData& getFileData(int t_index, bool& t_outOfBounds)   const;
 
-    bool            isValid()                const;
     int             getChunkSize()           const;
     THash           getHashCode()            const;
     int             getChunksCount()         const;
@@ -111,10 +116,9 @@ public:
     QJsonDocument   toJson() const;
 
 private:
-    bool parseFiles(QJsonObject& t_document);
-    bool parseChunks(QJsonObject& t_document);
+    void parseFiles(QJsonObject& t_document);
+    void parseChunks(QJsonObject& t_document);
 
-    bool                m_isValid;
     int                 m_chunkSize;
     int                 m_uncompressedSize;
     int                 m_size;
