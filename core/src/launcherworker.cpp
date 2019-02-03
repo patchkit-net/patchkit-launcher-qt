@@ -47,10 +47,26 @@ void LauncherWorker::run()
             qInfo() << "Launcher has been cancelled";
             return;
         }
+        catch (Api::ApiConnectionError& e)
+        {
+            qCritical() << e.what();
+            if (!m_launcherInterface.shouldRetry("Failed to connect to the patchkit api"))
+            {
+                return;
+            }
+        }
+        catch (InvalidFormatException& e)
+        {
+            qCritical() << e.what();
+            if (!m_launcherInterface.shouldRetry("Launcher failed to parse an api response"))
+            {
+                return;
+            }
+        }
         catch (std::exception& e)
         {
             qCritical() << e.what();
-            if (!m_launcherInterface.shouldRetry(e.what()))
+            if (!m_launcherInterface.shouldRetry("An unknown error has occured"))
             {
                 return;
             }

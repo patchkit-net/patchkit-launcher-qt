@@ -61,7 +61,7 @@ void MainWindow::shouldStartInOfflineMode(ILauncherInterface::OfflineModeAnswer&
 
 void MainWindow::shouldRetry(const QString& reason, bool& ans)
 {
-    QString message = QString("Error: %1\n Would you like to retry?").arg(reason);
+    QString message = QString("%1\nWould you like to retry?").arg(reason);
     int answer = QMessageBox::critical(nullptr, "Error",
         message,
         QMessageBox::Yes, QMessageBox::No);

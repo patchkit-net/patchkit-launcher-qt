@@ -71,17 +71,17 @@ QString Api::getPatcherSecret(const QString &appSecret, CancellationToken cancel
 
     if (!document.isObject())
     {
-        throw InvalidFormat("Expected document root to be object");
+        throw InvalidFormatException("Expected document root to be object");
     }
 
     if (!document.object().contains("patcher_secret"))
     {
-        throw InvalidFormat("Document did not contain the 'patcher_secret' field");
+        throw InvalidFormatException("Document did not contain the 'patcher_secret' field");
     }
 
     if (!document.object()["patcher_secret"].isString())
     {
-        throw InvalidFormat("patcher_secret was not a string");
+        throw InvalidFormatException("patcher_secret was not a string");
     }
 
     return document.object()["patcher_secret"].toString();
@@ -96,7 +96,7 @@ QString Api::getDefaultPatcherSecret(CancellationToken cancellationToken) const
 
     if (!document.isArray())
     {
-        throw InvalidFormat("Expected document root to be array");
+        throw InvalidFormatException("Expected document root to be array");
     }
 
     QJsonArray array = document.array();
@@ -116,7 +116,7 @@ QString Api::getDefaultPatcherSecret(CancellationToken cancellationToken) const
         }
     }
 
-    throw InvalidFormat("Failed to resolve patcher for platform " + platformString);
+    throw InvalidFormatException("Failed to resolve patcher for platform " + platformString);
 }
 
 int Api::getLatestAppVersion(const QString &appSecret, CancellationToken cancellationToken) const
@@ -129,12 +129,12 @@ int Api::getLatestAppVersion(const QString &appSecret, CancellationToken cancell
 
     if (!document.isObject())
     {
-        throw InvalidFormat("Expected document root to be object");
+        throw InvalidFormatException("Expected document root to be object");
     }
 
     if (!document.object().contains("id"))
     {
-        throw InvalidFormat("Document did not contain the 'id' field");
+        throw InvalidFormatException("Document did not contain the 'id' field");
     }
 
     if (!document.object()["id"].isDouble())
@@ -146,7 +146,7 @@ int Api::getLatestAppVersion(const QString &appSecret, CancellationToken cancell
 
     if (id == -1)
     {
-        throw InvalidFormat("Value of 'id' field was not an integer");
+        throw InvalidFormatException("Value of 'id' field was not an integer");
     }
 
     return id;
@@ -164,7 +164,7 @@ QStringList Api::getContentUrls(const QString& appSecret, int versionId, Cancell
 
     if (!document.isArray())
     {
-        throw InvalidFormat("Expected document root to be array");
+        throw InvalidFormatException("Expected document root to be array");
     }
 
     auto arr = document.array();
@@ -173,14 +173,14 @@ QStringList Api::getContentUrls(const QString& appSecret, int versionId, Cancell
     {
         if (!item.isObject())
         {
-            throw InvalidFormat("Expected array item to be object");
+            throw InvalidFormatException("Expected array item to be object");
         }
 
         QJsonObject obj = item.toObject();
 
         if (!obj.contains("url"))
         {
-            throw InvalidFormat("Did not contain the 'url' field");
+            throw InvalidFormatException("Did not contain the 'url' field");
         }
 
         contentUrls.push_back(obj["url"].toString());
