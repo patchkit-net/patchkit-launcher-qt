@@ -14,6 +14,8 @@ ChunkedBuffer::ChunkedBuffer(const QVector<THash> expectedHashes, int chunkSize,
     , m_target(target)
     , m_chunkIndex(0)
 {
+    qInfo() << "Initializing chunked buffer.";
+    qInfo() << "Chunk size: " << chunkSize;
 }
 
 ChunkedBuffer::~ChunkedBuffer()
@@ -39,6 +41,7 @@ qint64 ChunkedBuffer::readData(char* /*data*/, qint64 /*maxSize*/)
 
 qint64 ChunkedBuffer::writeData(const char* data, qint64 maxSize)
 {
+    qInfo() << "Receiving data...";
     qint64 oldSize = m_buffer.size();
     m_buffer += QByteArray(data, static_cast<int>(maxSize));
 
@@ -70,6 +73,7 @@ qint64 ChunkedBuffer::writeData(const char* data, qint64 maxSize)
 
 void ChunkedBuffer::processChunk(const QByteArray& chunk)
 {
+    qInfo() << "Processing chunk of size: " << chunk.size();
     auto chunkSize = chunk.size();
 
     if (chunkSize > m_chunkSize)
@@ -89,6 +93,8 @@ void ChunkedBuffer::processChunk(const QByteArray& chunk)
 
         throw ChunkVerificationException(msg);
     }
+
+    qInfo() << "Successfully processed chunk.";
 
     m_target.write(chunk);
     m_chunkIndex++;
