@@ -72,7 +72,6 @@ qint64 ChunkedBuffer::writeData(const char* data, qint64 maxSize)
 
 void ChunkedBuffer::processChunk(const QByteArray& chunk)
 {
-    qInfo() << "Processing chunk of size: " << chunk.size();
     auto chunkSize = chunk.size();
 
     if (chunkSize > m_chunkSize)
@@ -92,8 +91,6 @@ void ChunkedBuffer::processChunk(const QByteArray& chunk)
 
         throw ChunkVerificationException(msg);
     }
-
-    qInfo() << "Successfully processed chunk.";
 
     m_target.write(chunk);
     m_chunkIndex++;
