@@ -41,7 +41,6 @@ qint64 ChunkedBuffer::readData(char* /*data*/, qint64 /*maxSize*/)
 
 qint64 ChunkedBuffer::writeData(const char* data, qint64 maxSize)
 {
-    qInfo() << "Receiving data...";
     qint64 oldSize = m_buffer.size();
     m_buffer += QByteArray(data, static_cast<int>(maxSize));
 
