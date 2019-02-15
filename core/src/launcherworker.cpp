@@ -50,7 +50,7 @@ void LauncherWorker::run()
         catch (Api::ApiConnectionError& e)
         {
             qCritical() << e.what();
-            if (!m_launcherInterface.shouldRetry("Failed to connect to the patchkit api"))
+            if (!m_launcherInterface.shouldRetry("Failed to connect to the patchkit API."))
             {
                 return;
             }
@@ -58,7 +58,7 @@ void LauncherWorker::run()
         catch (InvalidFormatException& e)
         {
             qCritical() << e.what();
-            if (!m_launcherInterface.shouldRetry("Launcher failed to parse an api response"))
+            if (!m_launcherInterface.shouldRetry("Launcher failed to parse an API response."))
             {
                 return;
             }
@@ -66,7 +66,7 @@ void LauncherWorker::run()
         catch (std::exception& e)
         {
             qCritical() << e.what();
-            if (!m_launcherInterface.shouldRetry("An unknown error has occured"))
+            if (!m_launcherInterface.shouldRetry("An unknown error has occured."))
             {
                 return;
             }
