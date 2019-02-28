@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v1.4.0]
+### Added
+- Boost library linking
+- lock file implementation using `boost::interprocess::file_lock`
+- New patcher manifest file format processing.
+- Launcher will use the api-cache address from the `PK_LAUNCHER_API_CACHE_URL` environment variable if available.
+- The network-status symbol
+
+### Changed
+- Overhauled a significant portion of the codebase
+- Error messages now describe what happened
+- ContentSummary parsing - added fields size and uncompressed_size
+
+### Fixed
+- Launcher will now query api caches if the main api doesn't respond
+- The way the Launcher is reading installation info
+- A small issue which would cause the Launcher to lock itself from executing again if an error occured when trying to start the Patcher.
+- (1134) The invalid chunk error introduced in rc5
+- path handling bugs introduced in rc5
+- handling of PK_LAUNCHER_API_URL and PK_LAUNCHER_API_CACHE_URL environment variables
+
 ## [v1.3.0]
 ### Added
 - Creating the launcher_path file in the Patcher directory, the file contains a relative path to Launcher executable.
@@ -36,7 +57,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v1.0.3]
 ### Added
-- Addional api-cache server based on AWS Lambda
+- Additional api-cache server
 
 ## [v1.0.2]
 ### Added
