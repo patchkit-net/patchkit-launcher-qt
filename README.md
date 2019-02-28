@@ -30,12 +30,6 @@ If the Launcher has necessary write permissions.
 * Linux - log file is located next to executable.
 * Mac OSX - log file is located in `~/Library/Application Support/PatchKit/Apps`
 
-Otherwise:
-
-* Windows - `C:/Users/<USER>/AppData/Local/<APPNAME>`
-* Linux - `~/.local/share/<APPNAME>`
-* Mac OSX - unchanged
-
 ## Project structure
 
 The Launcher project is separated into 3 subprojects:
