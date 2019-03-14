@@ -50,7 +50,7 @@ void LauncherWorker::run()
         catch (Api::ApiConnectionError& e)
         {
             qCritical() << e.what();
-            if (!m_launcherInterface.shouldRetry("Failed to connect to the patchkit API."))
+            if (retryOrGoOffline("Failed to connect to the patchkit API."))
             {
                 return;
             }
@@ -58,7 +58,7 @@ void LauncherWorker::run()
         catch (InvalidFormatException& e)
         {
             qCritical() << e.what();
-            if (!m_launcherInterface.shouldRetry("Launcher failed to parse an API response."))
+            if (retryOrGoOffline("Launcher failed to parse an API response."))
             {
                 return;
             }
@@ -66,7 +66,7 @@ void LauncherWorker::run()
         catch (std::exception& e)
         {
             qCritical() << e.what();
-            if (!m_launcherInterface.shouldRetry("An unknown error has occured."))
+            if (retryOrGoOffline("An unknown error has occured."))
             {
                 return;
             }
@@ -90,6 +90,7 @@ bool LauncherWorker::runInternal()
     // Setup the patcher secret
     // NOTE: Why?
     data = setupPatcherSecret(data, api, m_cancellationTokenSource);
+    m_runningData.reset(new Data(data));
 
     // Locations
     Locations locations(data);
@@ -136,16 +137,57 @@ bool LauncherWorker::runInternal()
                 throw CancellationToken::CancelledException();
             }
         }
-        else
-        {
-        }
     }
 
     return false;
 }
 
+bool LauncherWorker::retryOrGoOffline(const QString& reason)
+{
+    qInfo("Asking the user to either retry or go into offline mode");
+    if (m_runningData)
+    {
+        Locations locations(*m_runningData);
+        LocalPatcherData localData(locations);
+
+        if (localData.isInstalled())
+        {
+            qInfo("Local patcher version is installed, asking if should go offline");
+            auto ans = m_launcherInterface.shoulStartInOfflineMode();
+            if (ans == ILauncherInterface::OfflineModeAnswer::YES)
+            {
+                qInfo("The user decided to go into offline mode");
+                localData.start(*m_runningData, data::NetworkStatus::Offline);
+                return true;
+            }
+            else if (ans == ILauncherInterface::OfflineModeAnswer::NO)
+            {
+                qInfo("The user decided not to into offline mode, launcher will retry");
+                return false;
+            }
+            else
+            {
+                qInfo("The user decided to cancel");
+                throw CancellationToken::CancelledException();
+            }
+        }
+    }
+
+    qInfo("Asking the user if Launcher should retry.");
+    if (!m_launcherInterface.shouldRetry(reason))
+    {
+        qInfo("The user decided to retry");
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
 LauncherWorker::LauncherWorker(ILauncherInterface& launcherInterface, QObject* parent)
     : QThread(parent)
+    , m_runningData(nullptr)
     , m_launcherInterface(launcherInterface)
 {
 }
