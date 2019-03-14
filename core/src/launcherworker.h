@@ -47,6 +47,7 @@ private slots:
 
 private:
     bool runInternal();
+    bool retryOrGoOffline(const QString& reason);
 
     Data resolveData();
     void update(
@@ -63,6 +64,7 @@ private:
 
     Data setupPatcherSecret(const Data& data, const Api& api, CancellationToken cancellationToken);
 
+    std::unique_ptr<Data> m_runningData;
     ILauncherInterface& m_launcherInterface;
     CancellationTokenSource m_cancellationTokenSource;
 };
