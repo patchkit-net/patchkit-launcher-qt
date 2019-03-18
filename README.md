@@ -20,15 +20,14 @@ Data file location depends on the platform:
 * Mac OSX - it's placed in the Resources directory of bundle.
 * Linux - it's placed next to the launcher executable.
 
-## Log file
+## Runtime locations
+For locations of files or directories produced by the Launcher refer to this table
 
-Launcher produces a log file during it's execution named `Launcher-log.txt`. It's location depends on the platform and permissions.
-
-If the Launcher has necessary write permissions.
-
-* Windows - log file is located next to executable.
-* Linux - log file is located next to executable.
-* Mac OSX - log file is located in `~/Library/Application Support/PatchKit/Apps`
+|File|Windows|Linux|OSX|
+|----|-------|-----|---|
+|Log file| next to the executable|next to the executable|`~/Library/Application Support/PatchKit/Apps`|
+| `patcher` directory|next to the executable| next to the executable|`~/Library/Application Support/PatchKit/Apps/<first 8 characters of app secret>`|
+|`app` directory |next to the executable| next to the executable|`~/Library/Application Support/PatchKit/Apps/<first 8 characters of app secret>`|
 
 ## Project structure
 
