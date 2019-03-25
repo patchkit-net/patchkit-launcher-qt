@@ -76,7 +76,6 @@ void LauncherWorker::run()
 
 bool LauncherWorker::runInternal()
 {
-    Logger::initialize();
     emit statusChanged("Initializing...");
     qInfo() << "Initializing";
 
@@ -100,6 +99,9 @@ bool LauncherWorker::runInternal()
     {
         throw InsufficientPermissions("Launcher needs the current directory to be writable");
     }
+
+    qInfo() << "Initialzing logger";
+    Logger::initialize();
 
     // Lock instance
     LockFile lockFile;
