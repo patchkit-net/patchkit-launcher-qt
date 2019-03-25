@@ -5,8 +5,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v1.5.0]
+### Added
+- Additional log entries
+
 ### Fixed
 - Fixed the offline mode bug
+- Windows permissions issues arising from premature logger initialization
 
 ## [v1.4.0]
 ### Added
