@@ -76,7 +76,6 @@ void LauncherWorker::run()
 
 bool LauncherWorker::runInternal()
 {
-    Logger::initialize();
     emit statusChanged("Initializing...");
     qInfo() << "Initializing";
 
@@ -100,6 +99,9 @@ bool LauncherWorker::runInternal()
     {
         throw InsufficientPermissions("Launcher needs the current directory to be writable");
     }
+
+    qInfo() << "Initialzing logger";
+    Logger::initialize();
 
     // Lock instance
     LockFile lockFile;
@@ -174,14 +176,14 @@ bool LauncherWorker::retryOrGoOffline(const QString& reason)
     }
 
     qInfo("Asking the user if Launcher should retry.");
-    if (!m_launcherInterface.shouldRetry(reason))
+    if (m_launcherInterface.shouldRetry(reason))
     {
         qInfo("The user decided to retry");
-        return false;
+        return true;
     }
     else
     {
-        return true;
+        return false;
     }
 }
 

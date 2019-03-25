@@ -33,15 +33,19 @@ bool downloading::chunked::Downloader::downloadChunked(
     {
         for (QString url : contentUrls)
         {
-            tryDownloadChunked(nam, chunkedBuffer, url, cancellationToken);
+            auto validChunksWritten = tryDownloadChunked(nam, chunkedBuffer, url, cancellationToken);
 
-            if (chunkedBuffer.validChunksWritten() == m_contentSummary.getChunksCount())
+            if (validChunksWritten == m_contentSummary.getChunksCount())
             {
+                qInfo() << "Succesfully downloaded " << validChunksWritten << " out of " << m_contentSummary.getChunksCount() << " chunks";
                 return true;
             }
+
+            qInfo() << "Written " << validChunksWritten << " chunks out of " << m_contentSummary.getChunksCount();
         }
     }
 
+    qWarning() << "Chunked download did not succeed";
     return false;
 }
 
