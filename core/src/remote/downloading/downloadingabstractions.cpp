@@ -43,6 +43,7 @@ bool tryRangedDownload(
 
     if (!doesStatusCodeIndicateSuccess(statusCode))
     {
+        qWarning() << "Status code " << statusCode << " does not indicate success, returning false.";
         return false;
     }
 

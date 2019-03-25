@@ -16,12 +16,13 @@ int main(int argc, char* argv[])
     qInfo("Starting the launcher.");
     QApplication application(argc, argv);
 
-    Logger::initialize();
-
+    qInfo("Setting apllication window parameters.");
     application.setQuitOnLastWindowClosed(false);
 
+    qInfo("Setting network proxy parameters");
     QNetworkProxyFactory::setUseSystemConfiguration(true);
 
+    qInfo("Starting Launcher thread");
     LauncherApp::Launcher launcher(application);
     launcher.start();
 
