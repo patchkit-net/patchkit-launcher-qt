@@ -5,8 +5,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v1.5.0]
+### Added
+- #1214 Additional log entries
+
 ### Fixed
-- Fixed the offline mode bug
+- #1205 Fixed the offline mode bug
+- #1215 Windows permissions issues arising from premature logger initialization
+- #1216 Would you like to retry dialog
 
 ## [v1.4.0]
 ### Added
