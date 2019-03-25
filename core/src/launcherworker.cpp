@@ -174,14 +174,14 @@ bool LauncherWorker::retryOrGoOffline(const QString& reason)
     }
 
     qInfo("Asking the user if Launcher should retry.");
-    if (!m_launcherInterface.shouldRetry(reason))
+    if (m_launcherInterface.shouldRetry(reason))
     {
         qInfo("The user decided to retry");
-        return false;
+        return true;
     }
     else
     {
-        return true;
+        return false;
     }
 }
 
