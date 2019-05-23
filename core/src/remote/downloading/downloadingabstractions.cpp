@@ -11,6 +11,34 @@ namespace downloading
 namespace abstractions
 {
 
+int waitForReplyStatusCode(
+        const QNetworkReply* reply,
+        int timeout,
+        CancellationToken cancellationToken)
+{
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+
+    QObject::connect(&cancellationToken, &CancellationToken::cancelled,
+                     &loop, &QEventLoop::quit);
+
+    QObject::connect(reply, &QNetworkReply::metaDataChanged, &loop, &QEventLoop::quit);
+    QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+
+    timer.start(timeout);
+    loop.exec();
+
+    cancellationToken.throwIfCancelled();
+
+    if (timer.remainingTime() == 0)
+    {
+        throw Timeout("Waiting for reply timed out");
+    }
+
+    return getReplyStatusCode(reply);
+}
+
 int getReplyStatusCode(const QNetworkReply* reply)
 {
     if (!reply)
@@ -39,7 +67,7 @@ bool tryRangedDownload(
     request.setRawHeader("Range", range.toString().toUtf8());
     QNetworkReply* reply = nam.get(request);
 
-    int statusCode = waitUntilReplyIsReady(reply, timeout, cancellationToken);
+    int statusCode = waitForReplyStatusCode(reply, timeout, cancellationToken);
 
     if (!doesStatusCodeIndicateSuccess(statusCode))
     {
@@ -177,7 +205,7 @@ bool tryDownload(
     QNetworkRequest request(url);
     QNetworkReply* reply = nam.get(request);
 
-    int statusCode = waitUntilReplyIsReady(reply, timeout, cancellationToken);
+    int statusCode = waitForReplyStatusCode(reply, timeout, cancellationToken);
 
     if (!doesStatusCodeIndicateSuccess(statusCode))
     {
@@ -195,7 +223,7 @@ bool tryDownload(
 
 bool doesStatusCodeIndicateSuccess(int statusCode)
 {
-    return statusCode >= 200 && statusCode < 300;
+    return statusCode != 204 && statusCode >= 200 && statusCode < 300;
 }
 
 } // namespace abstractions
