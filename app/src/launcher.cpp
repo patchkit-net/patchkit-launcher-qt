@@ -35,6 +35,10 @@ LauncherApp::Launcher::Launcher(const QApplication& t_application)
             &m_mainWindow, &MainWindow::shouldRetry,
             Qt::BlockingQueuedConnection);
 
+    connect(&m_interface, &Interface::showErrorMessage,
+            &m_mainWindow, &MainWindow::showErrorMessage,
+            Qt::BlockingQueuedConnection);
+
     // UI --> Thread
     connect(&m_mainWindow, &MainWindow::cancel, &m_worker, &LauncherWorker::cancel);
 

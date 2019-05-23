@@ -21,6 +21,7 @@ public slots:
 
     void shouldStartInOfflineMode(ILauncherInterface::OfflineModeAnswer& ans);
     void shouldRetry(const QString& reason, bool& ans);
+    void showErrorMessage(const QString& msg);
 
 signals:
     void cancel();
