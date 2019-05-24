@@ -8,6 +8,8 @@
 #include "locations.h"
 #include "customexceptions.h"
 
+#include <boost/interprocess/exceptions.hpp>
+
 LockFile::LockFile()
     : m_isLockFileLocal(false)
 {
@@ -31,15 +33,21 @@ LockFile::~LockFile()
 
 void LockFile::lock()
 {
-    if (!m_lockFile.try_lock())
-    {
-        qCritical("Failed to lock the lockfile.");
-        throw LockException("Failed to lock the lockfile.");
+    try {
+        if (!m_lockFile.try_lock())
+        {
+            qCritical("Failed to lock the lockfile.");
+            throw LockException("Failed to lock the lockfile.");
+        }
+        else
+        {
+            qInfo() << "Successful lock on " << QDir::cleanPath(Config::lockFileName);
+            m_isLockFileLocal = true;
+        }
     }
-    else
+    catch (boost::interprocess::interprocess_exception&)
     {
-        qInfo() << "Successful lock on " << QDir::cleanPath(Config::lockFileName);
-        m_isLockFileLocal = true;
+        throw LockException("Locking failed");
     }
 }
 
