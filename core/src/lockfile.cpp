@@ -20,7 +20,21 @@ LockFile::LockFile()
         lockFile.close();
     }
 
-    m_lockFile = boost::interprocess::file_lock(Config::lockFileName.toStdString().c_str());
+    // https://www.boost.org/doc/libs/1_70_0/doc/html/boost/interprocess/file_lock.html#idm46381346245600-bb
+    // According to boost documentation, instantiating the file_lock class
+    // may fail and throw interprocess_exception if the file does not exist or
+    // there are no system resources.
+    //
+    // For some reason it also seems to fail if the file is locked, hence the try/catch
+    try
+    {
+        m_lockFile = boost::interprocess::file_lock(Config::lockFileName.toStdString().c_str());
+    }
+    catch (boost::interprocess::interprocess_exception& e)
+    {
+        qCritical() << "Failed to instantiate lock file: " << e.what();
+        throw LockException("Failed to instantiate lock file");
+    }
 }
 
 LockFile::~LockFile()
@@ -33,7 +47,8 @@ LockFile::~LockFile()
 
 void LockFile::lock()
 {
-    try {
+    try
+    {
         if (!m_lockFile.try_lock())
         {
             qCritical("Failed to lock the lockfile.");
@@ -45,8 +60,9 @@ void LockFile::lock()
             m_isLockFileLocal = true;
         }
     }
-    catch (boost::interprocess::interprocess_exception&)
+    catch (boost::interprocess::interprocess_exception& e)
     {
+        qCritical() << "Locking failed: " << e.what();
         throw LockException("Locking failed");
     }
 }
