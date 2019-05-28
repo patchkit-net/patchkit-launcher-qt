@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - #1205 Fixed the offline mode bug
 - #1215 Windows permissions issues arising from premature logger initialization
 - #1216 Would you like to retry dialog
+- #1255 & #1256 lock file issues
+- #1223 Fixed long waiting times
 
 ## [v1.4.0]
 ### Added

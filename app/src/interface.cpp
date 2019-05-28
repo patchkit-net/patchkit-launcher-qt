@@ -32,3 +32,10 @@ bool Interface::shouldRetry(const QString& reason)
     return ans;
 }
 
+void Interface::displayErrorMessage(const QString& msg)
+{
+    qInfo() << "Displaying error message";
+
+    emit showErrorMessage(msg);
+}
+

@@ -59,6 +59,11 @@ void MainWindow::shouldStartInOfflineMode(ILauncherInterface::OfflineModeAnswer&
     }
 }
 
+void MainWindow::showErrorMessage(const QString& msg)
+{
+    QMessageBox::critical(nullptr, "Error", msg);
+}
+
 void MainWindow::shouldRetry(const QString& reason, bool& ans)
 {
     QString message = QString("%1\nWould you like to retry?").arg(reason);

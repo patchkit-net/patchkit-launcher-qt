@@ -18,3 +18,5 @@ x86/
 *.userosscache
 *.sln.docstates
 *.vcxproj.filters
+
+.vscode/

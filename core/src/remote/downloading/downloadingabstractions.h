@@ -12,6 +12,8 @@ namespace downloading
 namespace abstractions
 {
 
+int waitForReplyStatusCode(const QNetworkReply* reply);
+
 int getReplyStatusCode(const QNetworkReply* reply);
 
 bool doesStatusCodeIndicateSuccess(int statusCode);

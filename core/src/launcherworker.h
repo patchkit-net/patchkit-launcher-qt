@@ -18,17 +18,18 @@
 
 using remote::api::Api;
 
-/* TODO:
- * The declaration of this class is relatively fine but it's underlying logic
- * is a sprawling mess of almost 300 lines.
- *
- * Splitting the implementation into separate source files would solve this problem.
- */
 class LauncherWorker : public QThread
 {
     Q_OBJECT
 
     void run() override;
+
+    enum class Action
+    {
+        RETRY,
+        GO_OFFLINE,
+        QUIT,
+    };
 
 public:
     CUSTOM_RUNTIME_ERROR(InsufficientPermissions)
@@ -47,7 +48,10 @@ private slots:
 
 private:
     bool runInternal();
-    bool retryOrGoOffline(const QString& reason);
+    Action retryOrGoOffline(const QString& reason);
+    bool tryStartOffline();
+
+    void tryStartOfflineOrDisplayError(const QString& msg);
 
     Data resolveData();
     void update(

@@ -47,28 +47,52 @@ void LauncherWorker::run()
             qInfo() << "Launcher has been cancelled";
             return;
         }
+        catch (LockFile::LockException&)
+        {
+            qWarning() << "Another instance of launcher or patcher is running.";
+            this->m_launcherInterface.displayErrorMessage("Another instance of launcher or patcher is running.");
+            return;
+        }
         catch (Api::ApiConnectionError& e)
         {
             qCritical() << e.what();
-            if (retryOrGoOffline("Failed to connect to the patchkit API."))
+            switch (retryOrGoOffline("Failed to connect to the patchkit API."))
             {
-                return;
+                case Action::QUIT:
+                    return;
+                case Action::RETRY:
+                    break;
+                case Action::GO_OFFLINE:
+                    tryStartOfflineOrDisplayError("Failed to start patcher in offline mode");
+                    return;
             }
         }
         catch (InvalidFormatException& e)
         {
             qCritical() << e.what();
-            if (retryOrGoOffline("Launcher failed to parse an API response."))
+            switch (retryOrGoOffline("Launcher failed to parse an API response."))
             {
-                return;
+                case Action::QUIT:
+                    return;
+                case Action::RETRY:
+                    break;
+                case Action::GO_OFFLINE:
+                    tryStartOfflineOrDisplayError("Failed to start patcher in offline mode");
+                    return;
             }
         }
         catch (std::exception& e)
         {
             qCritical() << e.what();
-            if (retryOrGoOffline("An unknown error has occured."))
+            switch (retryOrGoOffline("An unknown error has occured."))
             {
-                return;
+                case Action::QUIT:
+                    return;
+                case Action::RETRY:
+                    break;
+                case Action::GO_OFFLINE:
+                    tryStartOfflineOrDisplayError("Failed to start patcher in offline mode");
+                    return;
             }
         }
     }
@@ -144,7 +168,41 @@ bool LauncherWorker::runInternal()
     return false;
 }
 
-bool LauncherWorker::retryOrGoOffline(const QString& reason)
+bool LauncherWorker::tryStartOffline()
+{
+    if (m_runningData)
+    {
+        try
+        {
+            Locations locations(*m_runningData);
+            LocalPatcherData localData(locations);
+            localData.start(*m_runningData, data::NetworkStatus::Offline);
+            return true;
+        }
+        catch (CancellationToken::CancelledException)
+        {
+            throw;
+        }
+        catch (std::exception&)
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
+}
+
+void LauncherWorker::tryStartOfflineOrDisplayError(const QString& msg)
+{
+    if (!tryStartOffline())
+    {
+        m_launcherInterface.displayErrorMessage(msg);
+    }
+}
+
+LauncherWorker::Action LauncherWorker::retryOrGoOffline(const QString& reason)
 {
     qInfo("Asking the user to either retry or go into offline mode");
     if (m_runningData)
@@ -159,18 +217,17 @@ bool LauncherWorker::retryOrGoOffline(const QString& reason)
             if (ans == ILauncherInterface::OfflineModeAnswer::YES)
             {
                 qInfo("The user decided to go into offline mode");
-                localData.start(*m_runningData, data::NetworkStatus::Offline);
-                return true;
+                return Action::GO_OFFLINE;
             }
             else if (ans == ILauncherInterface::OfflineModeAnswer::NO)
             {
                 qInfo("The user decided not to into offline mode, launcher will retry");
-                return false;
+                return Action::RETRY;
             }
             else
             {
                 qInfo("The user decided to cancel");
-                throw CancellationToken::CancelledException();
+                return Action::QUIT;
             }
         }
     }
@@ -179,11 +236,11 @@ bool LauncherWorker::retryOrGoOffline(const QString& reason)
     if (m_launcherInterface.shouldRetry(reason))
     {
         qInfo("The user decided to retry");
-        return false;
+        return Action::RETRY;
     }
     else
     {
-        return true;
+        return Action::QUIT;
     }
 }
 
