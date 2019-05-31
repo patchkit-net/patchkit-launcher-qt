@@ -37,7 +37,7 @@ const int Config::downloadTimeoutMsec      = 5000;
 const QString Config::mainApiUrl = "https://api2.patchkit.net";
 
 const QStringList Config::cacheApiUrls = {
-    "https://api-cache.patchkit.net",
+    "https://api-cache.patchkit.net"
 };
 
 const QString Config::apiUrlOverrideEnvironmentVariableName = "PK_LAUNCHER_API_URL";
