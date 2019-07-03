@@ -35,6 +35,7 @@ bool tryRangedDownload(
         data::DownloadRange range, QIODevice& target,
         int timeout, CancellationToken cancellationToken)
 {
+    url.setScheme("https");
     QNetworkRequest request(url);
     request.setRawHeader("Range", range.toString().toUtf8());
     QNetworkReply* reply = nam.get(request);
@@ -171,6 +172,7 @@ bool tryDownload(
         QNetworkAccessManager& nam, QUrl url, QIODevice& target,
         int timeout, CancellationToken cancellationToken)
 {
+    url.setScheme("https");
     qInfo() << "Downloading from " << url.toString() << " with timeout " << timeout;
 
     QNetworkRequest request(url);
