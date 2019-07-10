@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [unreleased]
+### Added
+- #1080 Checking for write errors caused by not enough disk space
+
 ### Changed
 - IO methods in ioutils now take cancellation tokens
 

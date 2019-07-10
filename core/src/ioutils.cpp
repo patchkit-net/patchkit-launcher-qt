@@ -116,7 +116,11 @@ void IOUtils::copyIODeviceData(QIODevice& t_readDevice, QIODevice& t_writeDevice
         qint64 readSize = t_readDevice.read(buffer, bufferSize);
         if (readSize > 0)
         {
-            t_writeDevice.write(buffer, readSize);
+            qint64 ret = t_writeDevice.write(buffer, readSize);
+            if (ret == -1) {
+                qCritical() << "Copying IO device data failed: " << t_writeDevice.errorString();
+                throw FatalException(t_writeDevice.errorString());
+            }
         }
     }
 }
