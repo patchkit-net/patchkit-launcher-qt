@@ -8,6 +8,7 @@
 #include <QtMath>
 #include <QSettings>
 #include <QFile>
+#include <QProcessEnvironment>
 
 #include "cancellation/cancellationtoken.h"
 #include "data/launchersettings.h"
@@ -297,9 +298,15 @@ void LauncherWorker::update(
         const Api& api, QNetworkAccessManager& nam,
         CancellationToken cancellationToken)
 {
+    QProcessEnvironment env;
     LocalPatcherData localData(locations);
 
     int latestAppVersion = api.getLatestAppVersion(data.patcherSecret(), cancellationToken);
+    if (env.contains(Config::appVersionIdOverrideEnvVar))
+    {
+        QString envVersionId = env.value(Config::appVersionIdOverrideEnvVar, "");
+        latestAppVersion = envVersionId.toInt();
+    }
 
     if (localData.isInstalledSpecific(latestAppVersion, data))
     {
