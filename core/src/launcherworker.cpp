@@ -8,6 +8,7 @@
 #include <QtMath>
 #include <QSettings>
 #include <QFile>
+#include <QGuiApplication>
 
 #include "cancellation/cancellationtoken.h"
 #include "data/launchersettings.h"
@@ -307,6 +308,15 @@ void LauncherWorker::update(
         return;
     }
 
+    AppInfo appInfo = api.getAppInfo(data.applicationSecret(), cancellationToken);
+    if (!appInfo.displayName.isEmpty())
+    {
+        auto app = dynamic_cast<QGuiApplication*>(QGuiApplication::instance());
+        if (app)
+        {
+            app->setApplicationDisplayName(appInfo.displayName);
+        }
+    }
     ContentSummary contentSummary = api.getContentSummary(data.patcherSecret(), latestAppVersion, cancellationToken);
 
 

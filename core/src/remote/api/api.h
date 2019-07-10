@@ -9,6 +9,7 @@
 
 #include "cancellation/cancellationtoken.h"
 #include "data/contentsummary.h"
+#include "data/appinfo.h"
 #include "customexceptions.h"
 
 #include "iapi.h"
@@ -40,6 +41,9 @@ public:
 
     virtual QStringList getContentUrls(
             const QString& appSecret, int versionId, CancellationToken cancellationToken) const override;
+
+    virtual AppInfo getAppInfo(
+            const QString& appSecret, CancellationToken cancellationToken) const override;
 
 private:
     QJsonDocument get(const QString& path, CancellationToken cancellationToken) const;
