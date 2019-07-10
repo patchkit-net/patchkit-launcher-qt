@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [unreleased]
 ### Changed
 - IO methods in ioutils now take cancellation tokens
+
+### Fixed
+- double inclusion of networkstatus in core.pro
+
 ## [v1.5.0.0]
 ### Added
 - #1214 Additional log entries

@@ -32,7 +32,6 @@ SOURCES += \
     $$PWD/src/data/launchersettings.cpp \
     $$PWD/src/data/secretencoding.cpp \
     $$PWD/src/data/downloadrange.cpp \
-    $$PWD/src/data/networkstatus.cpp \
     $$PWD/src/remote/downloading/chunked/downloader.cpp \
     $$PWD/src/remote/downloading/progressdevice.cpp \
     $$PWD/src/remote/downloading/apiconnectionstrategy.cpp
