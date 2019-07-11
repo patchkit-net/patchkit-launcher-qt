@@ -81,6 +81,12 @@ void LauncherWorker::run()
                     return;
             }
         }
+        catch (FatalException& e)
+        {
+            qCritical() << "A fatal exception has occured: " << e.what();
+            m_launcherInterface.displayErrorMessage(e.what());
+            return;
+        }
         catch (std::exception& e)
         {
             qCritical() << e.what();

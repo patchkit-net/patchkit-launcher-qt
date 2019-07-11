@@ -29,7 +29,7 @@ void Utilities::tryRestartWithHigherPermissions()
     ShellExecute(nullptr, L"runas", Locations::applicationFilePath().toStdWString().c_str(), nullptr, nullptr, SW_SHOWNORMAL);
     throw CancellationToken::CancelledException();
 #else
-    throw FatalException("Cannot write in current directory.");
+    throw FatalException("Cannot write in current directory");
 #endif
 }
 
