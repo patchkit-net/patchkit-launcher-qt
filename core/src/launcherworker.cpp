@@ -106,6 +106,17 @@ bool LauncherWorker::runInternal()
     // Initialize
     Data data = resolveData();
 
+    // NOTE: Locations must be initialized before the logger and lock file
+    // because it sets the current working directory
+    Locations locations(data.applicationSecret());
+
+    qInfo() << "Initialzing logger";
+    Logger::initialize();
+
+    // Lock instance
+    LockFile lockFile;
+    lockFile.lock();
+
     // Initialize components
     QNetworkAccessManager nam;
     Api api(nam);
@@ -115,21 +126,12 @@ bool LauncherWorker::runInternal()
     data = setupPatcherSecret(data, api, m_cancellationTokenSource);
     m_runningData.reset(new Data(data));
 
-    // Locations
-    Locations locations(data);
 
     // Check permissions
     if (!Utilities::isDirectoryWritable(locations.currentDirPath()))
     {
         throw InsufficientPermissions("Launcher needs the current directory to be writable");
     }
-
-    qInfo() << "Initialzing logger";
-    Logger::initialize();
-
-    // Lock instance
-    LockFile lockFile;
-    lockFile.lock();
 
     LocalPatcherData localData(locations);
 
@@ -174,7 +176,7 @@ bool LauncherWorker::tryStartOffline()
     {
         try
         {
-            Locations locations(*m_runningData);
+            Locations locations(m_runningData->applicationSecret());
             LocalPatcherData localData(locations);
             localData.start(*m_runningData, data::NetworkStatus::Offline);
             return true;
@@ -207,7 +209,7 @@ LauncherWorker::Action LauncherWorker::retryOrGoOffline(const QString& reason)
     qInfo("Asking the user to either retry or go into offline mode");
     if (m_runningData)
     {
-        Locations locations(*m_runningData);
+        Locations locations(m_runningData->applicationSecret());
         LocalPatcherData localData(locations);
 
         if (localData.isInstalled())

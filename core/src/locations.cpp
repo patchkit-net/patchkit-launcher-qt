@@ -31,13 +31,13 @@ QString osxWritableDirectory()
     return appsDirectory.path();
 }
 
-Locations::Locations(const Data& data)
+Locations::Locations(const QString& applicationSecret)
 {
     qDebug("Initializing path.");
 
 #if defined(Q_OS_OSX)
 
-    QDir appPath = QDir(osxWritableDirectory() + QDir::separator() + data.applicationSecret().mid(0, 8));
+    QDir appPath = QDir(osxWritableDirectory() + QDir::separator() + applicationSecret.mid(0, 8));
 
     if (!appPath.exists())
     {
