@@ -10,7 +10,6 @@
 
 #include <config.h>
 #include <logger.h>
-#include <locations.h>
 #include <lockfile.h>
 
 LauncherApp::Launcher::Launcher(const QApplication& t_application)

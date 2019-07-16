@@ -9,6 +9,8 @@ namespace locations
 {
     QString workingDirectory(const QString& appSecret);
     QString locationFile(const QString& workingDir);
+    QString dataFilePath();
+    QString logFilePath(const QString& workingDir);
     QString launcherExecutable();
 
     class Launcher

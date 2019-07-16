@@ -15,7 +15,6 @@ SOURCES += \
     $$PWD/src/ioutils.cpp \
     $$PWD/src/localpatcherdata.cpp \
     $$PWD/src/launcherworker.cpp \
-    $$PWD/src/locations.cpp \
     $$PWD/src/executableresources.cpp \
     $$PWD/src/lockfile.cpp \
     $$PWD/src/xxhash.c \
@@ -39,13 +38,11 @@ SOURCES += \
     $$PWD/src/locations/application.cpp \
     $$PWD/src/locations/launcher.cpp \
     $$PWD/src/locations/patcher.cpp \
-    $$PWD/src/utils/locationutils.cpp \
-    src/locations/installation.cpp
+    $$PWD/src/locations/installation.cpp
 
 HEADERS += \
     $$PWD/src/xxhash.h \
     $$PWD/src/tempdir.h \
-    $$PWD/src/locations.h \
     $$PWD/src/ioutils.h \
     $$PWD/src/launcherworker.h \
     $$PWD/src/logger.h \
@@ -79,8 +76,7 @@ HEADERS += \
     $$PWD/src/locations/application.h \
     $$PWD/src/locations/launcher.h \
     $$PWD/src/locations/patcher.h \
-    $$PWD/src/utils/locationutils.h \
-    src/locations/installation.h
+    $$PWD/src/locations/installation.h
 
 include($$PWD/../default.pri)
 include($$PWD/../version.pri)

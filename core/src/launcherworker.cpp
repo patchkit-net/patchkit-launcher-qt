@@ -15,7 +15,6 @@
 #include "remote/downloading/chunked/downloader.h"
 #include "remote/downloading/progressdevice.h"
 #include "logger.h"
-#include "locations.h"
 #include "customexceptions.h"
 #include "config.h"
 #include "lockfile.h"
@@ -153,7 +152,7 @@ bool LauncherWorker::runInternal()
     }
 
     qInfo() << "Initialzing logger";
-    Logger::initialize();
+    Logger::initialize(workingDir);
 
     // Lock instance
     LockFile lockFile(locations.lockFile());
@@ -313,7 +312,7 @@ Data LauncherWorker::resolveData()
     try
     {
         qInfo("Loading data from resource.");
-        return Data::loadFromResources(Locations::applicationFilePath(),
+        return Data::loadFromResources(locations::launcherExecutable(),
                                             Config::dataResourceId,
                                             Config::dataResourceTypeId);
     }
@@ -325,7 +324,7 @@ Data LauncherWorker::resolveData()
 #endif
 
     qInfo("Loading data from file.");
-    return Data::loadFromFile(Locations::dataFilePath());
+    return Data::loadFromFile(locations::dataFilePath());
 }
 
 void LauncherWorker::update(

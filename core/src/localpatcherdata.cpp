@@ -14,7 +14,6 @@
 
 #include "config.h"
 #include "logger.h"
-#include "locations.h"
 #include "ioutils.h"
 #include "lockfile.h"
 #include "customexceptions.h"

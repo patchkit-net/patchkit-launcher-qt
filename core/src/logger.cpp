@@ -9,10 +9,12 @@
 #include <QDateTime>
 #include <QTextStream>
 #include <QFileInfo>
-#include "locations.h"
+#include "locations/launcher.h"
 
-Logger::Logger()
-    : m_logFile(Locations::logFilePath())
+std::shared_ptr<Logger> Logger::instance = std::make_shared<Logger>(nullptr);
+
+Logger::Logger(const QString& workingDir)
+    : m_logFile(locations::logFilePath(workingDir))
     , m_logFileStream(&m_logFile)
     , m_stdoutStream(stdout)
     , m_isSilent(false)
@@ -30,16 +32,9 @@ Logger::Logger()
                     << flush;
 }
 
-Logger &Logger::getInstance()
+void Logger::initialize(const QString& workingDir)
 {
-    static Logger instance;
-
-    return instance;
-}
-
-void Logger::initialize()
-{
-    getInstance();
+    instance = std::make_shared<Logger>(workingDir);
 }
 
 void Logger::setSilent(bool t_silent)
@@ -60,6 +55,11 @@ QString Logger::adjustSecretForLog(const QString& t_secret)
 QString Logger::adjustSecretForLog(const char* t_secret)
 {
     return adjustSecretForLog(QString(t_secret));
+}
+
+Logger& Logger::getInstance()
+{
+    return *instance;
 }
 
 const char* Logger::resolveMessageType(QtMsgType t_type)
@@ -94,8 +94,10 @@ const char* Logger::resolveMessageType(QtMsgType t_type)
 
 void Logger::logHandler(QtMsgType t_type, const QMessageLogContext& t_context, const QString& t_msg)
 {
-    if (getInstance().m_isSilent)
+    if (!instance || instance->m_isSilent)
+    {
         return;
+    }
 
     QString txt = t_msg;
     txt.prepend(" - ");
@@ -113,6 +115,6 @@ void Logger::logHandler(QtMsgType t_type, const QMessageLogContext& t_context, c
     txt.append(")");
 #endif
 
-    getInstance().m_stdoutStream << txt << endl << flush;
-    getInstance().m_logFileStream << txt << endl << flush;
+    instance->m_stdoutStream << txt << endl << flush;
+    instance->m_logFileStream << txt << endl << flush;
 }

@@ -102,3 +102,13 @@ QString locations::locationFile(const QString& workingDir)
 {
     return QDir(workingDir).filePath(Config::locationFileName);
 }
+
+QString locations::dataFilePath()
+{
+    return QDir(QApplication::applicationDirPath()).filePath(Config::dataFileName);
+}
+
+QString locations::logFilePath(const QString& workingDir)
+{
+    return QDir(workingDir).filePath(Config::logFileName);
+}
