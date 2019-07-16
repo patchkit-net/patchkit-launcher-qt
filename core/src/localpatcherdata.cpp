@@ -82,7 +82,7 @@ bool LocalPatcherData::isInstalledSpecific(int t_version, const Data& t_data)
     return false;
 }
 
-InstallationInfo LocalPatcherData::install(const QString& t_downloadedPath, const Data& t_data, int t_version, ILauncherInterface& interface, CancellationToken cancellationToken)
+InstallationInfo LocalPatcherData::install(const QString& t_downloadedPath, const Data& t_data, int t_version, CancellationToken cancellationToken)
 {
     qInfo() << "Installing patcher (version "
             << t_version
@@ -97,10 +97,10 @@ InstallationInfo LocalPatcherData::install(const QString& t_downloadedPath, cons
 
     QFile downloadedFile(t_downloadedPath);
 
-    return install(downloadedFile, t_data, t_version, interface, cancellationToken);
+    return install(downloadedFile, t_data, t_version, cancellationToken);
 }
 
-InstallationInfo LocalPatcherData::install(QIODevice& source, const Data& data, int version, ILauncherInterface& interface, CancellationToken cancellationToken)
+InstallationInfo LocalPatcherData::install(QIODevice& source, const Data& data, int version, CancellationToken cancellationToken)
 {
     uninstall();
     const auto& locations = m_locations;

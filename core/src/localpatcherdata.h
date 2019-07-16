@@ -31,10 +31,10 @@ public:
     bool isInstalledSpecific(int t_version, const Data& t_data);
 
     InstallationInfo install(
-            const QString& t_downloadedPath, const Data& t_data, int t_version, ILauncherInterface& interface, CancellationToken cancellationToken);
+            const QString& t_downloadedPath, const Data& t_data, int t_version, CancellationToken cancellationToken);
 
     InstallationInfo install(
-            QIODevice& source, const Data& data, int version, ILauncherInterface& interface, CancellationToken cancellationToken);
+            QIODevice& source, const Data& data, int version, CancellationToken cancellationToken);
 
     void start(const Data& t_data, data::NetworkStatus networkStatus);
 

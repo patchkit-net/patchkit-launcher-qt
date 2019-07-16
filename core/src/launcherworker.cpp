@@ -365,7 +365,7 @@ void LauncherWorker::update(
     downloadData.open(QIODevice::ReadOnly);
 
     emit statusChanged("Installing...");
-    localData.install(downloadData, data, latestAppVersion, m_launcherInterface, cancellationToken);
+    localData.install(downloadData, data, latestAppVersion, cancellationToken);
 }
 
 bool LauncherWorker::tryUpdate(
