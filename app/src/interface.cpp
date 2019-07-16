@@ -39,3 +39,10 @@ void Interface::displayErrorMessage(const QString& msg)
     emit showErrorMessage(msg);
 }
 
+void Interface::selectInstallationLocation(QString& location, bool& shouldCancel)
+{
+    qInfo() << "Selecting installation location";
+
+    emit selectInstallationLocationSignal(location, shouldCancel);
+}
+

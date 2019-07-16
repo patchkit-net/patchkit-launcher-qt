@@ -8,6 +8,7 @@
 #include <QtMath>
 #include <QSettings>
 #include <QFile>
+#include <QDir>
 
 #include "cancellation/cancellationtoken.h"
 #include "data/launchersettings.h"
@@ -19,6 +20,8 @@
 #include "config.h"
 #include "lockfile.h"
 #include "utilities.h"
+#include "locations/launcher.h"
+#include "locations/installation.h"
 
 void LauncherWorker::run()
 {
@@ -70,7 +73,7 @@ void LauncherWorker::run()
         catch (InvalidFormatException& e)
         {
             qCritical() << e.what();
-            switch (retryOrGoOffline("Launcher failed to parse an API response."))
+            switch (retryOrGoOffline("Launcher encountered an invalid format."))
             {
                 case Action::QUIT:
                     return;
@@ -110,16 +113,41 @@ bool LauncherWorker::runInternal()
     QNetworkAccessManager nam;
     Api api(nam);
 
+    QString workingDir = locations::workingDirectory(data.applicationSecret());
+
     // Setup the patcher secret
     // NOTE: Why?
     data = setupPatcherSecret(data, api, m_cancellationTokenSource);
     m_runningData.reset(new Data(data));
 
-    // Locations
-    Locations locations(data);
+    m_runningData.operator bool();
+
+    locations::Installation installation;
+    if (locations::Installation::canLoad(workingDir))
+    {
+        installation = locations::Installation::load(workingDir);
+    }
+    else
+    {
+        QString location = workingDir;
+        bool shouldCancel;
+        m_launcherInterface.selectInstallationLocation(location, shouldCancel);
+        if (shouldCancel)
+        {
+            CancellationToken::cancelHere();
+        }
+        installation = locations::Installation(
+                    QDir(location).filePath(Config::patcherDirectoryName),
+                    QDir(location).filePath(Config::applicationDirectoryName));
+
+        installation.save(workingDir);
+    }
+
+    locations::Launcher locations = locations::Launcher::initalize(
+                data.applicationSecret(), installation);
 
     // Check permissions
-    if (!Utilities::isDirectoryWritable(locations.currentDirPath()))
+    if (!Utilities::isDirectoryWritable(locations.directory()))
     {
         throw InsufficientPermissions("Launcher needs the current directory to be writable");
     }
@@ -128,7 +156,7 @@ bool LauncherWorker::runInternal()
     Logger::initialize();
 
     // Lock instance
-    LockFile lockFile;
+    LockFile lockFile(locations.lockFile());
     lockFile.lock();
 
     LocalPatcherData localData(locations);
@@ -174,10 +202,15 @@ bool LauncherWorker::tryStartOffline()
     {
         try
         {
-            Locations locations(*m_runningData);
-            LocalPatcherData localData(locations);
-            localData.start(*m_runningData, data::NetworkStatus::Offline);
-            return true;
+            auto locations = this->tryLoadLocations();
+            if (locations)
+            {
+                LocalPatcherData localData(*locations);
+                localData.start(*m_runningData, data::NetworkStatus::Offline);
+                return true;
+            }
+
+            return false;
         }
         catch (CancellationToken::CancelledException)
         {
@@ -207,27 +240,30 @@ LauncherWorker::Action LauncherWorker::retryOrGoOffline(const QString& reason)
     qInfo("Asking the user to either retry or go into offline mode");
     if (m_runningData)
     {
-        Locations locations(*m_runningData);
-        LocalPatcherData localData(locations);
-
-        if (localData.isInstalled())
+        auto locations = this->tryLoadLocations();
+        if (locations)
         {
-            qInfo("Local patcher version is installed, asking if should go offline");
-            auto ans = m_launcherInterface.shoulStartInOfflineMode();
-            if (ans == ILauncherInterface::OfflineModeAnswer::YES)
+            LocalPatcherData localData(*locations);
+
+            if (localData.isInstalled())
             {
-                qInfo("The user decided to go into offline mode");
-                return Action::GO_OFFLINE;
-            }
-            else if (ans == ILauncherInterface::OfflineModeAnswer::NO)
-            {
-                qInfo("The user decided not to into offline mode, launcher will retry");
-                return Action::RETRY;
-            }
-            else
-            {
-                qInfo("The user decided to cancel");
-                return Action::QUIT;
+                qInfo("Local patcher version is installed, asking if should go offline");
+                auto ans = m_launcherInterface.shoulStartInOfflineMode();
+                if (ans == ILauncherInterface::OfflineModeAnswer::YES)
+                {
+                    qInfo("The user decided to go into offline mode");
+                    return Action::GO_OFFLINE;
+                }
+                else if (ans == ILauncherInterface::OfflineModeAnswer::NO)
+                {
+                    qInfo("The user decided not to into offline mode, launcher will retry");
+                    return Action::RETRY;
+                }
+                else
+                {
+                    qInfo("The user decided to cancel");
+                    return Action::QUIT;
+                }
             }
         }
     }
@@ -293,7 +329,7 @@ Data LauncherWorker::resolveData()
 }
 
 void LauncherWorker::update(
-        const Locations& locations, const Data& data,
+        const locations::Launcher& locations, const Data& data,
         const Api& api, QNetworkAccessManager& nam,
         CancellationToken cancellationToken)
 {
@@ -330,11 +366,11 @@ void LauncherWorker::update(
     downloadData.open(QIODevice::ReadOnly);
 
     emit statusChanged("Installing...");
-    localData.install(downloadData, data, latestAppVersion);
+    localData.install(downloadData, data, latestAppVersion, m_launcherInterface, cancellationToken);
 }
 
 bool LauncherWorker::tryUpdate(
-        const Locations& locations,
+        const locations::Launcher& locations,
         const Data& data, const Api& api,
         QNetworkAccessManager& nam,
         CancellationToken cancellationToken)
@@ -362,6 +398,36 @@ bool LauncherWorker::tryUpdate(
     }
 
     return false;
+}
+
+std::unique_ptr<locations::Launcher> LauncherWorker::tryLoadLocations()
+{
+    auto null = std::unique_ptr<locations::Launcher>(nullptr);
+
+    QString appSecret = m_runningData->applicationSecret();
+    QString workingDir = locations::workingDirectory(m_runningData->applicationSecret());
+    if (!locations::Installation::canLoad(workingDir))
+    {
+        return null;
+    }
+    try
+    {
+        auto installation = locations::Installation::load(workingDir);
+        auto locations = locations::Launcher::initalize(appSecret, installation);
+        return std::make_unique<locations::Launcher>(locations);
+    }
+    catch (InvalidFormatException&)
+    {
+        return null;
+    }
+    catch (IOError&)
+    {
+        return null;
+    }
+    catch (FileNotFound&)
+    {
+        return null;
+    }
 }
 
 Data LauncherWorker::setupPatcherSecret(const Data& data, const Api& api, CancellationToken cancellationToken)

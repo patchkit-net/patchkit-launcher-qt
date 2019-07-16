@@ -8,6 +8,7 @@
 #include <memory>
 
 #include "mainwindow.h"
+#include "installationdialog.h"
 #include "interface.h"
 
 #include <launcherworker.h>

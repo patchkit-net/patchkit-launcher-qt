@@ -53,6 +53,7 @@ public:
     const static QString patcherIdInfoFileName;
     const static QString patcherManifestFileName;
     const static QString patcherLauncherPathFileName;
+    const static QString locationFileName;
 
     const static QString lockFileName;
 

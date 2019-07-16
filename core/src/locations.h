@@ -27,8 +27,6 @@ public:
 
     static QString dataFilePath();
 
-    QString patcherDownloadPath() const;
-
     QString patcherDirectoryPath() const;
 
     QString patcherInstallationInfoFilePath() const;
@@ -46,4 +44,7 @@ public:
 #if defined(QT_DEBUG)
     void evalutatePaths() const;
 #endif
+
+private:
+    QString installationLocation;
 };

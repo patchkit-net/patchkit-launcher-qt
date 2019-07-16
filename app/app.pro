@@ -10,14 +10,18 @@ SOURCES     += \
     $$PWD/src/launcher.cpp \
     $$PWD/src/main.cpp \
     $$PWD/src/mainwindow.cpp \
-    $$PWD/src/interface.cpp
+    $$PWD/src/interface.cpp \
+    $$PWD/src/installationdialog.cpp
 
 HEADERS     += \
     $$PWD/src/launcher.h \
     $$PWD/src/mainwindow.h \
-    $$PWD/src/interface.h
+    $$PWD/src/interface.h \
+    $$PWD/src/installationdialog.h
 
-FORMS       += $$PWD/src/mainwindow.ui
+FORMS       += \
+    $$PWD/src/mainwindow.ui \
+    $$PWD/src/installationdialog.ui
 
 include($$PWD/../default.pri)
 include($$PWD/../version.pri)

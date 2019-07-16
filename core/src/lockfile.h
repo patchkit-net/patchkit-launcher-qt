@@ -13,7 +13,7 @@ class LockFile
 public:
     CUSTOM_RUNTIME_ERROR(LockException)
 
-    LockFile();
+    LockFile(const QString& path);
     ~LockFile();
 
     void lock();
@@ -25,4 +25,5 @@ public:
 private:
     boost::interprocess::file_lock m_lockFile;
     bool m_isLockFileLocal;
+    QString m_path;
 };

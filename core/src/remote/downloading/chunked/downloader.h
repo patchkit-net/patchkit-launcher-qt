@@ -8,6 +8,7 @@
 
 #include <QNetworkAccessManager>
 #include <QIODevice>
+#include <QUrl>
 
 namespace downloading
 {

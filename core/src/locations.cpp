@@ -65,11 +65,6 @@ Locations::Locations(const Data& data)
 #endif
 }
 
-QString Locations::patcherDownloadPath() const
-{
-    return QDir(currentDirPath()).filePath(Config::patcherDownloadFileName);
-}
-
 QString Locations::applicationFilePath()
 {
     return QApplication::applicationFilePath();

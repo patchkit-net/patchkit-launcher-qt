@@ -39,6 +39,10 @@ LauncherApp::Launcher::Launcher(const QApplication& t_application)
             &m_mainWindow, &MainWindow::showErrorMessage,
             Qt::BlockingQueuedConnection);
 
+    connect(&m_interface, &Interface::selectInstallationLocationSignal,
+            &m_mainWindow, &MainWindow::selectInstallationLocation,
+            Qt::BlockingQueuedConnection);
+
     // UI --> Thread
     connect(&m_mainWindow, &MainWindow::cancel, &m_worker, &LauncherWorker::cancel);
 
@@ -54,6 +58,7 @@ void LauncherApp::Launcher::start()
 
     qInfo("Showing main window.");
     m_mainWindow.show();
+
 
     qInfo("Starting launcher worker.");
     m_worker.start();

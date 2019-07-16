@@ -20,6 +20,9 @@ MainWindow::MainWindow(LauncherWorker& t_launcherWorker, QWidget* t_parent)
 {
     m_ui.setupUi(this);
 
+    setWindowFlags(Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint);
+//    setWindowFlags(Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint);
+
     connect(m_ui.cancelButton, &QPushButton::clicked, this, &MainWindow::cancel);
 }
 
@@ -62,6 +65,25 @@ void MainWindow::shouldStartInOfflineMode(ILauncherInterface::OfflineModeAnswer&
 void MainWindow::showErrorMessage(const QString& msg)
 {
     QMessageBox::critical(nullptr, "Error", msg);
+}
+
+void MainWindow::selectInstallationLocation(
+        QString& location, bool& shouldCancel)
+{
+    InstallationDialog dialog(location, this);
+
+    QEventLoop loop;
+
+    connect(&dialog, &InstallationDialog::onEnd, &loop, &QEventLoop::quit);
+
+    dialog.show();
+
+    loop.exec();
+
+    dialog.close();
+
+    shouldCancel = dialog.shouldCancel();
+    location = dialog.selectedInstallationLocation();
 }
 
 void MainWindow::shouldRetry(const QString& reason, bool& ans)

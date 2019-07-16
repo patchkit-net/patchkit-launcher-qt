@@ -35,7 +35,12 @@ SOURCES += \
     $$PWD/src/data/networkstatus.cpp \
     $$PWD/src/remote/downloading/chunked/downloader.cpp \
     $$PWD/src/remote/downloading/progressdevice.cpp \
-    $$PWD/src/remote/downloading/apiconnectionstrategy.cpp
+    $$PWD/src/remote/downloading/apiconnectionstrategy.cpp \
+    $$PWD/src/locations/application.cpp \
+    $$PWD/src/locations/launcher.cpp \
+    $$PWD/src/locations/patcher.cpp \
+    $$PWD/src/utils/locationutils.cpp \
+    src/locations/installation.cpp
 
 HEADERS += \
     $$PWD/src/xxhash.h \
@@ -70,7 +75,12 @@ HEADERS += \
     $$PWD/src/data/launcherresult.h \
     $$PWD/src/remote/downloading/chunked/downloader.h \
     $$PWD/src/remote/downloading/progressdevice.h \
-    $$PWD/src/remote/downloading/apiconnectionstrategy.h
+    $$PWD/src/remote/downloading/apiconnectionstrategy.h \
+    $$PWD/src/locations/application.h \
+    $$PWD/src/locations/launcher.h \
+    $$PWD/src/locations/patcher.h \
+    $$PWD/src/utils/locationutils.h \
+    src/locations/installation.h
 
 include($$PWD/../default.pri)
 include($$PWD/../version.pri)

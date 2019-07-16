@@ -13,6 +13,7 @@
 #include "lockfile.h"
 #include "data/networkstatus.hpp"
 #include "ilauncher.h"
+#include "locations/launcher.h"
 
 #include <QThread>
 
@@ -55,16 +56,18 @@ private:
 
     Data resolveData();
     void update(
-            const Locations& locations,
+            const locations::Launcher& locations,
             const Data& data, const Api& api,
             QNetworkAccessManager& nam,
             CancellationToken cancellationToken);
 
     bool tryUpdate(
-            const Locations& locations,
+            const locations::Launcher& locations,
             const Data& data, const Api& api,
             QNetworkAccessManager& nam,
             CancellationToken cancellationToken);
+
+    std::unique_ptr<locations::Launcher> tryLoadLocations();
 
     Data setupPatcherSecret(const Data& data, const Api& api, CancellationToken cancellationToken);
 
