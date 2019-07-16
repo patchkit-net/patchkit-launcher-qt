@@ -128,17 +128,21 @@ bool LauncherWorker::runInternal()
     }
     else
     {
-        QString location = workingDir;
-        bool shouldCancel;
-        m_launcherInterface.selectInstallationLocation(location, shouldCancel);
-        if (shouldCancel)
+        QString installationLocation = workingDir;
+        if (Config::isSelectableInstallationLocationEnabled())
         {
-            CancellationToken::cancelHere();
-        }
-        installation = locations::Installation(
-                    QDir(location).filePath(Config::patcherDirectoryName),
-                    QDir(location).filePath(Config::applicationDirectoryName));
+            bool shouldCancel;
+            m_launcherInterface.selectInstallationLocation(installationLocation, shouldCancel);
+            if (shouldCancel)
+            {
+                CancellationToken::cancelHere();
+            }
 
+        }
+
+        installation = locations::Installation(
+                    QDir(installationLocation).filePath(Config::patcherDirectoryName),
+                    QDir(installationLocation).filePath(Config::applicationDirectoryName));
         installation.save(workingDir);
     }
 

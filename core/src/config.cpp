@@ -4,6 +4,7 @@
 */
 
 #include "config.h"
+#include <QProcessEnvironment>
 
 const QString Config::logFileName = "launcher-log.txt";
 
@@ -114,4 +115,24 @@ const QString& Globals::version()
 {
     static QString v(VERSION);
     return v;
+}
+
+#if defined(Q_OS_OSX)
+const bool Config::useSelectableInstallationLocation = true;
+#else
+const bool Config::useSelectableInstallationLocation = false;
+#endif
+
+const QString Config::selectableInstallationLocationVariableName = "PK_LAUNCHER_SELECT_INSTALLATION_LOCATION";
+
+bool Config::isSelectableInstallationLocationEnabled()
+{
+    QProcessEnvironment env;
+
+    if (env.contains(selectableInstallationLocationVariableName))
+    {
+        return env.value(selectableInstallationLocationVariableName) == "1";
+    }
+
+    return Config::useSelectableInstallationLocation;
 }
