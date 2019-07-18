@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - #1080 Checking for write errors caused by not enough disk space
 
 ### Changed
-- IO methods in ioutils now take cancellation tokens
+- Slightly better cancellation responsiveness
 
 ### Fixed
 - double inclusion of networkstatus in core.pro
