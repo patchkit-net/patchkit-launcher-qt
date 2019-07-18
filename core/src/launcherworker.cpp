@@ -203,6 +203,34 @@ void LauncherWorker::tryStartOfflineOrDisplayError(const QString& msg)
     }
 }
 
+void LauncherWorker::trySetDisplayName(const remote::api::Api& api, const Data& data, CancellationToken cancellationToken)
+{
+    try
+    {
+        AppInfo appInfo = api.getAppInfo(data.applicationSecret(), cancellationToken);
+        if (!appInfo.displayName.isEmpty())
+        {
+            auto app = dynamic_cast<QGuiApplication*>(QGuiApplication::instance());
+            if (app)
+            {
+                app->setApplicationDisplayName(appInfo.displayName);
+            }
+        }
+    }
+    catch (remote::api::Api::ApiConnectionError& e)
+    {
+       qWarning() << "Failed to set the display name due to an api connection error: " << e.what();
+    }
+    catch (InvalidFormatException& e)
+    {
+        qWarning() << "Failed to set the display name due to an invalid format error: " << e.what();
+    }
+    catch (Timeout&)
+    {
+        qWarning() << "Failed to set the display name due to a timeout";
+    }
+}
+
 LauncherWorker::Action LauncherWorker::retryOrGoOffline(const QString& reason)
 {
     qInfo("Asking the user to either retry or go into offline mode");
@@ -308,17 +336,9 @@ void LauncherWorker::update(
         return;
     }
 
-    AppInfo appInfo = api.getAppInfo(data.applicationSecret(), cancellationToken);
-    if (!appInfo.displayName.isEmpty())
-    {
-        auto app = dynamic_cast<QGuiApplication*>(QGuiApplication::instance());
-        if (app)
-        {
-            app->setApplicationDisplayName(appInfo.displayName);
-        }
-    }
-    ContentSummary contentSummary = api.getContentSummary(data.patcherSecret(), latestAppVersion, cancellationToken);
+    trySetDisplayName(api, data, cancellationToken);
 
+    ContentSummary contentSummary = api.getContentSummary(data.patcherSecret(), latestAppVersion, cancellationToken);
 
     QBuffer downloadData;
     downloadData.open(QIODevice::WriteOnly);
