@@ -21,7 +21,6 @@ MainWindow::MainWindow(LauncherWorker& t_launcherWorker, QWidget* t_parent)
     m_ui.setupUi(this);
 
     setWindowFlags(Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint);
-//    setWindowFlags(Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint);
 
     connect(m_ui.cancelButton, &QPushButton::clicked, this, &MainWindow::cancel);
 }
