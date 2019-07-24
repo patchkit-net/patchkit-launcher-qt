@@ -13,7 +13,7 @@ class Locations
 {
 public:
     Locations(Locations const&) = default;
-    Locations(const Data& data);
+    Locations(const QString& applicationSecret);
 
     void initializeWithData(const Data& t_data);
 

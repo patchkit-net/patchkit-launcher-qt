@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [unreleased]
+### Changed
+- Launcher will set up a lock file before trying any api connection
+
 ### Added
 - #463 Setting the display name of the Launcher at runtime
 
