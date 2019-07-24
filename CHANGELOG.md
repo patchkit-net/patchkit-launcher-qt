@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 - #463 Setting the display name of the Launcher at runtime
+- #1080 Checking for write errors caused by not enough disk space
+
+### Changed
+- IO methods in ioutils now take cancellation tokens
+
+### Fixed
+- double inclusion of networkstatus in core.pro
 
 ## [v1.5.0.0]
 ### Added

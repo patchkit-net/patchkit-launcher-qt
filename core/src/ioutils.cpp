@@ -5,6 +5,7 @@
 
 #include "ioutils.h"
 
+#include <QtDebug>
 #include <QDir>
 #include <QTextStream>
 #include <quazip.h>
@@ -68,7 +69,7 @@ bool IOUtils::checkIfFileExists(const QString& t_filePath)
     return info.isFile();
 }
 
-void IOUtils::extractZip(QIODevice& source, const QString& t_extractPath, InstallationInfo& installationInfo)
+void IOUtils::extractZip(QIODevice& source, const QString& t_extractPath, InstallationInfo& installationInfo, CancellationToken cancellationToken)
 {
     QuaZip zipFile(&source);
 
@@ -81,6 +82,8 @@ void IOUtils::extractZip(QIODevice& source, const QString& t_extractPath, Instal
 
     do
     {
+        cancellationToken.throwIfCancelled();
+
         QString zipEntryName = zipFile.getCurrentFileName();
 
         QString zipEntryPath = QDir::cleanPath(t_extractPath + "/" + zipEntryName);
@@ -92,7 +95,7 @@ void IOUtils::extractZip(QIODevice& source, const QString& t_extractPath, Instal
         else
         {
             QuaZipFile zipEntry(&zipFile);
-            extractZipFileEntry(zipEntry, zipEntryPath);
+            extractZipFileEntry(zipEntry, zipEntryPath, cancellationToken);
         }
 
         installationInfo.add(zipEntryName);
@@ -102,22 +105,27 @@ void IOUtils::extractZip(QIODevice& source, const QString& t_extractPath, Instal
     zipFile.close();
 }
 
-void IOUtils::copyIODeviceData(QIODevice& t_readDevice, QIODevice& t_writeDevice)
+void IOUtils::copyIODeviceData(QIODevice& t_readDevice, QIODevice& t_writeDevice, CancellationToken cancellationToken)
 {
     const qint64 bufferSize = 4096;
     char buffer[bufferSize];
 
     while (!t_readDevice.atEnd())
     {
+        cancellationToken.throwIfCancelled();
         qint64 readSize = t_readDevice.read(buffer, bufferSize);
         if (readSize > 0)
         {
-            t_writeDevice.write(buffer, readSize);
+            qint64 ret = t_writeDevice.write(buffer, readSize);
+            if (ret == -1) {
+                qCritical() << "Copying IO device data failed: " << t_writeDevice.errorString();
+                throw FatalException(t_writeDevice.errorString());
+            }
         }
     }
 }
 
-void IOUtils::extractZipFileEntry(QuaZipFile& t_zipEntry, const QString& t_zipEntryPath)
+void IOUtils::extractZipFileEntry(QuaZipFile& t_zipEntry, const QString& t_zipEntryPath, CancellationToken cancellationToken)
 {
     if (!t_zipEntry.open(QIODevice::ReadOnly) || t_zipEntry.getZipError() != UNZ_OK)
     {
@@ -135,7 +143,7 @@ void IOUtils::extractZipFileEntry(QuaZipFile& t_zipEntry, const QString& t_zipEn
         throw std::runtime_error("Couldn't open file for extracting.");
     }
 
-    copyIODeviceData(reinterpret_cast<QIODevice&>(t_zipEntry), zipEntryFile);
+    copyIODeviceData(dynamic_cast<QIODevice&>(t_zipEntry), zipEntryFile, cancellationToken);
 
     zipEntryFile.close();
 }
