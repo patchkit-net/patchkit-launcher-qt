@@ -155,7 +155,7 @@ void LocalPatcherData::start(const Data& t_data, data::NetworkStatus networkStat
 
     if (!QProcess::startDetached(target, targetArguments))
     {
-        throw FatalException("Failed to start the patcher.");
+        throw FatalException("Failed to start the patcher");
     }
 }
 
