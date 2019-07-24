@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [unreleased]
 ### Added
 - #1188 Installation location selection dialog
+- #463 Setting the display name of the Launcher at runtime
 
 ### Changed
 - Location resolution methods
+- Launcher will set up a lock file before trying any api connection
 
 ## [v1.5.0.0]
 ### Added

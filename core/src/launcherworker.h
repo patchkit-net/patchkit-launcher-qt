@@ -53,6 +53,7 @@ private:
     bool tryStartOffline();
 
     void tryStartOfflineOrDisplayError(const QString& msg);
+    void trySetDisplayName(const Api& api, const Data& data, CancellationToken cancellationToken);
 
     Data resolveData();
     void update(

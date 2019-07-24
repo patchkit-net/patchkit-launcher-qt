@@ -38,7 +38,8 @@ SOURCES += \
     $$PWD/src/locations/application.cpp \
     $$PWD/src/locations/launcher.cpp \
     $$PWD/src/locations/patcher.cpp \
-    $$PWD/src/locations/installation.cpp
+    $$PWD/src/locations/installation.cpp \
+    $$PWD/src/data/appinfo.cpp
 
 HEADERS += \
     $$PWD/src/xxhash.h \
@@ -76,7 +77,8 @@ HEADERS += \
     $$PWD/src/locations/application.h \
     $$PWD/src/locations/launcher.h \
     $$PWD/src/locations/patcher.h \
-    $$PWD/src/locations/installation.h
+    $$PWD/src/locations/installation.h \
+    $$PWD/src/data/appinfo.h
 
 include($$PWD/../default.pri)
 include($$PWD/../version.pri)
