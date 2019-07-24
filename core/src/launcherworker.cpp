@@ -9,6 +9,7 @@
 #include <QSettings>
 #include <QFile>
 #include <QProcessEnvironment>
+#include <QGuiApplication>
 
 #include "cancellation/cancellationtoken.h"
 #include "data/launchersettings.h"
@@ -82,6 +83,12 @@ void LauncherWorker::run()
                     return;
             }
         }
+        catch (FatalException& e)
+        {
+            qCritical() << "A fatal exception has occured: " << e.what();
+            m_launcherInterface.displayErrorMessage(e.what());
+            return;
+        }
         catch (std::exception& e)
         {
             qCritical() << e.what();
@@ -107,6 +114,17 @@ bool LauncherWorker::runInternal()
     // Initialize
     Data data = resolveData();
 
+    // NOTE: Locations must be initialized before the logger and lock file
+    // because it sets the current working directory
+    Locations locations(data.applicationSecret());
+
+    qInfo() << "Initialzing logger";
+    Logger::initialize();
+
+    // Lock instance
+    LockFile lockFile;
+    lockFile.lock();
+
     // Initialize components
     QNetworkAccessManager nam;
     Api api(nam);
@@ -116,21 +134,12 @@ bool LauncherWorker::runInternal()
     data = setupPatcherSecret(data, api, m_cancellationTokenSource);
     m_runningData.reset(new Data(data));
 
-    // Locations
-    Locations locations(data);
 
     // Check permissions
     if (!Utilities::isDirectoryWritable(locations.currentDirPath()))
     {
         throw InsufficientPermissions("Launcher needs the current directory to be writable");
     }
-
-    qInfo() << "Initialzing logger";
-    Logger::initialize();
-
-    // Lock instance
-    LockFile lockFile;
-    lockFile.lock();
 
     LocalPatcherData localData(locations);
 
@@ -175,7 +184,7 @@ bool LauncherWorker::tryStartOffline()
     {
         try
         {
-            Locations locations(*m_runningData);
+            Locations locations(m_runningData->applicationSecret());
             LocalPatcherData localData(locations);
             localData.start(*m_runningData, data::NetworkStatus::Offline);
             return true;
@@ -203,12 +212,40 @@ void LauncherWorker::tryStartOfflineOrDisplayError(const QString& msg)
     }
 }
 
+void LauncherWorker::trySetDisplayName(const remote::api::Api& api, const Data& data, CancellationToken cancellationToken)
+{
+    try
+    {
+        AppInfo appInfo = api.getAppInfo(data.applicationSecret(), cancellationToken);
+        if (!appInfo.displayName.isEmpty())
+        {
+            auto app = dynamic_cast<QGuiApplication*>(QGuiApplication::instance());
+            if (app)
+            {
+                app->setApplicationDisplayName(appInfo.displayName);
+            }
+        }
+    }
+    catch (remote::api::Api::ApiConnectionError& e)
+    {
+       qWarning() << "Failed to set the display name due to an api connection error: " << e.what();
+    }
+    catch (InvalidFormatException& e)
+    {
+        qWarning() << "Failed to set the display name due to an invalid format error: " << e.what();
+    }
+    catch (Timeout&)
+    {
+        qWarning() << "Failed to set the display name due to a timeout";
+    }
+}
+
 LauncherWorker::Action LauncherWorker::retryOrGoOffline(const QString& reason)
 {
     qInfo("Asking the user to either retry or go into offline mode");
     if (m_runningData)
     {
-        Locations locations(*m_runningData);
+        Locations locations(m_runningData->applicationSecret());
         LocalPatcherData localData(locations);
 
         if (localData.isInstalled())
@@ -314,8 +351,9 @@ void LauncherWorker::update(
         return;
     }
 
-    ContentSummary contentSummary = api.getContentSummary(data.patcherSecret(), latestAppVersion, cancellationToken);
+    trySetDisplayName(api, data, cancellationToken);
 
+    ContentSummary contentSummary = api.getContentSummary(data.patcherSecret(), latestAppVersion, cancellationToken);
 
     QBuffer downloadData;
     downloadData.open(QIODevice::WriteOnly);
@@ -337,7 +375,7 @@ void LauncherWorker::update(
     downloadData.open(QIODevice::ReadOnly);
 
     emit statusChanged("Installing...");
-    localData.install(downloadData, data, latestAppVersion);
+    localData.install(downloadData, data, latestAppVersion, cancellationToken);
 }
 
 bool LauncherWorker::tryUpdate(

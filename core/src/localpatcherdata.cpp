@@ -79,11 +79,11 @@ bool LocalPatcherData::isInstalledSpecific(int t_version, const Data& t_data)
                version == t_version;
     }
 
-    qInfo("Installation not found.");    
+    qInfo("Installation not found.");
     return false;
 }
 
-InstallationInfo LocalPatcherData::install(const QString& t_downloadedPath, const Data& t_data, int t_version)
+InstallationInfo LocalPatcherData::install(const QString& t_downloadedPath, const Data& t_data, int t_version, CancellationToken cancellationToken)
 {
     qInfo() << "Installing patcher (version "
             << t_version
@@ -98,16 +98,16 @@ InstallationInfo LocalPatcherData::install(const QString& t_downloadedPath, cons
 
     QFile downloadedFile(t_downloadedPath);
 
-    return install(downloadedFile, t_data, t_version);
+    return install(downloadedFile, t_data, t_version, cancellationToken);
 }
 
-InstallationInfo LocalPatcherData::install(QIODevice& source, const Data& data, int version)
+InstallationInfo LocalPatcherData::install(QIODevice& source, const Data& data, int version, CancellationToken cancellationToken)
 {
     uninstall();
     const auto& locations = m_locations;
     InstallationInfo installationInfo;
 
-    IOUtils::extractZip(source, locations.patcherDirectoryPath(), installationInfo);
+    IOUtils::extractZip(source, locations.patcherDirectoryPath(), installationInfo, cancellationToken);
 
     IOUtils::writeTextToFile(locations.patcherVersionInfoFilePath(), QString::number(version));
 
@@ -155,7 +155,7 @@ void LocalPatcherData::start(const Data& t_data, data::NetworkStatus networkStat
 
     if (!QProcess::startDetached(target, targetArguments))
     {
-        throw FatalException("Failed to start the patcher.");
+        throw FatalException("Failed to start the patcher");
     }
 }
 

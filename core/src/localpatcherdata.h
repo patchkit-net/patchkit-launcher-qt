@@ -15,6 +15,7 @@
 #include "data/installationinfo.h"
 #include "lockfile.h"
 #include "locations.h"
+#include "cancellation/cancellationtoken.h"
 
 #include <quazipfile.h>
 
@@ -29,10 +30,10 @@ public:
     bool isInstalledSpecific(int t_version, const Data& t_data);
 
     InstallationInfo install(
-            const QString& t_downloadedPath, const Data& t_data, int t_version);
+            const QString& t_downloadedPath, const Data& t_data, int t_version, CancellationToken cancellationToken);
 
     InstallationInfo install(
-            QIODevice& source, const Data& data, int version);
+            QIODevice& source, const Data& data, int version, CancellationToken cancellationToken);
 
     void start(const Data& t_data, data::NetworkStatus networkStatus);
 

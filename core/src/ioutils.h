@@ -6,6 +6,7 @@
 #pragma once
 
 #include "data/installationinfo.h"
+#include "cancellation/cancellationtoken.h"
 
 #include <QIODevice>
 #include <quazipfile.h>
@@ -25,10 +26,10 @@ public:
 
     static bool checkIfFileExists(const QString& t_filePath);
 
-    static void extractZip(QIODevice& source, const QString& t_extractPath, InstallationInfo& installationInfo);
+    static void extractZip(QIODevice& source, const QString& t_extractPath, InstallationInfo& installationInfo, CancellationToken cancellationToken);
 
-    static void copyIODeviceData(QIODevice& t_readDevice, QIODevice& t_writeDevice);
+    static void copyIODeviceData(QIODevice& t_readDevice, QIODevice& t_writeDevice, CancellationToken cancellationToken);
 
 private:
-    static void extractZipFileEntry(QuaZipFile& t_zipEntry, const QString& t_zipEntryPath);
+    static void extractZipFileEntry(QuaZipFile& t_zipEntry, const QString& t_zipEntryPath, CancellationToken cancellationToken);
 };
