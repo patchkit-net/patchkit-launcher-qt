@@ -4,16 +4,15 @@
 #include <QDir>
 #include <QFile>
 
-#include "config.h"
-#include "locations.h"
 #include "customexceptions.h"
 
 #include <boost/interprocess/exceptions.hpp>
 
-LockFile::LockFile()
+LockFile::LockFile(const QString& path)
     : m_isLockFileLocal(false)
+    , m_path(path)
 {
-    QFile lockFile(Config::lockFileName);
+    QFile lockFile(m_path);
     if (!lockFile.exists())
     {
         lockFile.open(QIODevice::ReadWrite);
@@ -28,7 +27,7 @@ LockFile::LockFile()
     // For some reason it also seems to fail if the file is locked, hence the try/catch
     try
     {
-        m_lockFile = boost::interprocess::file_lock(Config::lockFileName.toStdString().c_str());
+        m_lockFile = boost::interprocess::file_lock(m_path.toStdString().c_str());
     }
     catch (boost::interprocess::interprocess_exception& e)
     {
@@ -56,7 +55,7 @@ void LockFile::lock()
         }
         else
         {
-            qInfo() << "Successful lock on " << QDir::cleanPath(Config::lockFileName);
+            qInfo() << "Successful lock on " << QDir::cleanPath(m_path);
             m_isLockFileLocal = true;
         }
     }
@@ -78,7 +77,7 @@ void LockFile::cede()
     if (m_isLockFileLocal)
     {
         m_lockFile.unlock();
-        QFile cededFile(Config::lockFileName);
+        QFile cededFile(m_path);
         if (!cededFile.open(QIODevice::ReadWrite))
         {
             qCritical("Failed to cede the lock file.");
@@ -90,7 +89,7 @@ void LockFile::cede()
 
 void LockFile::clear()
 {
-    QFile lockFile(Config::lockFileName);
+    QFile lockFile(m_path);
 
     if (lockFile.exists())
     {

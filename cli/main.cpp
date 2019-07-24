@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("my-copy-program");
     QCoreApplication::setApplicationVersion("1.0");
 
-    CliInterface interface;
+    CliInterface interface(app.applicationDirPath());
     LauncherWorker worker(interface);
     worker.start();
     return app.exec();

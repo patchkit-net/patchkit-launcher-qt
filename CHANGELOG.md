@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [unreleased]
 ### Added
+- #1188 Installation location selection dialog
 - #1354 Environment variables for overriding the app secret and version id
 - #463 Setting the display name of the Launcher at runtime
 - #1080 Checking for write errors caused by not enough disk space
@@ -16,6 +17,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 - double inclusion of networkstatus in core.pro
+
+### Changed
+- Location resolution methods
+- Launcher will set up a lock file before trying any api connection
 
 ## [v1.5.0.0]
 ### Added

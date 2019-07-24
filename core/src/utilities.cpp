@@ -12,7 +12,7 @@
 #include <QDebug>
 #include <QDir>
 
-#include "locations.h"
+#include "locations/launcher.h"
 #include "config.h"
 #include "customexceptions.h"
 #include "data/patchermanifest.h"
@@ -26,7 +26,7 @@
 void Utilities::tryRestartWithHigherPermissions()
 {
 #if defined(Q_OS_WIN)
-    ShellExecute(nullptr, L"runas", Locations::applicationFilePath().toStdWString().c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    ShellExecute(nullptr, L"runas", locations::launcherExecutable().toStdWString().c_str(), nullptr, nullptr, SW_SHOWNORMAL);
     throw CancellationToken::CancelledException();
 #else
     throw FatalException("Cannot write in current directory");

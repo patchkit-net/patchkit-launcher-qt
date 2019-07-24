@@ -6,6 +6,7 @@
 #pragma once
 
 #include "ui_mainwindow.h"
+#include "installationdialog.h"
 #include <launcherworker.h>
 
 class MainWindow : public QMainWindow
@@ -22,6 +23,8 @@ public slots:
     void shouldStartInOfflineMode(ILauncherInterface::OfflineModeAnswer& ans);
     void shouldRetry(const QString& reason, bool& ans);
     void showErrorMessage(const QString& msg);
+    void selectInstallationLocation(
+            QString& location, bool& shouldCancel);
 
 signals:
     void cancel();

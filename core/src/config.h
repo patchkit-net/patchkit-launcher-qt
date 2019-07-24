@@ -39,6 +39,10 @@ namespace Globals
 class Config
 {
 public:
+    static bool isSelectableInstallationLocationEnabled();
+    const static bool useSelectableInstallationLocation;
+    const static QString selectableInstallationLocationVariableName;
+
     const static QString logFileName;
 
     const static QString dataFileName;
@@ -53,6 +57,7 @@ public:
     const static QString patcherIdInfoFileName;
     const static QString patcherManifestFileName;
     const static QString patcherLauncherPathFileName;
+    const static QString locationFileName;
 
     const static QString lockFileName;
 

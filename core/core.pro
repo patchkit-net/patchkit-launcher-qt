@@ -15,7 +15,6 @@ SOURCES += \
     $$PWD/src/ioutils.cpp \
     $$PWD/src/localpatcherdata.cpp \
     $$PWD/src/launcherworker.cpp \
-    $$PWD/src/locations.cpp \
     $$PWD/src/executableresources.cpp \
     $$PWD/src/lockfile.cpp \
     $$PWD/src/xxhash.c \
@@ -35,12 +34,15 @@ SOURCES += \
     $$PWD/src/remote/downloading/chunked/downloader.cpp \
     $$PWD/src/remote/downloading/progressdevice.cpp \
     $$PWD/src/remote/downloading/apiconnectionstrategy.cpp \
+    $$PWD/src/locations/application.cpp \
+    $$PWD/src/locations/launcher.cpp \
+    $$PWD/src/locations/patcher.cpp \
+    $$PWD/src/locations/installation.cpp \
     $$PWD/src/data/appinfo.cpp
 
 HEADERS += \
     $$PWD/src/xxhash.h \
     $$PWD/src/tempdir.h \
-    $$PWD/src/locations.h \
     $$PWD/src/ioutils.h \
     $$PWD/src/launcherworker.h \
     $$PWD/src/logger.h \
@@ -71,6 +73,10 @@ HEADERS += \
     $$PWD/src/remote/downloading/chunked/downloader.h \
     $$PWD/src/remote/downloading/progressdevice.h \
     $$PWD/src/remote/downloading/apiconnectionstrategy.h \
+    $$PWD/src/locations/application.h \
+    $$PWD/src/locations/launcher.h \
+    $$PWD/src/locations/patcher.h \
+    $$PWD/src/locations/installation.h \
     $$PWD/src/data/appinfo.h
 
 include($$PWD/../default.pri)

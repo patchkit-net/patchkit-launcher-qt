@@ -43,6 +43,12 @@ public:
         }
     }
 
+    [[ noreturn ]]
+    static void cancelHere()
+    {
+        throw CancelledException();
+    }
+
 signals:
     void cancelled();
 

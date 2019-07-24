@@ -4,8 +4,9 @@
 
 #include <QDebug>
 
-CliInterface::CliInterface(QObject* parent)
+CliInterface::CliInterface(const QString& installationLocation, QObject* parent)
     : QObject(parent)
+    , m_installationLocation(installationLocation)
 {
 }
 
@@ -23,5 +24,11 @@ void CliInterface::displayErrorMessage(const QString& msg)
 {
     qInfo() << "Displaying error message";
     qCritical() << msg;
+}
+
+void CliInterface::selectInstallationLocation(QString& location, bool& shouldCancel)
+{
+    location = m_installationLocation;
+    shouldCancel = false;
 }
 
