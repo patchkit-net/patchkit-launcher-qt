@@ -8,6 +8,7 @@
 class ContentSummary;
 class QString;
 class QStringList;
+struct AppInfo;
 
 class CancellationToken;
 
@@ -31,4 +32,7 @@ public:
 
     virtual QStringList getContentUrls(
             const QString& appSecret, int versionId, CancellationToken cancellationToken) const = 0;
+
+    virtual AppInfo getAppInfo(
+            const QString& appSecret, CancellationToken cancellationToken) const = 0;
 };

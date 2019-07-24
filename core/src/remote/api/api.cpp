@@ -196,6 +196,18 @@ QStringList Api::getContentUrls(const QString& appSecret, int versionId, Cancell
     return contentUrls;
 }
 
+AppInfo Api::getAppInfo(const QString& appSecret, CancellationToken cancellationToken) const
+{
+    auto path = QString("1/apps/%1")
+            .arg(appSecret);
+
+    QJsonDocument document = get(path, cancellationToken);
+
+    auto appInfo = AppInfo::parse(document);
+
+    return appInfo;
+}
+
 QString Api::tryGetCountryCode(CancellationToken cancellationToken) const
 {
     qInfo() << "Getting the country code";

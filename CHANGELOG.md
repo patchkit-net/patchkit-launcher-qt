@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [unreleased]
 ### Added
+- #463 Setting the display name of the Launcher at runtime
 - #1080 Checking for write errors caused by not enough disk space
 
 ### Changed
