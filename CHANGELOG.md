@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Launcher will set up a lock file before trying any api connection
 
+### Added
+- #463 Setting the display name of the Launcher at runtime
+
 ## [v1.5.0.0]
 ### Added
 - #1214 Additional log entries
