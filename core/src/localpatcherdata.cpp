@@ -106,7 +106,7 @@ InstallationInfo LocalPatcherData::install(QIODevice& source, const Data& data, 
     const auto& locations = m_locations;
     InstallationInfo installationInfo;
 
-    IOUtils::extractZip(source, locations.patcher().directory(), installationInfo);
+    IOUtils::extractZip(source, locations.patcher().directory(), installationInfo, cancellationToken);
 
     IOUtils::writeTextToFile(locations.patcher().versionInfoFile(), QString::number(version));
 
@@ -154,7 +154,7 @@ void LocalPatcherData::start(const Data& t_data, data::NetworkStatus networkStat
 
     if (!QProcess::startDetached(target, targetArguments))
     {
-        throw FatalException("Failed to start the patcher.");
+        throw FatalException("Failed to start the patcher");
     }
 }
 

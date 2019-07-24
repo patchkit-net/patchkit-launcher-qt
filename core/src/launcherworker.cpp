@@ -9,6 +9,7 @@
 #include <QSettings>
 #include <QFile>
 #include <QDir>
+#include <QProcessEnvironment>
 #include <QGuiApplication>
 
 #include "cancellation/cancellationtoken.h"
@@ -83,6 +84,12 @@ void LauncherWorker::run()
                     tryStartOfflineOrDisplayError("Failed to start patcher in offline mode");
                     return;
             }
+        }
+        catch (FatalException& e)
+        {
+            qCritical() << "A fatal exception has occured: " << e.what();
+            m_launcherInterface.displayErrorMessage(e.what());
+            return;
         }
         catch (std::exception& e)
         {
@@ -365,9 +372,15 @@ void LauncherWorker::update(
         const Api& api, QNetworkAccessManager& nam,
         CancellationToken cancellationToken)
 {
+    QProcessEnvironment env;
     LocalPatcherData localData(locations);
 
     int latestAppVersion = api.getLatestAppVersion(data.patcherSecret(), cancellationToken);
+    if (env.contains(Config::appVersionIdOverrideEnvVar))
+    {
+        QString envVersionId = env.value(Config::appVersionIdOverrideEnvVar, "");
+        latestAppVersion = envVersionId.toInt();
+    }
 
     if (localData.isInstalledSpecific(latestAppVersion, data))
     {

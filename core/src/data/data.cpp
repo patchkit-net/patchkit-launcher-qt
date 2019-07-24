@@ -8,6 +8,7 @@
 #include <QFile>
 #include <QCryptographicHash>
 #include <QtDebug>
+#include <QProcessEnvironment>
 #include <memory>
 
 #include "executableresources.h"
@@ -80,12 +81,17 @@ QString Data::patcherSecret() const
 
 QString Data::applicationSecret() const
 {
+    QProcessEnvironment processEnv;
+    if (processEnv.contains(Config::appSecretOverrideEnvVar))
+    {
+        return processEnv.value(Config::appSecretOverrideEnvVar, "");
+    }
     return m_applicationSecret;
 }
 
 QByteArray Data::encodedApplicationSecret() const
 {
-    return data::secret::encode(m_applicationSecret);
+    return data::secret::encode(this->applicationSecret());
 }
 
  #ifdef Q_OS_WIN
