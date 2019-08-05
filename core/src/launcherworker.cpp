@@ -23,6 +23,7 @@
 #include "utilities.h"
 #include "locations/launcher.h"
 #include "locations/installation.h"
+#include "networktest.h"
 
 void LauncherWorker::run()
 {
@@ -119,6 +120,12 @@ bool LauncherWorker::runInternal()
     // Initialize components
     QNetworkAccessManager nam;
     Api api(nam);
+
+    // Testing connectivity
+    NetworkTest networkTest;
+    if (!networkTest.TestOnline(nam)) {
+
+    }
 
     QString workingDir = locations::workingDirectory(data.applicationSecret());
 
