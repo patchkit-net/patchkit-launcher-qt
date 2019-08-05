@@ -6,6 +6,7 @@
 #pragma once
 
 #include <QStringList>
+#include "remote/downloading/timeout.h"
 
 #ifndef CONFIG_INLINE_DATA
 #define CONFIG_INLINE_DATA_PLACEHOLDER "OnceUponAMidnightDreary"
@@ -63,12 +64,12 @@ public:
 
     const static QString applicationDirectoryName;
 
-    const static int minConnectionTimeoutMsec;
-    const static int maxConnectionTimeoutMsec;
+    const static Timeout minConnectionTimeoutMsec;
+    const static Timeout maxConnectionTimeoutMsec;
 
     const static int maxInvalidChunksCount;
 
-    const static int downloadTimeoutMsec;
+    const static Timeout downloadTimeoutMsec;
 
     const static QString mainApiUrl;
     const static QStringList cacheApiUrls;
@@ -79,7 +80,7 @@ public:
     const static QString appVersionIdOverrideEnvVar;
 
     const static QString geolocationApiUrl;
-    const static int geolocationTimeout;
+    const static Timeout geolocationTimeout;
 
     const static QString pingTarget;
     const static QString pingCountArg;

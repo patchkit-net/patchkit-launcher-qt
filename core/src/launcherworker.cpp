@@ -123,8 +123,31 @@ bool LauncherWorker::runInternal()
 
     // Testing connectivity
     NetworkTest networkTest;
-    if (!networkTest.TestOnline(nam)) {
-
+    if (!networkTest.isOnline(nam, m_cancellationTokenSource))
+    {
+        switch (retryOrGoOffline("Launcher cannot establish an internet connection"))
+        {
+            case Action::QUIT:
+                return true;
+            case Action::RETRY:
+                return false;
+            case Action::GO_OFFLINE:
+                if (tryStartOffline())
+                {
+                    return true;
+                }
+                else
+                {
+                    if (m_launcherInterface.shouldRetry("Launcher failed to start patcher in offline mode"))
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                }
+        }
     }
 
     QString workingDir = locations::workingDirectory(data.applicationSecret());
@@ -275,7 +298,7 @@ void LauncherWorker::trySetDisplayName(const remote::api::Api& api, const Data& 
     {
         qWarning() << "Failed to set the display name due to an invalid format error: " << e.what();
     }
-    catch (Timeout&)
+    catch (TimeoutException&)
     {
         qWarning() << "Failed to set the display name due to a timeout";
     }

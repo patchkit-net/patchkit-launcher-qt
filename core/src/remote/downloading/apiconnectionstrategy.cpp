@@ -12,8 +12,8 @@ namespace api
 {
 
 ApiConnectionStrategy::ApiConnectionStrategy(const ApiConnectionSettings& apiConnectionSettings,
-                                               int minConnectionTimeout,
-                                               int maxConnectionTimeout)
+                                               Timeout minConnectionTimeout,
+                                               Timeout maxConnectionTimeout)
     : m_apiConnectionSettings(apiConnectionSettings)
     , m_minConnectionTimeout(minConnectionTimeout)
     , m_maxConnectionTimeout(maxConnectionTimeout)
@@ -33,7 +33,7 @@ bool ApiConnectionStrategy::execute(
 
     do
     {
-        int timeout = tryCount == 0 ? m_minConnectionTimeout : m_maxConnectionTimeout;
+        Timeout timeout = tryCount == 0 ? m_minConnectionTimeout : m_maxConnectionTimeout;
 
         if (tryDownload(
                     nam, QString("%1/%2").arg(m_apiConnectionSettings.mainApiUrl, path),

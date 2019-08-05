@@ -19,17 +19,17 @@ Logger::Logger(const QString& workingDir)
     , m_stdoutStream(stdout)
     , m_isSilent(false)
 {
-    m_logFile.open(QIODevice::WriteOnly | QIODevice::Append);
+    if (m_logFile.open(QIODevice::WriteOnly | QIODevice::Append))
+    {
+        m_logFileStream << endl
+                        << "########## "
+                        << QDateTime::currentDateTime().toString()
+                        << " - Log start"
+                        << endl
+                        << flush;
+    }
 
     qInstallMessageHandler(logHandler);
-
-    // Initial log message
-    m_logFileStream << endl
-                    << "########## "
-                    << QDateTime::currentDateTime().toString()
-                    << " - Log start"
-                    << endl
-                    << flush;
 }
 
 void Logger::initialize(const QString& workingDir)
@@ -115,6 +115,9 @@ void Logger::logHandler(QtMsgType t_type, const QMessageLogContext& t_context, c
     txt.append(")");
 #endif
 
-    instance->m_stdoutStream << txt << endl << flush;
-    instance->m_logFileStream << txt << endl << flush;
+    if (instance->m_logFile.isOpen())
+    {
+        instance->m_stdoutStream << txt << endl << flush;
+        instance->m_logFileStream << txt << endl << flush;
+    }
 }

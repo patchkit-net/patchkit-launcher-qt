@@ -110,5 +110,9 @@ QString locations::dataFilePath()
 
 QString locations::logFilePath(const QString& workingDir)
 {
+    if (workingDir.isEmpty())
+    {
+        return "";
+    }
     return QDir(workingDir).filePath(Config::logFileName);
 }

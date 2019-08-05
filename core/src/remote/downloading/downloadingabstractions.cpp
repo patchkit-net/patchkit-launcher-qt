@@ -13,7 +13,7 @@ namespace abstractions
 
 int waitForReplyStatusCode(
         const QNetworkReply* reply,
-        int timeout,
+        Timeout timeout,
         CancellationToken cancellationToken)
 {
     QEventLoop loop;
@@ -26,14 +26,14 @@ int waitForReplyStatusCode(
     QObject::connect(reply, &QNetworkReply::metaDataChanged, &loop, &QEventLoop::quit);
     QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
 
-    timer.start(timeout);
+    timer.start(timeout.getMilliseconds());
     loop.exec();
 
     cancellationToken.throwIfCancelled();
 
     if (timer.remainingTime() == 0)
     {
-        throw Timeout("Waiting for reply timed out");
+        throw TimeoutException("Waiting for reply timed out");
     }
 
     return getReplyStatusCode(reply);
@@ -61,7 +61,7 @@ int getReplyStatusCode(const QNetworkReply* reply)
 bool tryRangedDownload(
         QNetworkAccessManager& nam, QUrl url,
         data::DownloadRange range, QIODevice& target,
-        int timeout, CancellationToken cancellationToken)
+        Timeout timeout, CancellationToken cancellationToken)
 {
     QNetworkRequest request(url);
     request.setRawHeader("Range", range.toString().toUtf8());
@@ -83,7 +83,7 @@ bool tryRangedDownload(
 bool tryRangedDownload(
         QNetworkAccessManager& nam, const QString& stringUrl,
         data::DownloadRange range, QIODevice& target,
-        int timeout, CancellationToken cancellationToken)
+        Timeout timeout, CancellationToken cancellationToken)
 {
     QUrl url(stringUrl);
 
@@ -92,7 +92,7 @@ bool tryRangedDownload(
 
 int waitUntilReplyIsReady(
         QNetworkReply* reply,
-        int timeout,
+        Timeout timeout,
         CancellationToken cancellationToken)
 {
     QEventLoop loop;
@@ -105,21 +105,21 @@ int waitUntilReplyIsReady(
     QObject::connect(reply, &QNetworkReply::readyRead, &loop, &QEventLoop::quit);
     QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
 
-    timer.start(timeout);
+    timer.start(timeout.getMilliseconds());
     loop.exec();
 
     cancellationToken.throwIfCancelled();
 
     if (timer.remainingTime() == 0)
     {
-        throw Timeout("Waiting for reply timed out");
+        throw TimeoutException("Waiting for reply timed out");
     }
 
     return getReplyStatusCode(reply);
 }
 
 void waitUntilReplyIsFinished(
-        QNetworkReply* reply, int timeout, CancellationToken cancellationToken)
+        QNetworkReply* reply, Timeout timeout, CancellationToken cancellationToken)
 {
     QEventLoop loop;
     QTimer timer;
@@ -134,20 +134,20 @@ void waitUntilReplyIsFinished(
     QObject::connect(&timer, &QTimer::timeout,
                      &loop, &QEventLoop::quit);
 
-    timer.start(timeout);
+    timer.start(timeout.getMilliseconds());
     loop.exec();
 
     cancellationToken.throwIfCancelled();
 
     if (timer.remainingTime() == 0)
     {
-        throw Timeout("Waiting for reply to finish timed out");
+        throw TimeoutException("Waiting for reply to finish timed out");
     }
 }
 
 void bufferReply(
         QNetworkReply* reply, QIODevice& target,
-        int timeout, CancellationToken cancellationToken)
+        Timeout timeout, CancellationToken cancellationToken)
 {
     if (!target.isOpen() || !target.open(QIODevice::WriteOnly))
     {
@@ -167,7 +167,7 @@ void bufferReply(
             QObject::connect(&cancellationToken, &CancellationToken::cancelled,
                              &loop, &QEventLoop::quit);
 
-            timer.start(timeout);
+            timer.start(timeout.getMilliseconds());
             loop.exec();
         }
 
@@ -177,7 +177,7 @@ void bufferReply(
 
         if (timer.remainingTime() == 0)
         {
-            throw Timeout("Buffering reply timed out");
+            throw TimeoutException("Buffering reply timed out");
         }
 
         target.write(data);
@@ -189,7 +189,7 @@ void bufferReply(
 
 bool tryDownload(
         QNetworkAccessManager &nam, const QString& stringUrl,
-        QIODevice &target, int timeout, CancellationToken cancellationToken)
+        QIODevice &target, Timeout timeout, CancellationToken cancellationToken)
 {
     QUrl url(stringUrl);
 
@@ -198,9 +198,9 @@ bool tryDownload(
 
 bool tryDownload(
         QNetworkAccessManager& nam, QUrl url, QIODevice& target,
-        int timeout, CancellationToken cancellationToken)
+        Timeout timeout, CancellationToken cancellationToken)
 {
-    qInfo() << "Downloading from " << url.toString() << " with timeout " << timeout;
+    qInfo() << "Downloading from " << url.toString() << " with timeout " << timeout.getMilliseconds() << " ms";
 
     QNetworkRequest request(url);
     QNetworkReply* reply = nam.get(request);

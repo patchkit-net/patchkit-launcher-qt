@@ -1,6 +1,7 @@
 #include "catch.h"
 
-#include <remote/downloading/downloadingabstractions.h>
+#include "remote/downloading/downloadingabstractions.h"
+#include "remote/downloading/timeout.h"
 #include <cancellation/cancellationtokensource.h>
 #include <data/downloadrange.h>
 #include "mockednam.h"
@@ -21,7 +22,7 @@ TEST_CASE("Reply buffering")
 
     CancellationTokenSource cancellation;
 
-    bufferReply(&reply, target, 200, cancellation);
+    bufferReply(&reply, target, Timeout::milliseconds(200), cancellation);
 
     REQUIRE(target.data().toStdString() == data.toStdString());
 }
@@ -40,7 +41,7 @@ TEST_CASE("Basic download")
 
     CancellationTokenSource cancellation;
 
-    bool result = tryDownload(nam, "host.com/123", target, 0, cancellation);
+    bool result = tryDownload(nam, "host.com/123", target, Timeout::milliseconds(0), cancellation);
 
     CHECK(result == true);
     REQUIRE(target.data().toStdString() == data.toStdString());
@@ -62,7 +63,7 @@ TEST_CASE("Ranged download")
     data::DownloadRange range(1);
 
     bool result = tryRangedDownload(nam, "host.com/123",
-        range, target, 100, cancellation);
+        range, target, Timeout::milliseconds(100), cancellation);
 
     CHECK(result == true);
     REQUIRE(target.data().toStdString() == "234567890");
