@@ -19,6 +19,8 @@
 #include "config.h"
 #include "lockfile.h"
 #include "utilities.h"
+#include "locations/launcher.h"
+#include "locations/installation.h"
 
 void LauncherWorker::run()
 {
@@ -109,6 +111,36 @@ bool LauncherWorker::runInternal()
     // Initialize components
     QNetworkAccessManager nam;
     Api api(nam);
+
+    // Testing connectivity
+    if (!m_networkTest.isOnline(nam, m_cancellationTokenSource))
+    {
+        switch (retryOrGoOffline("Launcher cannot establish an internet connection"))
+        {
+            case Action::QUIT:
+                return true;
+            case Action::RETRY:
+                return false;
+            case Action::GO_OFFLINE:
+                if (tryStartOffline())
+                {
+                    return true;
+                }
+                else
+                {
+                    if (m_launcherInterface.shouldRetry("Launcher failed to start patcher in offline mode"))
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                }
+        }
+    }
+
+    QString workingDir = locations::workingDirectory(data.applicationSecret());
 
     // Setup the patcher secret
     // NOTE: Why?
