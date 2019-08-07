@@ -14,6 +14,7 @@
 #include "data/networkstatus.hpp"
 #include "ilauncher.h"
 #include "locations/launcher.h"
+#include "networktest.h"
 
 #include <QThread>
 
@@ -75,4 +76,5 @@ private:
     std::unique_ptr<Data> m_runningData;
     ILauncherInterface& m_launcherInterface;
     CancellationTokenSource m_cancellationTokenSource;
+    NetworkTest m_networkTest;
 };

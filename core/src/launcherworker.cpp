@@ -23,7 +23,6 @@
 #include "utilities.h"
 #include "locations/launcher.h"
 #include "locations/installation.h"
-#include "networktest.h"
 
 void LauncherWorker::run()
 {
@@ -123,8 +122,7 @@ bool LauncherWorker::runInternal()
     Api api(nam);
 
     // Testing connectivity
-    NetworkTest networkTest;
-    if (!networkTest.isOnline(nam, m_cancellationTokenSource))
+    if (!m_networkTest.isOnline(nam, m_cancellationTokenSource))
     {
         switch (retryOrGoOffline("Launcher cannot establish an internet connection"))
         {
