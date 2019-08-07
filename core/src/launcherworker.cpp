@@ -405,14 +405,14 @@ void LauncherWorker::update(
     QProcessEnvironment env;
     LocalPatcherData localData(locations);
 
-    int latestAppVersion = api.getLatestAppVersion(data.patcherSecret(), cancellationToken);
-    if (env.contains(Config::appVersionIdOverrideEnvVar))
+    int latestPatcherVersion = api.getLatestAppVersion(data.patcherSecret(), cancellationToken);
+    if (env.contains(Config::patcherVersionIdOverrideEnvVar))
     {
-        QString envVersionId = env.value(Config::appVersionIdOverrideEnvVar, "");
-        latestAppVersion = envVersionId.toInt();
+        QString envVersionId = env.value(Config::patcherVersionIdOverrideEnvVar, "");
+        latestPatcherVersion = envVersionId.toInt();
     }
 
-    if (localData.isInstalledSpecific(latestAppVersion, data))
+    if (localData.isInstalledSpecific(latestPatcherVersion, data))
     {
         qInfo() << "Latest version is already installed";
         return;
@@ -420,7 +420,7 @@ void LauncherWorker::update(
 
     trySetDisplayName(api, data, cancellationToken);
 
-    ContentSummary contentSummary = api.getContentSummary(data.patcherSecret(), latestAppVersion, cancellationToken);
+    ContentSummary contentSummary = api.getContentSummary(data.patcherSecret(), latestPatcherVersion, cancellationToken);
 
     QBuffer downloadData;
     downloadData.open(QIODevice::WriteOnly);
@@ -430,7 +430,7 @@ void LauncherWorker::update(
 
     connect(&progressDevice, &ProgressDevice::onProgress, this, &LauncherWorker::setDownloadProgress);
     auto downloader = downloading::chunked::Downloader(
-                data.patcherSecret(), latestAppVersion, contentSummary, progressDevice);
+                data.patcherSecret(), latestPatcherVersion, contentSummary, progressDevice);
 
     if (!downloader.downloadChunked(api, nam, cancellationToken))
     {
@@ -442,7 +442,7 @@ void LauncherWorker::update(
     downloadData.open(QIODevice::ReadOnly);
 
     emit statusChanged("Installing...");
-    localData.install(downloadData, data, latestAppVersion, cancellationToken);
+    localData.install(downloadData, data, latestPatcherVersion, cancellationToken);
 }
 
 bool LauncherWorker::tryUpdate(

@@ -76,8 +76,8 @@ public:
 
     const static QString apiUrlOverrideEnvironmentVariableName;
     const static QString apiCacheUrlOverrideEnvironmentVariableName;
-    const static QString appSecretOverrideEnvVar;
-    const static QString appVersionIdOverrideEnvVar;
+    const static QString patcherSecretOverrideEnvVar;
+    const static QString patcherVersionIdOverrideEnvVar;
 
     const static QString geolocationApiUrl;
     const static Timeout geolocationTimeout;

@@ -76,16 +76,16 @@ Data Data::loadFromFile(const QString& t_filePath)
 
 QString Data::patcherSecret() const
 {
+    QProcessEnvironment processEnv;
+    if (processEnv.contains(Config::patcherSecretOverrideEnvVar))
+    {
+        return processEnv.value(Config::patcherSecretOverrideEnvVar, "");
+    }
     return m_patcherSecret;
 }
 
 QString Data::applicationSecret() const
 {
-    QProcessEnvironment processEnv;
-    if (processEnv.contains(Config::appSecretOverrideEnvVar))
-    {
-        return processEnv.value(Config::appSecretOverrideEnvVar, "");
-    }
     return m_applicationSecret;
 }
 

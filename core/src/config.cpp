@@ -44,8 +44,8 @@ const QStringList Config::cacheApiUrls = {
 
 const QString Config::apiUrlOverrideEnvironmentVariableName = "PK_LAUNCHER_API_URL";
 const QString Config::apiCacheUrlOverrideEnvironmentVariableName = "PK_LAUNCHER_API_CACHE_URL";
-const QString Config::appSecretOverrideEnvVar = "PK_LAUNCHER_FORCE_PATCHER_SECRET";
-const QString Config::appVersionIdOverrideEnvVar = "PK_LAUNCHER_FORCE_PATCHER_VERSION_ID";
+const QString Config::patcherSecretOverrideEnvVar = "PK_LAUNCHER_FORCE_PATCHER_SECRET";
+const QString Config::patcherVersionIdOverrideEnvVar = "PK_LAUNCHER_FORCE_PATCHER_VERSION_ID";
 
 const QString Config::geolocationApiUrl = "https://ip2loc.patchkit.net";
 const Timeout Config::geolocationTimeout = Timeout::seconds(10);
