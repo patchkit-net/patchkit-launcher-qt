@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - #1354 Environment variables for overriding the app secret and version id
 - #463 Setting the display name of the Launcher at runtime
 - #1080 Checking for write errors caused by not enough disk space
+- #1433 Checking network connection before doing anything
 
 ### Changed
 - Launcher will set up a lock file before trying any api connection
