@@ -8,7 +8,7 @@
 class NetworkTest
 {
 public:
-	NetworkTest() : m_attempt(0) {}
+    NetworkTest() : m_attempt(0) {}
 
     // Performs a simple conectivity test
     // Returns true if user is online
@@ -16,6 +16,6 @@ public:
 
 private:
 
-	int m_attempt;
+    int m_attempt;
 
 };
