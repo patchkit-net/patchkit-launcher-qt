@@ -13,8 +13,8 @@
 
 namespace Catch
 {
-    std::stringstream testOutputStream;
-    std::stringstream testErrorStream;
+    static std::stringstream testOutputStream;
+    static std::stringstream testErrorStream;
 
     std::ostream& cout()
     {
@@ -45,6 +45,7 @@ private:
 int main (int argc, char * argv[])
 {
     QCoreApplication app(argc, argv);
+    Logger::initialize(QCoreApplication::applicationDirPath());
 
     Logger::getInstance().setSilent(true);
 

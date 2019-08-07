@@ -31,10 +31,10 @@ const QString Config::patcherDirectoryName = "patcher";
 const QString Config::applicationDirectoryName = "app";
 #endif
 
-const int Config::minConnectionTimeoutMsec = 10000;
-const int Config::maxConnectionTimeoutMsec = 30000;
+const Timeout Config::minConnectionTimeoutMsec = Timeout::seconds(10);
+const Timeout Config::maxConnectionTimeoutMsec = Timeout::seconds(30);
 const int Config::maxInvalidChunksCount    = 10;
-const int Config::downloadTimeoutMsec      = 5000;
+const Timeout Config::downloadTimeoutMsec  = Timeout::seconds(5);
 
 const QString Config::mainApiUrl = "https://api2.patchkit.net";
 
@@ -48,7 +48,7 @@ const QString Config::appSecretOverrideEnvVar = "PK_LAUNCHER_FORCE_PATCHER_SECRE
 const QString Config::appVersionIdOverrideEnvVar = "PK_LAUNCHER_FORCE_PATCHER_VERSION_ID";
 
 const QString Config::geolocationApiUrl = "https://ip2loc.patchkit.net";
-const int Config::geolocationTimeout = 10000;
+const Timeout Config::geolocationTimeout = Timeout::seconds(10);
 
 const QString Config::pingTarget = "8.8.8.8";
 

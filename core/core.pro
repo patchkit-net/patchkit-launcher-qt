@@ -20,6 +20,7 @@ SOURCES += \
     $$PWD/src/xxhash.c \
     $$PWD/src/utilities.cpp \
     $$PWD/src/data/networkstatus.cpp \
+    $$PWD/src/networktest.cpp \
     $$PWD/src/remote/api/api.cpp \
     $$PWD/src/remote/api/apiconnectionsetting.cpp \
     $$PWD/src/remote/downloading/downloadingabstractions.cpp \
@@ -38,7 +39,8 @@ SOURCES += \
     $$PWD/src/locations/launcher.cpp \
     $$PWD/src/locations/patcher.cpp \
     $$PWD/src/locations/installation.cpp \
-    $$PWD/src/data/appinfo.cpp
+    $$PWD/src/data/appinfo.cpp \
+    $$PWD/src/remote/downloading/timeout.cpp
 
 HEADERS += \
     $$PWD/src/xxhash.h \
@@ -54,6 +56,7 @@ HEADERS += \
     $$PWD/src/lockfile.h \
     $$PWD/src/utilities.h \
     $$PWD/src/data/networkstatus.hpp \
+    $$PWD/src/networktest.h \
     $$PWD/src/remote/api/iapi.h \
     $$PWD/src/remote/api/api.h \
     $$PWD/src/remote/api/apiconnectionsetting.h \
@@ -77,7 +80,8 @@ HEADERS += \
     $$PWD/src/locations/launcher.h \
     $$PWD/src/locations/patcher.h \
     $$PWD/src/locations/installation.h \
-    $$PWD/src/data/appinfo.h
+    $$PWD/src/data/appinfo.h \
+    $$PWD/src/remote/downloading/timeout.h
 
 include($$PWD/../default.pri)
 include($$PWD/../version.pri)

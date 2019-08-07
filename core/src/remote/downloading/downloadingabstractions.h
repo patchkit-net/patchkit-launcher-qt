@@ -6,6 +6,7 @@
 #include <customexceptions.h>
 
 #include <data/downloadrange.h>
+#include "timeout.h"
 
 namespace downloading
 {
@@ -20,32 +21,32 @@ bool doesStatusCodeIndicateSuccess(int statusCode);
 
 int waitUntilReplyIsReady(
         QNetworkReply* reply,
-        int timeout,
+        Timeout timeout,
         CancellationToken cancellationToken);
 
 void waitUntilReplyIsFinished(
         QNetworkReply* reply,
-        int timeout,
+        Timeout timeout,
         CancellationToken cancellationToken);
 
 void bufferReply(
         QNetworkReply* reply,
         QIODevice& target,
-        int timeout,
+        Timeout timeout,
         CancellationToken cancellationToken);
 
 bool tryDownload(
         QNetworkAccessManager& nam,
         QUrl url,
         QIODevice& target,
-        int timeout,
+        Timeout timeout,
         CancellationToken cancellationToken);
 
 bool tryDownload(
         QNetworkAccessManager& nam,
         const QString& url,
         QIODevice& target,
-        int timeout,
+        Timeout timeout,
         CancellationToken cancellationToken);
 
 bool tryRangedDownload(
@@ -53,7 +54,7 @@ bool tryRangedDownload(
         QUrl url,
         data::DownloadRange range,
         QIODevice& target,
-        int timeout,
+        Timeout timeout,
         CancellationToken cancellationToken);
 
 bool tryRangedDownload(
@@ -61,7 +62,7 @@ bool tryRangedDownload(
         const QString& stringUrl,
         data::DownloadRange range,
         QIODevice& target,
-        int timeout,
+        Timeout timeout,
         CancellationToken cancellationToken);
 
 } // namespace abstractions

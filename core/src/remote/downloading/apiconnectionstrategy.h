@@ -8,6 +8,7 @@
 #include <QVector>
 
 #include "remote/api/apiconnectionsetting.h"
+#include "remote/downloading/timeout.h"
 
 namespace remote
 {
@@ -22,8 +23,8 @@ class ApiConnectionStrategy
 {
 public:
     ApiConnectionStrategy(const ApiConnectionSettings& apiConnectionSettings,
-                           int minConnectionTimeout,
-                           int maxConnectionTimeout);
+                           Timeout minConnectionTimeout,
+                           Timeout maxConnectionTimeout);
 
     bool execute(
             QNetworkAccessManager& nam,
@@ -33,8 +34,8 @@ public:
 
 private:
     ApiConnectionSettings m_apiConnectionSettings;
-    int m_minConnectionTimeout;
-    int m_maxConnectionTimeout;
+    Timeout m_minConnectionTimeout;
+    Timeout m_maxConnectionTimeout;
 
     static QByteArray downloadFromUrl(const QUrl& url);
 };
