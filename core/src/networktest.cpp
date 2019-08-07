@@ -4,10 +4,20 @@
 
 #include <QBuffer>
 
-bool NetworkTest::isOnline(QNetworkAccessManager& nam, CancellationToken cancellationToken) const
+bool NetworkTest::isOnline(QNetworkAccessManager& nam, CancellationToken cancellationToken)
 {
     const QString url = "https://network-test.patchkit.net/";
     QBuffer buffer;
 
-    return downloading::abstractions::tryDownload(nam, url, buffer, Timeout::seconds(10), cancellationToken);
+    m_attempt += 1;
+
+    int timeout = 10;
+    if (m_attempt == 2) {
+    	timeout = 30;
+    } else if (m_attempt >= 3) {
+    	timeout = 60;
+    }
+
+    return downloading::abstractions::tryDownload(nam, url, buffer, Timeout::seconds(timeout),
+    	cancellationToken);
 }
