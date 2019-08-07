@@ -10,7 +10,7 @@
 |Code||
 |-|-|
 | Classes | `class UpperCamelCase` |
-| Namespaces | `namespace UpperCamelCase` |
+| Namespaces | `namespace lowerCamelCase` |
 | Type definitions | `typedef oldType TNewType` |
 | Type definitions (function pointer types only) | `typedef void (*PointerType)()` |
 | Methods | `void lowerCamelCase(int t_lowerCamelCase)` |
