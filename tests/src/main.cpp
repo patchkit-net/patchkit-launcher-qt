@@ -47,7 +47,7 @@ int main (int argc, char * argv[])
     QCoreApplication app(argc, argv);
     Logger::initialize(QCoreApplication::applicationDirPath());
 
-//    Logger::getInstance().setSilent(true);
+    Logger::getInstance().setSilent(true);
 
     Tester testerThread;
     testerThread.start();
