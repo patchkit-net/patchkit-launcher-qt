@@ -116,6 +116,7 @@ bool LauncherWorker::runInternal()
 
     // Initialize
     Data data = resolveData();
+    m_runningData.reset(new Data(data));
 
     // Initialize components
     QNetworkAccessManager nam;
