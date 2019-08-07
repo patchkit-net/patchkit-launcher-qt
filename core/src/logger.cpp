@@ -11,7 +11,7 @@
 #include <QFileInfo>
 #include "locations/launcher.h"
 
-std::shared_ptr<Logger> Logger::instance = std::make_shared<Logger>(nullptr);
+std::shared_ptr<Logger> Logger::instance = std::shared_ptr<Logger>(nullptr);
 
 Logger::Logger(const QString& workingDir)
     : m_logFile(locations::logFilePath(workingDir))
@@ -35,6 +35,11 @@ Logger::Logger(const QString& workingDir)
 void Logger::initialize(const QString& workingDir)
 {
     instance = std::make_shared<Logger>(workingDir);
+}
+
+Logger::~Logger()
+{
+    qInstallMessageHandler(nullptr);
 }
 
 void Logger::setSilent(bool t_silent)
@@ -115,9 +120,10 @@ void Logger::logHandler(QtMsgType t_type, const QMessageLogContext& t_context, c
     txt.append(")");
 #endif
 
+    instance->m_stdoutStream << txt << endl << flush;
+
     if (instance->m_logFile.isOpen())
     {
-        instance->m_stdoutStream << txt << endl << flush;
         instance->m_logFileStream << txt << endl << flush;
     }
 }

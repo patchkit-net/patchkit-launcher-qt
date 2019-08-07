@@ -8,6 +8,7 @@
 #include <QFile>
 #include <QTextStream>
 #include <QtDebug>
+#include <QtMessageHandler>
 
 #include <memory>
 
@@ -16,6 +17,7 @@ class Logger
 public:
     static void initialize(const QString& workingDir);
     Logger(Logger const&) = delete;
+    ~Logger();
     void operator=(Logger const&) = delete;
 
     void setSilent(bool t_silent);
@@ -23,7 +25,9 @@ public:
     static QString adjustSecretForLog(const QString& t_secret);
     static QString adjustSecretForLog(const char* t_secret);
     static Logger& getInstance();
+
     Logger(const QString& workingDir);
+
 private:
     QFile m_logFile;
     QTextStream m_logFileStream;

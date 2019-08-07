@@ -153,6 +153,9 @@ bool LauncherWorker::runInternal()
 
     QString workingDir = locations::workingDirectory(data.applicationSecret());
 
+    Logger::initialize(workingDir);
+    qInfo() << "Launcher version: " << Globals::version();
+
     // Setup the patcher secret
     // NOTE: Why?
     data = setupPatcherSecret(data, api, m_cancellationTokenSource);
@@ -193,9 +196,6 @@ bool LauncherWorker::runInternal()
     {
         throw InsufficientPermissions("Launcher needs the current directory to be writable");
     }
-
-    qInfo() << "Initialzing logger";
-    Logger::initialize(workingDir);
 
     // Lock instance
     LockFile lockFile(locations.lockFile());
