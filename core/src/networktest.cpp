@@ -12,12 +12,15 @@ bool NetworkTest::isOnline(QNetworkAccessManager& nam, CancellationToken cancell
     m_attempt += 1;
 
     int timeout = 10;
-    if (m_attempt == 2) {
-    	timeout = 30;
-    } else if (m_attempt >= 3) {
-    	timeout = 60;
+    if (m_attempt == 2)
+    {
+        timeout = 30;
+    }
+    else if (m_attempt >= 3)
+    {
+        timeout = 60;
     }
 
     return downloading::abstractions::tryDownload(nam, url, buffer, Timeout::seconds(timeout),
-    	cancellationToken);
+        cancellationToken);
 }
