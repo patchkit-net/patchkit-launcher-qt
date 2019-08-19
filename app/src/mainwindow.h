@@ -19,6 +19,7 @@ public:
 public slots:
     void setStatus(const QString& t_status) const;
     void setProgress(int t_progress) const;
+    void setTitle(const QString& title);
 
     void shouldStartInOfflineMode(ILauncherInterface::OfflineModeAnswer& ans);
     void shouldRetry(const QString& reason, bool& ans);

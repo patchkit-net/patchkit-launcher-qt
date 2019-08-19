@@ -44,6 +44,7 @@ public:
 signals:
     void statusChanged(const QString& t_status);
     void progressChanged(int t_progress);
+    void setDisplayName(const QString displayName);
 
 private slots:
     void setDownloadProgress(long long t_bytesDownloaded, long long t_totalBytes);

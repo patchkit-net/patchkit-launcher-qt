@@ -285,7 +285,9 @@ void LauncherWorker::trySetDisplayName(const remote::api::Api& api, const Secret
             auto app = dynamic_cast<QGuiApplication*>(QGuiApplication::instance());
             if (app)
             {
-                app->setApplicationDisplayName(appInfo.displayName);
+                QString displayName = appInfo.displayName;
+                app->setApplicationDisplayName(displayName);
+                emit setDisplayName(displayName);
             }
             else
             {
