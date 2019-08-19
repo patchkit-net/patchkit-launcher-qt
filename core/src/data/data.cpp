@@ -15,13 +15,9 @@
 #include "config.h"
 #include "data/secretencoding.h"
 
-Data::Data()
+Data Data::overridePatcherSecret(Data&& data, Secret patcherSecret)
 {
-}
-
-Data Data::overwritePatcherSecret(const Data &original, const QString &patcherSecret)
-{
-    return Data(patcherSecret, original.applicationSecret());
+    return Data(data.applicationSecret(), patcherSecret);
 }
 
 bool Data::canLoadFromConfig()
@@ -74,27 +70,22 @@ Data Data::loadFromFile(const QString& t_filePath)
     return data;
 }
 
-QString Data::patcherSecret() const
+Secret Data::patcherSecret() const
 {
     QProcessEnvironment processEnv;
     if (processEnv.contains(Config::patcherSecretOverrideEnvVar))
     {
-        return processEnv.value(Config::patcherSecretOverrideEnvVar, "");
+        return Secret::from(processEnv.value(Config::patcherSecretOverrideEnvVar, ""));
     }
     return m_patcherSecret;
 }
 
-QString Data::applicationSecret() const
+Secret Data::applicationSecret() const
 {
     return m_applicationSecret;
 }
 
-QByteArray Data::encodedApplicationSecret() const
-{
-    return data::secret::encode(this->applicationSecret());
-}
-
- #ifdef Q_OS_WIN
+#ifdef Q_OS_WIN
 
 Data Data::loadFromResources(const QString& t_applicationFilePath, int t_resourceId, int t_resourceTypeId)
 {
@@ -154,4 +145,36 @@ QByteArray Data::readStringBytes(QDataStream& t_dataStream)
     }
 
     return bytes;
+}
+
+Secret::operator const QString&() const
+{
+    return m_value;
+}
+
+Secret Secret::fromEncoded(const QByteArray& encodedSecert)
+{
+    QString decoded = data::secret::decode(encodedSecert);
+
+    return Secret(decoded);
+}
+
+Secret Secret::from(const QString& secret)
+{
+    return Secret(secret);
+}
+
+QString Secret::value() const
+{
+    return m_value;
+}
+
+QByteArray Secret::encoded() const
+{
+    return data::secret::encode(m_value);
+}
+
+Secret::Secret(const QString& secret)
+    : m_value(secret)
+{
 }

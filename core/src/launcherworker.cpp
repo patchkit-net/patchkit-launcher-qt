@@ -121,6 +121,11 @@ bool LauncherWorker::runInternal()
     QNetworkAccessManager nam;
     Api api(nam);
 
+    QString workingDir = locations::workingDirectory(data.applicationSecret());
+
+    qInfo() << "Initialzing logger";
+    Logger::initialize(workingDir);
+
     // Testing connectivity
     if (!m_networkTest.isOnline(nam, m_cancellationTokenSource))
     {
@@ -149,14 +154,10 @@ bool LauncherWorker::runInternal()
         }
     }
 
-    QString workingDir = locations::workingDirectory(data.applicationSecret());
 
-    // Setup the patcher secret
-    // NOTE: Why?
-    data = setupPatcherSecret(data, api, m_cancellationTokenSource);
-    m_runningData.reset(new Data(data));
-
-    m_runningData.operator bool();
+    // Bootstrap the patcher secret. Patcher secret set int Launcher.dat or resources may be invalid if it was updated from the panel
+    Secret patcherSecret = setupPatcherSecret(data.applicationSecret(), data.patcherSecret(), api, m_cancellationTokenSource);
+    *m_runningData = Data::overridePatcherSecret(std::move(data), patcherSecret);
 
     locations::Installation installation;
     if (locations::Installation::canLoad(workingDir))
@@ -184,16 +185,13 @@ bool LauncherWorker::runInternal()
     }
 
     locations::Launcher locations = locations::Launcher::initalize(
-                data.applicationSecret(), installation);
+                m_runningData->applicationSecret(), installation);
 
     // Check permissions
     if (!Utilities::isDirectoryWritable(locations.directory()))
     {
         throw InsufficientPermissions("Launcher needs the current directory to be writable");
     }
-
-    qInfo() << "Initialzing logger";
-    Logger::initialize(workingDir);
 
     // Lock instance
     LockFile lockFile(locations.lockFile());
@@ -202,11 +200,11 @@ bool LauncherWorker::runInternal()
     LocalPatcherData localData(locations);
 
     qInfo() << "Updating the patcher";
-    bool hasUpdated = tryUpdate(locations, data, api, nam, m_cancellationTokenSource);
+    bool hasUpdated = tryUpdate(locations, m_runningData->applicationSecret(), patcherSecret, api, nam, m_cancellationTokenSource);
 
     if (hasUpdated)
     {
-        localData.start(data, data::NetworkStatus::Online);
+        localData.start(m_runningData->applicationSecret(), data::NetworkStatus::Online);
         return true;
     }
     else
@@ -219,7 +217,7 @@ bool LauncherWorker::runInternal()
             if (ans == ILauncherInterface::OfflineModeAnswer::YES)
             {
                 qInfo() << "Starting the patcher in offline mode";
-                localData.start(data, data::NetworkStatus::Offline);
+                localData.start(m_runningData->applicationSecret(), data::NetworkStatus::Offline);
                 return true;
             }
             else if (ans == ILauncherInterface::OfflineModeAnswer::NO)
@@ -246,7 +244,7 @@ bool LauncherWorker::tryStartOffline()
             if (locations)
             {
                 LocalPatcherData localData(*locations);
-                localData.start(*m_runningData, data::NetworkStatus::Offline);
+                localData.start(m_runningData->applicationSecret(), data::NetworkStatus::Offline);
                 return true;
             }
 
@@ -275,11 +273,11 @@ void LauncherWorker::tryStartOfflineOrDisplayError(const QString& msg)
     }
 }
 
-void LauncherWorker::trySetDisplayName(const remote::api::Api& api, const Data& data, CancellationToken cancellationToken)
+void LauncherWorker::trySetDisplayName(const remote::api::Api& api, const Secret& applicationSecret, CancellationToken cancellationToken)
 {
     try
     {
-        AppInfo appInfo = api.getAppInfo(data.applicationSecret(), cancellationToken);
+        AppInfo appInfo = api.getAppInfo(applicationSecret, cancellationToken);
         if (!appInfo.displayName.isEmpty())
         {
             auto app = dynamic_cast<QGuiApplication*>(QGuiApplication::instance());
@@ -397,29 +395,29 @@ Data LauncherWorker::resolveData()
 }
 
 void LauncherWorker::update(
-        const locations::Launcher& locations, const Data& data,
+        const locations::Launcher& locations, const Secret& appSecret, const Secret& patcherSecret,
         const Api& api, QNetworkAccessManager& nam,
         CancellationToken cancellationToken)
 {
     QProcessEnvironment env;
     LocalPatcherData localData(locations);
 
-    int latestPatcherVersion = api.getLatestAppVersion(data.patcherSecret(), cancellationToken);
+    int latestPatcherVersion = api.getLatestAppVersion(patcherSecret, cancellationToken);
     if (env.contains(Config::patcherVersionIdOverrideEnvVar))
     {
         QString envVersionId = env.value(Config::patcherVersionIdOverrideEnvVar, "");
         latestPatcherVersion = envVersionId.toInt();
     }
 
-    if (localData.isInstalledSpecific(latestPatcherVersion, data))
+    if (localData.isInstalledSpecific(latestPatcherVersion, patcherSecret))
     {
         qInfo() << "Latest version is already installed";
         return;
     }
 
-    trySetDisplayName(api, data, cancellationToken);
+    trySetDisplayName(api, appSecret, cancellationToken);
 
-    ContentSummary contentSummary = api.getContentSummary(data.patcherSecret(), latestPatcherVersion, cancellationToken);
+    ContentSummary contentSummary = api.getContentSummary(patcherSecret, latestPatcherVersion, cancellationToken);
 
     QBuffer downloadData;
     downloadData.open(QIODevice::WriteOnly);
@@ -429,7 +427,7 @@ void LauncherWorker::update(
 
     connect(&progressDevice, &ProgressDevice::onProgress, this, &LauncherWorker::setDownloadProgress);
     auto downloader = downloading::chunked::Downloader(
-                data.patcherSecret(), latestPatcherVersion, contentSummary, progressDevice);
+                patcherSecret, latestPatcherVersion, contentSummary, progressDevice);
 
     if (!downloader.downloadChunked(api, nam, cancellationToken))
     {
@@ -441,12 +439,12 @@ void LauncherWorker::update(
     downloadData.open(QIODevice::ReadOnly);
 
     emit statusChanged("Installing...");
-    localData.install(downloadData, data, latestPatcherVersion, cancellationToken);
+    localData.install(downloadData, patcherSecret, latestPatcherVersion, cancellationToken);
 }
 
 bool LauncherWorker::tryUpdate(
         const locations::Launcher& locations,
-        const Data& data, const Api& api,
+        const Secret& appSecret, const Secret& patcherSecret, const Api& api,
         QNetworkAccessManager& nam,
         CancellationToken cancellationToken)
 {
@@ -454,7 +452,7 @@ bool LauncherWorker::tryUpdate(
 
     try
     {
-        update(locations, data, api, nam, cancellationToken);
+        update(locations, appSecret, patcherSecret, api, nam, cancellationToken);
         return true;
     }
     catch (downloading::chunked::ChunkedBuffer::ChunkVerificationException&)
@@ -505,18 +503,18 @@ std::unique_ptr<locations::Launcher> LauncherWorker::tryLoadLocations()
     }
 }
 
-Data LauncherWorker::setupPatcherSecret(const Data& data, const Api& api, CancellationToken cancellationToken)
+Secret LauncherWorker::setupPatcherSecret(const Secret& appSecret, const Secret& patcherSecret, const Api& api, CancellationToken cancellationToken)
 {
-    LauncherSettings settings(data.applicationSecret());
+    LauncherSettings settings(appSecret);
 
     try
     {
         QString newPatcherSecret = api.getPatcherSecret(
-                    data.applicationSecret(), cancellationToken);
+                    appSecret, cancellationToken);
 
         settings.savePatcherSecret(newPatcherSecret);
 
-        return Data::overwritePatcherSecret(data, newPatcherSecret);
+        return Secret::from(newPatcherSecret);
     }
     catch (CancellationToken::CancelledException&)
     {
@@ -526,11 +524,11 @@ Data LauncherWorker::setupPatcherSecret(const Data& data, const Api& api, Cancel
     {
         if (!settings.patcherSecret().isEmpty())
         {
-            return Data::overwritePatcherSecret(data, settings.patcherSecret());
+            return Secret::from(settings.patcherSecret());
         }
     }
 
-    return data;
+    return patcherSecret;
 }
 
 void LauncherWorker::setDownloadProgress(long long t_bytesDownloaded, long long t_totalBytes)
