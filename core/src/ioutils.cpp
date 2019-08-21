@@ -129,7 +129,8 @@ void IOUtils::extractZipFileEntry(QuaZipFile& t_zipEntry, const QString& t_zipEn
 {
     if (!t_zipEntry.open(QIODevice::ReadOnly) || t_zipEntry.getZipError() != UNZ_OK)
     {
-        throw std::runtime_error("Couldn't read zip entry.");
+        auto msg = QString("Couldn't read zip entry %1").arg(t_zipEntry.getFileName());
+        throw std::runtime_error(msg.toStdString());
     }
 
     QFileInfo zipEntryFileInfo(t_zipEntryPath);
@@ -140,7 +141,8 @@ void IOUtils::extractZipFileEntry(QuaZipFile& t_zipEntry, const QString& t_zipEn
 
     if (!zipEntryFile.open(QIODevice::WriteOnly))
     {
-        throw std::runtime_error("Couldn't open file for extracting.");
+        auto msg = QString("Couldn't open file %1 for extracting.").arg(zipEntryFileInfo.absoluteFilePath());
+        throw std::runtime_error(msg.toStdString());
     }
 
     copyIODeviceData(dynamic_cast<QIODevice&>(t_zipEntry), zipEntryFile, cancellationToken);
