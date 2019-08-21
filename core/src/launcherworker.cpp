@@ -126,7 +126,7 @@ bool LauncherWorker::runInternal()
     qInfo() << "Initialzing logger";
     Logger::initialize(workingDir);
 
-    // Testing connectivity
+    qInfo("Testing connectivity");
     if (!m_networkTest.isOnline(nam, m_cancellationTokenSource))
     {
         switch (retryOrGoOffline("Launcher cannot establish an internet connection"))
@@ -159,9 +159,11 @@ bool LauncherWorker::runInternal()
     Secret patcherSecret = setupPatcherSecret(data.applicationSecret(), data.patcherSecret(), api, m_cancellationTokenSource);
     *m_runningData = Data::overridePatcherSecret(std::move(data), patcherSecret);
 
+    qInfo("Resolving installation location");
     locations::Installation installation;
     if (locations::Installation::canLoad(workingDir))
     {
+        qInfo("Location file is already present");
         installation = locations::Installation::load(workingDir);
     }
     else
@@ -169,6 +171,7 @@ bool LauncherWorker::runInternal()
         QString installationLocation = workingDir;
         if (Config::isSelectableInstallationLocationEnabled())
         {
+            qInfo("Asking user to select installation location");
             bool shouldCancel;
             m_launcherInterface.selectInstallationLocation(installationLocation, shouldCancel);
             if (shouldCancel)
@@ -177,6 +180,8 @@ bool LauncherWorker::runInternal()
             }
 
         }
+
+        qInfo() << "Installation location resolved to " << installationLocation;
 
         installation = locations::Installation(
                     QDir(installationLocation).filePath(Config::patcherDirectoryName),
