@@ -43,7 +43,18 @@ void LauncherWorker::run()
         catch (InsufficientPermissions& e)
         {
             qWarning() << "Permissions error: " << e.what();
-            Utilities::tryRestartWithHigherPermissions();
+            try
+            {
+                Utilities::tryRestartWithHigherPermissions();
+            }
+            catch (FatalException&)
+            {
+                this->m_launcherInterface.displayErrorMessage("Insufficient permissions");
+            }
+            catch (CancellationToken::CancelledException&)
+            {
+                // do nothing
+            }
             return;
         }
         catch (CancellationToken::CancelledException&)
