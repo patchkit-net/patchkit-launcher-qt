@@ -17,7 +17,7 @@
 
 Data Data::overridePatcherSecret(Data&& data, Secret patcherSecret)
 {
-    return Data(data.applicationSecret(), patcherSecret);
+    return Data(patcherSecret, data.applicationSecret());
 }
 
 bool Data::canLoadFromConfig()
