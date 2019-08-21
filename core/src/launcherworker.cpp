@@ -113,15 +113,19 @@ bool LauncherWorker::runInternal()
     emit statusChanged("Initializing...");
     qInfo() << "Initializing";
 
-    // Initialize
     Data data = resolveData();
     m_runningData.reset(new Data(data));
 
-    // Initialize components
     QNetworkAccessManager nam;
     Api api(nam);
 
     QString workingDir = locations::workingDirectory(data.applicationSecret());
+
+    qInfo() << "Checking if working directory: " << workingDir << " is writeable";
+    if (!Utilities::isDirectoryWritable(workingDir))
+    {
+        throw InsufficientPermissions("Launcher needs the current directory to be writable");
+    }
 
     qInfo() << "Initialzing logger";
     Logger::initialize(workingDir);
@@ -192,13 +196,18 @@ bool LauncherWorker::runInternal()
     locations::Launcher locations = locations::Launcher::initalize(
                 m_runningData->applicationSecret(), installation);
 
-    // Check permissions
-    if (!Utilities::isDirectoryWritable(locations.directory()))
+    qInfo("Checking if patcher directory is writeable");
+    if (!Utilities::isDirectoryWritable(locations.patcher().directory()))
     {
-        throw InsufficientPermissions("Launcher needs the current directory to be writable");
+        throw InsufficientPermissions("Patcher directory must be writable");
     }
 
-    // Lock instance
+    qInfo("Checking if app directory is writeable");
+    if (!Utilities::isDirectoryWritable(locations.application().directory()))
+    {
+        throw InsufficientPermissions("App directory must be writable");
+    }
+
     LockFile lockFile(locations.lockFile());
     lockFile.lock();
 
