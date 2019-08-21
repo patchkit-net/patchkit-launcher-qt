@@ -3,10 +3,12 @@
 #include <QDir>
 
 #include "config.h"
+#include "ioutils.h"
 
 locations::Patcher::Patcher(const QString& patcherDirectory)
     : m_directory(patcherDirectory)
 {
+    IOUtils::createDir(m_directory);
 }
 
 QString locations::Patcher::directory() const
