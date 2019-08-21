@@ -72,7 +72,7 @@ Data Data::loadFromFile(const QString& t_filePath)
 
 Secret Data::patcherSecret() const
 {
-    QProcessEnvironment processEnv;
+    QProcessEnvironment processEnv = QProcessEnvironment::systemEnvironment();
     if (processEnv.contains(Config::patcherSecretOverrideEnvVar))
     {
         return Secret::from(processEnv.value(Config::patcherSecretOverrideEnvVar, ""));

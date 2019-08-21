@@ -129,7 +129,7 @@ const QString Config::selectableInstallationLocationVariableName = "PK_LAUNCHER_
 
 bool Config::isSelectableInstallationLocationEnabled()
 {
-    QProcessEnvironment env;
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
 
     if (env.contains(selectableInstallationLocationVariableName))
     {

@@ -399,7 +399,7 @@ void LauncherWorker::update(
         const Api& api, QNetworkAccessManager& nam,
         CancellationToken cancellationToken)
 {
-    QProcessEnvironment env;
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     LocalPatcherData localData(locations);
 
     int latestPatcherVersion = api.getLatestAppVersion(patcherSecret, cancellationToken);
