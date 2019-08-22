@@ -140,8 +140,9 @@ bool LauncherWorker::runInternal()
 
     qInfo() << "Initialzing logger";
     Logger::initialize(workingDir);
-
     qInfo() << "Starting launcher, version: " << Globals::version();
+
+    trySetDisplayName(api, data.applicationSecret(), m_cancellationTokenSource);
 
     qInfo("Testing connectivity");
     if (!m_networkTest.isOnline(nam, m_cancellationTokenSource))
@@ -310,8 +311,18 @@ void LauncherWorker::trySetDisplayName(const remote::api::Api& api, const Secret
             auto app = dynamic_cast<QGuiApplication*>(QGuiApplication::instance());
             if (app)
             {
-                app->setApplicationDisplayName(appInfo.displayName);
+                QString displayName = appInfo.displayName;
+                app->setApplicationDisplayName(displayName);
+                emit setDisplayName(displayName);
             }
+            else
+            {
+                qWarning("Failed to resolve as QGuiApplication, display name cannot be set");
+            }
+        }
+        else
+        {
+            qWarning() << "Cannot set display name, the obtained display name is empty";
         }
     }
     catch (remote::api::Api::ApiConnectionError& e)
@@ -441,8 +452,6 @@ void LauncherWorker::update(
         qInfo() << "Latest version is already installed";
         return;
     }
-
-    trySetDisplayName(api, appSecret, cancellationToken);
 
     ContentSummary contentSummary = api.getContentSummary(patcherSecret, latestPatcherVersion, cancellationToken);
 

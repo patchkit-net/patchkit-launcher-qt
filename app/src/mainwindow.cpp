@@ -35,6 +35,11 @@ void MainWindow::setProgress(int t_progress) const
     m_ui.progressBar->setValue(t_progress);
 }
 
+void MainWindow::setTitle(const QString& title)
+{
+    setWindowTitle(title);
+}
+
 void MainWindow::shouldStartInOfflineMode(ILauncherInterface::OfflineModeAnswer& ans)
 {
     int answer = QMessageBox::question(nullptr, "Offline mode?",
