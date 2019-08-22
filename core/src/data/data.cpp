@@ -17,7 +17,7 @@
 
 Data Data::overridePatcherSecret(Data&& data, Secret patcherSecret)
 {
-    return Data(data.applicationSecret(), patcherSecret);
+    return Data(patcherSecret, data.applicationSecret());
 }
 
 bool Data::canLoadFromConfig()
@@ -72,7 +72,7 @@ Data Data::loadFromFile(const QString& t_filePath)
 
 Secret Data::patcherSecret() const
 {
-    QProcessEnvironment processEnv;
+    QProcessEnvironment processEnv = QProcessEnvironment::systemEnvironment();
     if (processEnv.contains(Config::patcherSecretOverrideEnvVar))
     {
         return Secret::from(processEnv.value(Config::patcherSecretOverrideEnvVar, ""));

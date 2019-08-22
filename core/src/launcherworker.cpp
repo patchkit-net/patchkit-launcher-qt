@@ -43,7 +43,18 @@ void LauncherWorker::run()
         catch (InsufficientPermissions& e)
         {
             qWarning() << "Permissions error: " << e.what();
-            Utilities::tryRestartWithHigherPermissions();
+            try
+            {
+                Utilities::tryRestartWithHigherPermissions();
+            }
+            catch (FatalException&)
+            {
+                this->m_launcherInterface.displayErrorMessage("Insufficient permissions");
+            }
+            catch (CancellationToken::CancelledException&)
+            {
+                // do nothing
+            }
             return;
         }
         catch (CancellationToken::CancelledException&)
@@ -113,22 +124,27 @@ bool LauncherWorker::runInternal()
     emit statusChanged("Initializing...");
     qInfo() << "Initializing";
 
-    // Initialize
     Data data = resolveData();
     m_runningData.reset(new Data(data));
 
-    // Initialize components
     QNetworkAccessManager nam;
     Api api(nam);
 
     QString workingDir = locations::workingDirectory(data.applicationSecret());
 
+    qInfo() << "Checking if working directory: " << workingDir << " is writeable";
+    if (!Utilities::isDirectoryWritable(workingDir))
+    {
+        throw InsufficientPermissions("Launcher needs the current directory to be writable");
+    }
+
     qInfo() << "Initialzing logger";
     Logger::initialize(workingDir);
+    qInfo() << "Starting launcher, version: " << Globals::version();
 
     trySetDisplayName(api, data.applicationSecret(), m_cancellationTokenSource);
 
-    // Testing connectivity
+    qInfo("Testing connectivity");
     if (!m_networkTest.isOnline(nam, m_cancellationTokenSource))
     {
         switch (retryOrGoOffline("Launcher cannot establish an internet connection"))
@@ -161,9 +177,11 @@ bool LauncherWorker::runInternal()
     Secret patcherSecret = setupPatcherSecret(data.applicationSecret(), data.patcherSecret(), api, m_cancellationTokenSource);
     *m_runningData = Data::overridePatcherSecret(std::move(data), patcherSecret);
 
+    qInfo("Resolving installation location");
     locations::Installation installation;
     if (locations::Installation::canLoad(workingDir))
     {
+        qInfo("Location file is already present");
         installation = locations::Installation::load(workingDir);
     }
     else
@@ -171,6 +189,7 @@ bool LauncherWorker::runInternal()
         QString installationLocation = workingDir;
         if (Config::isSelectableInstallationLocationEnabled())
         {
+            qInfo("Asking user to select installation location");
             bool shouldCancel;
             m_launcherInterface.selectInstallationLocation(installationLocation, shouldCancel);
             if (shouldCancel)
@@ -179,6 +198,8 @@ bool LauncherWorker::runInternal()
             }
 
         }
+
+        qInfo() << "Installation location resolved to " << installationLocation;
 
         installation = locations::Installation(
                     QDir(installationLocation).filePath(Config::patcherDirectoryName),
@@ -189,13 +210,18 @@ bool LauncherWorker::runInternal()
     locations::Launcher locations = locations::Launcher::initalize(
                 m_runningData->applicationSecret(), installation);
 
-    // Check permissions
-    if (!Utilities::isDirectoryWritable(locations.directory()))
+    qInfo("Checking if patcher directory is writeable");
+    if (!Utilities::isDirectoryWritable(locations.patcher().directory()))
     {
-        throw InsufficientPermissions("Launcher needs the current directory to be writable");
+        throw InsufficientPermissions("Patcher directory must be writable");
     }
 
-    // Lock instance
+    qInfo("Checking if app directory is writeable");
+    if (!Utilities::isDirectoryWritable(locations.application().directory()))
+    {
+        throw InsufficientPermissions("App directory must be writable");
+    }
+
     LockFile lockFile(locations.lockFile());
     lockFile.lock();
 
@@ -411,7 +437,7 @@ void LauncherWorker::update(
         const Api& api, QNetworkAccessManager& nam,
         CancellationToken cancellationToken)
 {
-    QProcessEnvironment env;
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     LocalPatcherData localData(locations);
 
     int latestPatcherVersion = api.getLatestAppVersion(patcherSecret, cancellationToken);
