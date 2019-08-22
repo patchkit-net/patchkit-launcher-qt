@@ -141,6 +141,8 @@ bool LauncherWorker::runInternal()
     qInfo() << "Initialzing logger";
     Logger::initialize(workingDir);
 
+    qInfo() << "Starting launcher, version: " << Globals::version();
+
     qInfo("Testing connectivity");
     if (!m_networkTest.isOnline(nam, m_cancellationTokenSource))
     {

@@ -52,7 +52,6 @@ LauncherApp::Launcher::Launcher(const QApplication& t_application)
 
 void LauncherApp::Launcher::start()
 {
-    qInfo() << "Starting launcher, version: " << Globals::version();
     connect(&m_worker, &QThread::finished, this, &Launcher::finish);
 
     qInfo("Showing main window.");
