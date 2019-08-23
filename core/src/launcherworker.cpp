@@ -43,7 +43,18 @@ void LauncherWorker::run()
         catch (InsufficientPermissions& e)
         {
             qWarning() << "Permissions error: " << e.what();
-            Utilities::tryRestartWithHigherPermissions();
+            try
+            {
+                Utilities::tryRestartWithHigherPermissions();
+            }
+            catch (FatalException&)
+            {
+                this->m_launcherInterface.displayErrorMessage("Insufficient permissions");
+            }
+            catch (CancellationToken::CancelledException&)
+            {
+                // do nothing
+            }
             return;
         }
         catch (CancellationToken::CancelledException&)
@@ -113,15 +124,27 @@ bool LauncherWorker::runInternal()
     emit statusChanged("Initializing...");
     qInfo() << "Initializing";
 
-    // Initialize
     Data data = resolveData();
     m_runningData.reset(new Data(data));
 
-    // Initialize components
     QNetworkAccessManager nam;
     Api api(nam);
 
-    // Testing connectivity
+    QString workingDir = locations::workingDirectory(data.applicationSecret());
+
+    qInfo() << "Checking if working directory: " << workingDir << " is writeable";
+    if (!Utilities::isDirectoryWritable(workingDir))
+    {
+        throw InsufficientPermissions("Launcher needs the current directory to be writable");
+    }
+
+    qInfo() << "Initialzing logger";
+    Logger::initialize(workingDir);
+    qInfo() << "Starting launcher, version: " << Globals::version();
+
+    trySetDisplayName(api, data.applicationSecret(), m_cancellationTokenSource);
+
+    qInfo("Testing connectivity");
     if (!m_networkTest.isOnline(nam, m_cancellationTokenSource))
     {
         switch (retryOrGoOffline("Launcher cannot establish an internet connection"))
@@ -149,18 +172,16 @@ bool LauncherWorker::runInternal()
         }
     }
 
-    QString workingDir = locations::workingDirectory(data.applicationSecret());
 
-    // Setup the patcher secret
-    // NOTE: Why?
-    data = setupPatcherSecret(data, api, m_cancellationTokenSource);
-    m_runningData.reset(new Data(data));
+    // Bootstrap the patcher secret. Patcher secret set int Launcher.dat or resources may be invalid if it was updated from the panel
+    Secret patcherSecret = setupPatcherSecret(data.applicationSecret(), data.patcherSecret(), api, m_cancellationTokenSource);
+    *m_runningData = Data::overridePatcherSecret(std::move(data), patcherSecret);
 
-    m_runningData.operator bool();
-
+    qInfo("Resolving installation location");
     locations::Installation installation;
     if (locations::Installation::canLoad(workingDir))
     {
+        qInfo("Location file is already present");
         installation = locations::Installation::load(workingDir);
     }
     else
@@ -168,6 +189,7 @@ bool LauncherWorker::runInternal()
         QString installationLocation = workingDir;
         if (Config::isSelectableInstallationLocationEnabled())
         {
+            qInfo("Asking user to select installation location");
             bool shouldCancel;
             m_launcherInterface.selectInstallationLocation(installationLocation, shouldCancel);
             if (shouldCancel)
@@ -177,6 +199,8 @@ bool LauncherWorker::runInternal()
 
         }
 
+        qInfo() << "Installation location resolved to " << installationLocation;
+
         installation = locations::Installation(
                     QDir(installationLocation).filePath(Config::patcherDirectoryName),
                     QDir(installationLocation).filePath(Config::applicationDirectoryName));
@@ -184,29 +208,31 @@ bool LauncherWorker::runInternal()
     }
 
     locations::Launcher locations = locations::Launcher::initalize(
-                data.applicationSecret(), installation);
+                m_runningData->applicationSecret(), installation);
 
-    // Check permissions
-    if (!Utilities::isDirectoryWritable(locations.directory()))
+    qInfo("Checking if patcher directory is writeable");
+    if (!Utilities::isDirectoryWritable(locations.patcher().directory()))
     {
-        throw InsufficientPermissions("Launcher needs the current directory to be writable");
+        throw InsufficientPermissions("Patcher directory must be writable");
     }
 
-    qInfo() << "Initialzing logger";
-    Logger::initialize(workingDir);
+    qInfo("Checking if app directory is writeable");
+    if (!Utilities::isDirectoryWritable(locations.application().directory()))
+    {
+        throw InsufficientPermissions("App directory must be writable");
+    }
 
-    // Lock instance
     LockFile lockFile(locations.lockFile());
     lockFile.lock();
 
     LocalPatcherData localData(locations);
 
     qInfo() << "Updating the patcher";
-    bool hasUpdated = tryUpdate(locations, data, api, nam, m_cancellationTokenSource);
+    bool hasUpdated = tryUpdate(locations, m_runningData->applicationSecret(), patcherSecret, api, nam, m_cancellationTokenSource);
 
     if (hasUpdated)
     {
-        localData.start(data, data::NetworkStatus::Online);
+        localData.start(m_runningData->applicationSecret(), data::NetworkStatus::Online);
         return true;
     }
     else
@@ -219,7 +245,7 @@ bool LauncherWorker::runInternal()
             if (ans == ILauncherInterface::OfflineModeAnswer::YES)
             {
                 qInfo() << "Starting the patcher in offline mode";
-                localData.start(data, data::NetworkStatus::Offline);
+                localData.start(m_runningData->applicationSecret(), data::NetworkStatus::Offline);
                 return true;
             }
             else if (ans == ILauncherInterface::OfflineModeAnswer::NO)
@@ -246,7 +272,7 @@ bool LauncherWorker::tryStartOffline()
             if (locations)
             {
                 LocalPatcherData localData(*locations);
-                localData.start(*m_runningData, data::NetworkStatus::Offline);
+                localData.start(m_runningData->applicationSecret(), data::NetworkStatus::Offline);
                 return true;
             }
 
@@ -275,18 +301,28 @@ void LauncherWorker::tryStartOfflineOrDisplayError(const QString& msg)
     }
 }
 
-void LauncherWorker::trySetDisplayName(const remote::api::Api& api, const Data& data, CancellationToken cancellationToken)
+void LauncherWorker::trySetDisplayName(const remote::api::Api& api, const Secret& applicationSecret, CancellationToken cancellationToken)
 {
     try
     {
-        AppInfo appInfo = api.getAppInfo(data.applicationSecret(), cancellationToken);
+        AppInfo appInfo = api.getAppInfo(applicationSecret, cancellationToken);
         if (!appInfo.displayName.isEmpty())
         {
             auto app = dynamic_cast<QGuiApplication*>(QGuiApplication::instance());
             if (app)
             {
-                app->setApplicationDisplayName(appInfo.displayName);
+                QString displayName = appInfo.displayName;
+                app->setApplicationDisplayName(displayName);
+                emit setDisplayName(displayName);
             }
+            else
+            {
+                qWarning("Failed to resolve as QGuiApplication, display name cannot be set");
+            }
+        }
+        else
+        {
+            qWarning() << "Cannot set display name, the obtained display name is empty";
         }
     }
     catch (remote::api::Api::ApiConnectionError& e)
@@ -397,29 +433,27 @@ Data LauncherWorker::resolveData()
 }
 
 void LauncherWorker::update(
-        const locations::Launcher& locations, const Data& data,
+        const locations::Launcher& locations, const Secret& appSecret, const Secret& patcherSecret,
         const Api& api, QNetworkAccessManager& nam,
         CancellationToken cancellationToken)
 {
-    QProcessEnvironment env;
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     LocalPatcherData localData(locations);
 
-    int latestPatcherVersion = api.getLatestAppVersion(data.patcherSecret(), cancellationToken);
+    int latestPatcherVersion = api.getLatestAppVersion(patcherSecret, cancellationToken);
     if (env.contains(Config::patcherVersionIdOverrideEnvVar))
     {
         QString envVersionId = env.value(Config::patcherVersionIdOverrideEnvVar, "");
         latestPatcherVersion = envVersionId.toInt();
     }
 
-    if (localData.isInstalledSpecific(latestPatcherVersion, data))
+    if (localData.isInstalledSpecific(latestPatcherVersion, patcherSecret))
     {
         qInfo() << "Latest version is already installed";
         return;
     }
 
-    trySetDisplayName(api, data, cancellationToken);
-
-    ContentSummary contentSummary = api.getContentSummary(data.patcherSecret(), latestPatcherVersion, cancellationToken);
+    ContentSummary contentSummary = api.getContentSummary(patcherSecret, latestPatcherVersion, cancellationToken);
 
     QBuffer downloadData;
     downloadData.open(QIODevice::WriteOnly);
@@ -429,7 +463,7 @@ void LauncherWorker::update(
 
     connect(&progressDevice, &ProgressDevice::onProgress, this, &LauncherWorker::setDownloadProgress);
     auto downloader = downloading::chunked::Downloader(
-                data.patcherSecret(), latestPatcherVersion, contentSummary, progressDevice);
+                patcherSecret, latestPatcherVersion, contentSummary, progressDevice);
 
     if (!downloader.downloadChunked(api, nam, cancellationToken))
     {
@@ -441,12 +475,12 @@ void LauncherWorker::update(
     downloadData.open(QIODevice::ReadOnly);
 
     emit statusChanged("Installing...");
-    localData.install(downloadData, data, latestPatcherVersion, cancellationToken);
+    localData.install(downloadData, patcherSecret, latestPatcherVersion, cancellationToken);
 }
 
 bool LauncherWorker::tryUpdate(
         const locations::Launcher& locations,
-        const Data& data, const Api& api,
+        const Secret& appSecret, const Secret& patcherSecret, const Api& api,
         QNetworkAccessManager& nam,
         CancellationToken cancellationToken)
 {
@@ -454,7 +488,7 @@ bool LauncherWorker::tryUpdate(
 
     try
     {
-        update(locations, data, api, nam, cancellationToken);
+        update(locations, appSecret, patcherSecret, api, nam, cancellationToken);
         return true;
     }
     catch (downloading::chunked::ChunkedBuffer::ChunkVerificationException&)
@@ -505,18 +539,18 @@ std::unique_ptr<locations::Launcher> LauncherWorker::tryLoadLocations()
     }
 }
 
-Data LauncherWorker::setupPatcherSecret(const Data& data, const Api& api, CancellationToken cancellationToken)
+Secret LauncherWorker::setupPatcherSecret(const Secret& appSecret, const Secret& patcherSecret, const Api& api, CancellationToken cancellationToken)
 {
-    LauncherSettings settings(data.applicationSecret());
+    LauncherSettings settings(appSecret);
 
     try
     {
         QString newPatcherSecret = api.getPatcherSecret(
-                    data.applicationSecret(), cancellationToken);
+                    appSecret, cancellationToken);
 
         settings.savePatcherSecret(newPatcherSecret);
 
-        return Data::overwritePatcherSecret(data, newPatcherSecret);
+        return Secret::from(newPatcherSecret);
     }
     catch (CancellationToken::CancelledException&)
     {
@@ -526,11 +560,11 @@ Data LauncherWorker::setupPatcherSecret(const Data& data, const Api& api, Cancel
     {
         if (!settings.patcherSecret().isEmpty())
         {
-            return Data::overwritePatcherSecret(data, settings.patcherSecret());
+            return Secret::from(settings.patcherSecret());
         }
     }
 
-    return data;
+    return patcherSecret;
 }
 
 void LauncherWorker::setDownloadProgress(long long t_bytesDownloaded, long long t_totalBytes)

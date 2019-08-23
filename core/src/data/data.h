@@ -7,11 +7,28 @@
 
 #include <QDataStream>
 
+struct Secret
+{
+public:
+    Secret(const QString& secret);
+
+    static Secret fromEncoded(const QByteArray& encodedSecert);
+    static Secret from(const QString& secret);
+
+    QString value() const;
+    QByteArray encoded() const;
+
+    operator const QString&() const;
+
+private:
+    QString m_value;
+};
+
 struct Data
 {
     Data();
 
-    static Data overwritePatcherSecret(const Data& original, const QString& patcherSecret);
+    static Data overridePatcherSecret(Data&& data, Secret patcherSecret);
 
     static bool canLoadFromConfig();
 
@@ -23,11 +40,9 @@ struct Data
     static Data loadFromResources(const QString& t_applicationFilePath, int t_resourceId, int t_resourceTypeId);
 #endif
 
-    QString patcherSecret() const;
+    Secret patcherSecret() const;
 
-    QString applicationSecret() const;
-
-    QByteArray encodedApplicationSecret() const;
+    Secret applicationSecret() const;
 
 private:
     static Data fromEncoded(const QByteArray& t_encodedPatcherSecret, const QByteArray& t_encodedApplicationSecret);
@@ -36,8 +51,8 @@ private:
 
     Data(const QString& patcherSecret, const QString& appSecret);
 
-    QString m_patcherSecret;
-    QString m_applicationSecret;
+    Secret m_patcherSecret;
+    Secret m_applicationSecret;
 
     static QByteArray readStringBytes(QDataStream& t_dataStream);
 };

@@ -44,6 +44,7 @@ public:
 signals:
     void statusChanged(const QString& t_status);
     void progressChanged(int t_progress);
+    void setDisplayName(const QString displayName);
 
 private slots:
     void setDownloadProgress(long long t_bytesDownloaded, long long t_totalBytes);
@@ -54,24 +55,25 @@ private:
     bool tryStartOffline();
 
     void tryStartOfflineOrDisplayError(const QString& msg);
-    void trySetDisplayName(const Api& api, const Data& data, CancellationToken cancellationToken);
+    void trySetDisplayName(const Api& api, const Secret& applicationSecret, CancellationToken cancellationToken);
 
-    Data resolveData();
+    static Data resolveData();
+
     void update(
             const locations::Launcher& locations,
-            const Data& data, const Api& api,
+            const Secret& appSecret, const Secret& patcherSecret, const Api& api,
             QNetworkAccessManager& nam,
             CancellationToken cancellationToken);
 
     bool tryUpdate(
             const locations::Launcher& locations,
-            const Data& data, const Api& api,
+            const Secret& appSecret, const Secret& patcherSecret, const Api& api,
             QNetworkAccessManager& nam,
             CancellationToken cancellationToken);
 
     std::unique_ptr<locations::Launcher> tryLoadLocations();
 
-    Data setupPatcherSecret(const Data& data, const Api& api, CancellationToken cancellationToken);
+    Secret setupPatcherSecret(const Secret& appSecret, const Secret& patcherSecret, const Api& api, CancellationToken cancellationToken);
 
     std::unique_ptr<Data> m_runningData;
     ILauncherInterface& m_launcherInterface;

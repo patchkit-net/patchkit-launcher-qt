@@ -25,6 +25,7 @@ LauncherApp::Launcher::Launcher(const QApplication& t_application)
     connect(&m_worker, &LauncherWorker::statusChanged, &m_mainWindow, &MainWindow::setStatus);
     connect(&m_worker, &LauncherWorker::progressChanged, &m_mainWindow, &MainWindow::setProgress);
     connect(&m_worker, &LauncherWorker::finished, &m_mainWindow, &MainWindow::close);
+    connect(&m_worker, &LauncherWorker::setDisplayName, &m_mainWindow, &MainWindow::setTitle);
 
     connect(&m_interface, &Interface::shouldStartInOfflineModeSignal,
             &m_mainWindow, &MainWindow::shouldStartInOfflineMode,
@@ -52,7 +53,6 @@ LauncherApp::Launcher::Launcher(const QApplication& t_application)
 
 void LauncherApp::Launcher::start()
 {
-    qInfo() << "Starting launcher, version: " << Globals::version();
     connect(&m_worker, &QThread::finished, this, &Launcher::finish);
 
     qInfo("Showing main window.");
