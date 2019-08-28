@@ -128,7 +128,6 @@ bool LauncherWorker::runInternal()
     m_runningData.reset(new Data(data));
 
     QNetworkAccessManager nam;
-    Api api(nam);
 
     QString workingDir = locations::workingDirectory(data.applicationSecret());
 
@@ -141,8 +140,6 @@ bool LauncherWorker::runInternal()
     qInfo() << "Initialzing logger";
     Logger::initialize(workingDir);
     qInfo() << "Starting launcher, version: " << Globals::version();
-
-    trySetDisplayName(api, data.applicationSecret(), m_cancellationTokenSource);
 
     qInfo("Testing connectivity");
     if (!m_networkTest.isOnline(nam, m_cancellationTokenSource))
@@ -172,6 +169,9 @@ bool LauncherWorker::runInternal()
         }
     }
 
+    Api api(nam);
+
+    trySetDisplayName(api, data.applicationSecret(), m_cancellationTokenSource);
 
     // Bootstrap the patcher secret. Patcher secret set int Launcher.dat or resources may be invalid if it was updated from the panel
     Secret patcherSecret = setupPatcherSecret(data.applicationSecret(), data.patcherSecret(), api, m_cancellationTokenSource);
