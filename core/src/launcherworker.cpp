@@ -222,8 +222,8 @@ bool LauncherWorker::runInternal()
         throw InsufficientPermissions("App directory must be writable");
     }
 
-    LockFile lockFile(locations.lockFile());
-    lockFile.lock();
+    m_lockFile.reset(new LockFile(locations.lockFile()));
+    m_lockFile->lock();
 
     LocalPatcherData localData(locations);
 
@@ -232,7 +232,7 @@ bool LauncherWorker::runInternal()
 
     if (hasUpdated)
     {
-        localData.start(m_runningData->applicationSecret(), data::NetworkStatus::Online);
+        localData.start(m_runningData->applicationSecret(), m_lockFile, data::NetworkStatus::Online);
         return true;
     }
     else
@@ -245,7 +245,7 @@ bool LauncherWorker::runInternal()
             if (ans == ILauncherInterface::OfflineModeAnswer::YES)
             {
                 qInfo() << "Starting the patcher in offline mode";
-                localData.start(m_runningData->applicationSecret(), data::NetworkStatus::Offline);
+                localData.start(m_runningData->applicationSecret(), m_lockFile, data::NetworkStatus::Offline);
                 return true;
             }
             else if (ans == ILauncherInterface::OfflineModeAnswer::NO)
@@ -272,7 +272,7 @@ bool LauncherWorker::tryStartOffline()
             if (locations)
             {
                 LocalPatcherData localData(*locations);
-                localData.start(m_runningData->applicationSecret(), data::NetworkStatus::Offline);
+                localData.start(m_runningData->applicationSecret(), m_lockFile, data::NetworkStatus::Offline);
                 return true;
             }
 
@@ -388,6 +388,7 @@ LauncherWorker::LauncherWorker(ILauncherInterface& launcherInterface, QObject* p
     : QThread(parent)
     , m_runningData(nullptr)
     , m_launcherInterface(launcherInterface)
+    , m_lockFile(nullptr)
 {
 }
 

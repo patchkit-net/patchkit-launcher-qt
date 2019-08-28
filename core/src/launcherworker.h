@@ -79,4 +79,5 @@ private:
     ILauncherInterface& m_launcherInterface;
     CancellationTokenSource m_cancellationTokenSource;
     NetworkTest m_networkTest;
+    std::shared_ptr<LockFile> m_lockFile;
 };

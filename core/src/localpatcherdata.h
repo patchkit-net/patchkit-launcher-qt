@@ -19,6 +19,7 @@
 #include "ilauncher.h"
 
 #include <quazipfile.h>
+#include <memory>
 
 class LocalPatcherData : public QObject
 {
@@ -36,7 +37,7 @@ public:
     InstallationInfo install(
             QIODevice& source, const Secret& patcherSecret, int version, CancellationToken cancellationToken);
 
-    void start(const Secret& appSecret, data::NetworkStatus networkStatus);
+    void start(const Secret& appSecret, std::shared_ptr<LockFile> lockFile, data::NetworkStatus networkStatus);
 
 private:
     void uninstall();

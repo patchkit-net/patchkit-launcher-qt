@@ -132,7 +132,7 @@ InstallationInfo LocalPatcherData::install(QIODevice& source, const Secret& patc
     return installationInfo;
 }
 
-void LocalPatcherData::start(const Secret& appSecret, data::NetworkStatus networkStatus)
+void LocalPatcherData::start(const Secret& appSecret, std::shared_ptr<LockFile> lockFile, data::NetworkStatus networkStatus)
 {
     qInfo("Starting patcher.");
 
@@ -151,6 +151,12 @@ void LocalPatcherData::start(const Secret& appSecret, data::NetworkStatus networ
     QStringList targetArguments = manifest.makeArguments(manifestContext);
 
     qDebug() << "Preparing execute target: " << target << " with arguments: " << targetArguments;
+
+    if (lockFile)
+    {
+        qDebug("Releasing the lock file");
+        lockFile->cede();
+    }
 
     if (!QProcess::startDetached(target, targetArguments))
     {
