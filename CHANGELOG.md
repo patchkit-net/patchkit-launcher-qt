@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - double inclusion of networkstatus in core.pro
 - #1433 Wait times
+- #1475 Releasing the lock file before starting
 
 ### Changed
 - Location resolution methods
