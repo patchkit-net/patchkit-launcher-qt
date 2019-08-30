@@ -10,14 +10,14 @@ bool NetworkTest::isOnline(QNetworkAccessManager& nam, CancellationToken cancell
 
     m_attempt += 1;
 
-    int timeout = 10;
+    int timeout = 10000;
     if (m_attempt == 2)
     {
-        timeout = 30;
+        timeout = 30000;
     }
     else if (m_attempt >= 3)
     {
-        timeout = 60;
+        timeout = 60000;
     }
 
     return downloading::abstractions::tryDownload(nam, url, buffer, timeout, cancellationToken);
