@@ -19,8 +19,6 @@
 #include "config.h"
 #include "lockfile.h"
 #include "utilities.h"
-#include "locations/launcher.h"
-#include "locations/installation.h"
 
 void LauncherWorker::run()
 {
@@ -140,7 +138,7 @@ bool LauncherWorker::runInternal()
         }
     }
 
-    QString workingDir = locations::workingDirectory(data.applicationSecret());
+    QString workingDir = Locations::workingDirectory(data.applicationSecret());
 
     // Setup the patcher secret
     // NOTE: Why?

@@ -13,7 +13,6 @@
 #include "lockfile.h"
 #include "data/networkstatus.hpp"
 #include "ilauncher.h"
-#include "locations/launcher.h"
 #include "networktest.h"
 
 #include <QThread>

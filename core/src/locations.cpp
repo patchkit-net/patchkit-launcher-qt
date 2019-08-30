@@ -65,6 +65,23 @@ Locations::Locations(const Data& data)
 #endif
 }
 
+QString Locations::workingDirectory(const QString appSecret)
+{
+#if defined(Q_OS_OSX)
+    QDir workingDir = QDir(osxWritableDirectory()).filePath(appSecret.mid(0, 8));
+#else
+    QDir workingDir = QDir(applicationDirPath());
+#endif
+
+    if (!workingDir.exists())
+    {
+        workingDir.mkpath(".");
+    }
+    QString path = workingDir.absolutePath();
+
+    return workingDir.absolutePath();
+}
+
 QString Locations::patcherDownloadPath() const
 {
     return QDir(currentDirPath()).filePath(Config::patcherDownloadFileName);

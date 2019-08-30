@@ -17,6 +17,8 @@ public:
 
     void initializeWithData(const Data& t_data);
 
+    static QString workingDirectory(const QString appSecret);
+
     static QString applicationFilePath();
 
     static QString applicationDirPath();

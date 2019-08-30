@@ -1,6 +1,5 @@
 #include "networktest.h"
 #include "remote/downloading/downloadingabstractions.h"
-#include "remote/downloading/timeout.h"
 
 #include <QBuffer>
 
@@ -21,6 +20,5 @@ bool NetworkTest::isOnline(QNetworkAccessManager& nam, CancellationToken cancell
         timeout = 60;
     }
 
-    return downloading::abstractions::tryDownload(nam, url, buffer, Timeout::seconds(timeout),
-        cancellationToken);
+    return downloading::abstractions::tryDownload(nam, url, buffer, timeout, cancellationToken);
 }
