@@ -104,7 +104,7 @@ bool LauncherWorker::runInternal()
     qInfo() << "Initializing";
 
     // Initialize
-    Data data = resolveData();
+    m_runningData.reset(new Data(resolveData()));
 
     // Initialize components
     QNetworkAccessManager nam;
@@ -138,11 +138,11 @@ bool LauncherWorker::runInternal()
         }
     }
 
-    QString workingDir = Locations::workingDirectory(data.applicationSecret());
+    QString workingDir = Locations::workingDirectory(m_runningData->applicationSecret());
 
     // Setup the patcher secret
     // NOTE: Why?
-    data = setupPatcherSecret(data, api, m_cancellationTokenSource);
+    auto data = setupPatcherSecret(*m_runningData, api, m_cancellationTokenSource);
     m_runningData.reset(new Data(data));
 
     // Locations
