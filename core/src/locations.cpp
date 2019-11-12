@@ -107,7 +107,8 @@ QString Locations::logFilePath()
 #if defined(Q_OS_OSX)
     return QDir(osxWritableDirectory()).filePath(Config::logFileName);
 #else
-    return QDir(applicationDirPath()).filePath(Config::logFileName);
+    auto location = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    return QDir(location).filePath(Config::logFileName);
 #endif
 }
 
