@@ -149,10 +149,10 @@ bool LauncherWorker::runInternal()
     Locations locations(data);
 
     // Check permissions
-    if (!Utilities::isDirectoryWritable(locations.currentDirPath()))
-    {
-        throw InsufficientPermissions("Launcher needs the current directory to be writable");
-    }
+//    if (!Utilities::isDirectoryWritable(locations.currentDirPath()))
+//    {
+//        throw InsufficientPermissions("Launcher needs the current directory to be writable");
+//    }
 
     qInfo() << "Initialzing logger";
     Logger::initialize();
