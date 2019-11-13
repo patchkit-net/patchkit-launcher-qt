@@ -27,6 +27,8 @@ public:
 
     static QString logFilePath();
 
+    static QString lockFilePath();
+
     static QString dataFilePath();
 
     QString patcherDownloadPath() const;

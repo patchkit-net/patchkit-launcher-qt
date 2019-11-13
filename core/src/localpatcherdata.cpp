@@ -143,7 +143,7 @@ void LocalPatcherData::start(const Data& t_data, data::NetworkStatus networkStat
     manifestContext.defineSymbol("{installdir}", m_locations.applicationInstallationDirPath());
     manifestContext.defineSymbol("{exedir}", m_locations.patcherDirectoryPath());
     manifestContext.defineSymbol("{secret}", applicationSecret);
-    manifestContext.defineSymbol("{lockfile}", QDir(Config::lockFileName).absolutePath());
+    manifestContext.defineSymbol("{lockfile}", QDir(Locations::lockFilePath()).absolutePath());
     manifestContext.defineSymbol("{network-status}", data::ToString(networkStatus));
 
     auto manifest = readPatcherManifset();
