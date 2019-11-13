@@ -107,8 +107,11 @@ QString Locations::logFilePath()
 #if defined(Q_OS_OSX)
     return QDir(osxWritableDirectory()).filePath(Config::logFileName);
 #else
-    auto location = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    return QDir(location).filePath(Config::logFileName);
+    auto location = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+    if (!location.exists()) {
+        location.mkpath(".");
+    }
+    return location.filePath(Config::logFileName);
 #endif
 }
 
@@ -117,8 +120,12 @@ QString Locations::lockFilePath()
     #if defined(Q_OS_OSX)
     return QDir(osxWritableDirectory()).filePath(Config::lockFileName);
 #else
-    auto location = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    return QDir(location).filePath(Config::lockFileName);
+    auto location = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+
+    if (!location.exists()) {
+        location.mkpath(".");
+    }
+    return location.filePath(Config::lockFileName);
 #endif
 }
 
