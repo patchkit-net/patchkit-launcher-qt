@@ -1,9 +1,13 @@
 # Building
 
 ## Boost
+
 Launcher requires the Boost library to compile.
 
-Make sure to set the `PK_LAUNCHER_BOOST_INCLUDEDIR` environment variable (from command line or using QT Creator project settings) to an appropriate path.
+For Windows make sure to download boost with the binaries, it can be downloaded from here:
+https://sourceforge.net/projects/boost/files/boost-binaries/
+
+Set the `PK_LAUNCHER_BOOST_INCLUDEDIR` and `PK_LAUNCHER_BOOST_LIBDIR` environment variable (from command line or using QT Creator project settings) to an appropriate path.
 
 For example, if you're using [PDK](https://github.com/patchkit-net/patchkit-development-kit/) the path should look something like `/path/to/patchkit-development-kit/src/boost`.
 
@@ -49,3 +53,18 @@ nmake -f Makefile.Debug
 ## Building statically linked Qt
 
 Refer to [PatchKit Development Kit](https://github.com/patchkit-net/patchkit-development-kit).
+
+## Troubleshooting
+
+### Linker: Boost library name is different than we require
+
+Just find the file and rename it to match the names.
+
+### Running: Throw TLS errors on HTTPS connections
+
+You need to put openssl dll next to the launcher exe.
+
+1. Find out what version to use with this function:
+`qDebug() << QSslSocket::supportsSsl() << QSslSocket::sslLibraryBuildVersionString() << QSslSocket::sslLibraryVersionString();`
+2. Download the binaries from here: https://wiki.openssl.org/index.php/Binaries
+3. Put it next to the Launcher.exe
