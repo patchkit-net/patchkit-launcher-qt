@@ -62,9 +62,15 @@ Just find the file and rename it to match the names.
 
 ### Running: Throw TLS errors on HTTPS connections
 
-You need to put openssl dll next to the launcher exe.
+You need to put openssl and libcrypto dlls next to the launcher exe.
 
 1. Find out what version to use with this function:
 `qDebug() << QSslSocket::supportsSsl() << QSslSocket::sslLibraryBuildVersionString() << QSslSocket::sslLibraryVersionString();`
 2. Download the binaries from here: https://wiki.openssl.org/index.php/Binaries
 3. Put it next to the Launcher.exe
+
+### Running: Raises errors of missing Qt libraries
+
+You need to add bin path of your Qt installation to PATH. For instance:
+
+`C:\Qt\5.12.5\msvc2017_64\bin`
