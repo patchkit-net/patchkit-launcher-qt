@@ -16,6 +16,9 @@ int main(int argc, char* argv[])
     qInfo("Starting the launcher.");
     QApplication application(argc, argv);
 
+    QCoreApplication::setApplicationName("patchkit-launcher-qt");
+    QCoreApplication::setOrganizationName("upsoft");
+
     qInfo("Setting apllication window parameters.");
     application.setQuitOnLastWindowClosed(false);
 

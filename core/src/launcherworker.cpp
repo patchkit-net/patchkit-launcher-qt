@@ -148,12 +148,6 @@ bool LauncherWorker::runInternal()
     // Locations
     Locations locations(data);
 
-    // Check permissions
-    if (!Utilities::isDirectoryWritable(locations.currentDirPath()))
-    {
-        throw InsufficientPermissions("Launcher needs the current directory to be writable");
-    }
-
     qInfo() << "Initialzing logger";
     Logger::initialize();
 
@@ -335,6 +329,12 @@ void LauncherWorker::update(
     {
         qInfo() << "Latest version is already installed";
         return;
+    }
+
+    // Check permissions
+    if (!Utilities::isDirectoryWritable(locations.currentDirPath()))
+    {
+        throw InsufficientPermissions("Launcher needs the current directory to be writable");
     }
 
     ContentSummary contentSummary = api.getContentSummary(data.patcherSecret(), latestAppVersion, cancellationToken);
