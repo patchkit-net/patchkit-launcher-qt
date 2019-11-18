@@ -14,6 +14,7 @@
 #include "config.h"
 #include "data/data.h"
 #include "logger.h"
+#include "utilities.h"
 
 QString osxWritableDirectory()
 {
@@ -107,11 +108,17 @@ QString Locations::logFilePath()
 #if defined(Q_OS_OSX)
     return QDir(osxWritableDirectory()).filePath(Config::logFileName);
 #else
-    auto location = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
-    if (!location.exists()) {
-        location.mkpath(".");
+    if (Utilities::isDirectoryWritable(applicationDirPath()))
+    {
+        return QDir(applicationDirPath()).filePath(Config::logFileName);
+    } else
+    {
+        auto location = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+        if (!location.exists()) {
+            location.mkpath(".");
+        }
+        return location.filePath(Config::logFileName);
     }
-    return location.filePath(Config::logFileName);
 #endif
 }
 
@@ -120,12 +127,18 @@ QString Locations::lockFilePath()
     #if defined(Q_OS_OSX)
     return QDir(osxWritableDirectory()).filePath(Config::lockFileName);
 #else
-    auto location = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+    if (Utilities::isDirectoryWritable(applicationDirPath()))
+    {
+        return QDir(applicationDirPath()).filePath(Config::lockFileName);
+    } else
+    {
+        auto location = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
 
-    if (!location.exists()) {
-        location.mkpath(".");
+        if (!location.exists()) {
+            location.mkpath(".");
+        }
+        return location.filePath(Config::lockFileName);
     }
-    return location.filePath(Config::lockFileName);
 #endif
 }
 
