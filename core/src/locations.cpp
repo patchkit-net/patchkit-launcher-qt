@@ -15,7 +15,7 @@
 #include "data/data.h"
 #include "logger.h"
 
-QString osxWritableDirectory()
+QString unixWritableDirectory()
 {
     auto sep = QDir::separator();
 
@@ -35,9 +35,9 @@ Locations::Locations(const Data& data)
 {
     qDebug("Initializing path.");
 
-#if defined(Q_OS_OSX)
+#if defined(Q_OS_OSX) || defined(Q_OS_UNIX)
 
-    QDir appPath = QDir(osxWritableDirectory() + QDir::separator() + data.applicationSecret().mid(0, 8));
+    QDir appPath = QDir(unixWritableDirectory() + QDir::separator() + data.applicationSecret().mid(0, 8));
 
     if (!appPath.exists())
     {
@@ -87,8 +87,8 @@ QString Locations::currentDirPath() const
 
 QString Locations::logFilePath()
 {
-#if defined(Q_OS_OSX)
-    return QDir(osxWritableDirectory()).filePath(Config::logFileName);
+#if defined(Q_OS_OSX) || defined(Q_OS_UNIX)
+    return QDir(unixWritableDirectory()).filePath(Config::logFileName);
 #else
     return QDir(applicationDirPath()).filePath(Config::logFileName);
 #endif
